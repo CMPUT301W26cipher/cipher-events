@@ -14,11 +14,16 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.organizer.OrganizerEventCreationResult;
+import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
 import com.example.cipher_events.pages.ProfileFragment;
 import com.example.cipher_events.pages.SearchFragment;
+import com.example.cipher_events.user.EntrantEventService;
+import com.example.cipher_events.user.EntrantQrScanResult;
 import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
@@ -26,6 +31,7 @@ import com.example.cipher_events.user.UserProfileService;
 import com.example.cipher_events.user.UserRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.zxing.WriterException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +46,9 @@ public class MainActivity extends AppCompatActivity {
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
 
+    private OrganizerEventService organizerEventService;
+    private EntrantEventService entrantEventService;
+
     private final List<Event> allEvents = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +58,14 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
+        //User-related services
         userRepository = new UserRepository();
         historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService(userRepository, historyRepository);
+
+        //QR / Event-related services
+        organizerEventService = new OrganizerEventService();
+        entrantEventService = new EntrantEventService();
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -164,5 +178,104 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    // =========================================================
+    // US 02.01.01
+    // Organizer creates event and generates QR code
+    // =========================================================
+    public OrganizerEventCreationResult createEventAndGenerateQr(String name,
+                                                                 String description,
+                                                                 String time,
+                                                                 String location,
+                                                                 Organizer organizer,
+                                                                 String posterPictureURL,
+                                                                 int qrWidth,
+                                                                 int qrHeight) {
+        try {
+            OrganizerEventCreationResult result = organizerEventService.createEventAndGenerateQr(
+                    name,
+                    description,
+                    time,
+                    location,
+                    organizer,
+                    posterPictureURL,
+                    qrWidth,
+                    qrHeight
+            );
+            //Keep a local reference for profile deletion history operations
+            Event createdEvent = result.getEvent();
+            if (createdEvent != null && !allEvents.contains(createdEvent)) {
+                allEvents.add(createdEvent);
+            }
+
+            Toast.makeText(this, "Event created and QR generated", Toast.LENGTH_SHORT).show();
+            return result;
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        } catch (WriterException e) {
+            Toast.makeText(this, "Failed to generate QR Code", Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    // =========================================================
+    // US 01.06.01
+    // Entrant scans QR and views event details
+    // =========================================================
+    public EntrantQrScanResult getEventDetailsFromScannedQr(String scannedQRTest) {
+        try {
+            return entrantEventService.getEventDetailsFromScannedQr(scannedQRTest);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    // =========================================================
+    // US 01.06.02
+    // Entrant signs up for event from event details
+    // =========================================================\
+    public void signUpForEventDetails(String eventId, User entrant) {
+        try {
+            entrantEventService.signUpForEventFromDetails(eventId, entrant);
+            Toast.makeText(this, "Successfully joined the event waiting list", Toast.LENGTH_SHORT).show();
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    public User getUserByDeviceId(String deviceId) {
+        return userRepository.findByDeviceId(deviceId);
+    }
+
+    public void addEventToSystem(Event event) {
+        if (event != null && !allEvents.contains(event)) {
+            allEvents.add(event);
+        }
+    }
+
+    public void setAllEvents(List<Event> events) {
+        allEvents.clear();
+        if (events != null) {
+            allEvents.addAll(events);
+        }
+    }
+
+    public List<Event> getAllEvents() {
+        return new ArrayList<>(allEvents);
+    }
+
+    public UserProfileService getUserProfileService() {
+        return userProfileService;
+    }
+
+    public OrganizerEventService getOrganizerEventService() {
+        return organizerEventService;
+    }
+
+    public EntrantEventService getEntrantEventService() {
+        return entrantEventService;
     }
 }
