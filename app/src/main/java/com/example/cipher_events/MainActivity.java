@@ -26,6 +26,7 @@ import com.example.cipher_events.user.UserProfileService;
 import com.example.cipher_events.user.UserRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.example.cipher_events.waitinglist.WaitingListService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +41,8 @@ public class MainActivity extends AppCompatActivity {
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
 
+    private WaitingListService waitingListService;
+
     private final List<Event> allEvents = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         userRepository = new UserRepository();
         historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService(userRepository, historyRepository);
+        waitingListService = new WaitingListService(historyRepository);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -164,5 +168,83 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    // =========================================================
+    // US 01.01.01
+    // Join Waiting List
+    // =========================================================
+    public boolean joinWaitingList(User user, Event event) {
+        try {
+
+            boolean joined = waitingListService.joinWaitingList(user, event);
+
+            if (joined) {
+                Toast.makeText(this, "Successfully joined waiting list", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Unable to join waiting list", Toast.LENGTH_LONG).show();
+            }
+
+            return joined;
+
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    // =========================================================
+    // US 01.01.02
+    // Leave Waiting List
+    // =========================================================
+    public boolean leaveWaitingList(User user, Event event) {
+        try {
+
+            boolean removed = waitingListService.leaveWaitingList(user, event);
+
+            if (removed) {
+                Toast.makeText(this, "Removed from waiting list", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "User not in waiting list", Toast.LENGTH_LONG).show();
+            }
+
+            return removed;
+
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    // =========================================================
+    // US 01.05.04
+    // View Waiting List Count
+    // =========================================================
+    public int getWaitingListCount(Event event) {
+        return waitingListService.getWaitingListCount(event);
+    }
+
+    // =========================================================
+    // US 02.02.01
+    // View Waiting List
+    // =========================================================
+    public List<User> getWaitingList(Event event) {
+        return waitingListService.getWaitingList(event);
+    }
+
+    // =========================================================
+    // US 02.03.01
+    // Set Waiting List Capacity
+    // =========================================================
+    public void setWaitingListCapacity(Event event, Integer capacity) {
+        waitingListService.setWaitingListCapacity(event, capacity);
+    }
+
+    // =========================================================
+    // US 02.07.01
+    // Notify Waiting List Entrants (Placeholder)
+    // =========================================================
+    public void notifyAllWaitingListEntrants(Event event, String message) {
+        waitingListService.notifyAllEntrants(event, message);
     }
 }
