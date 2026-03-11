@@ -18,6 +18,7 @@ public final class EventQrCodeGenerator {
     public static final String QR_PREFIX = "cipher-event://event/";
 
     private EventQrCodeGenerator() {
+        // Utility class
     }
 
     public static String buildPayload(String eventId) {
