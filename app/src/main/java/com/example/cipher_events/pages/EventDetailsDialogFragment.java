@@ -17,6 +17,17 @@ import com.example.cipher_events.R;
 
 import java.util.ArrayList;
 
+/**
+ * Displays a popup upon clicking an event
+ * pop up displays full event details:
+ * - Event Title
+ * - Number of attendees
+ * - Event Description
+ * - Date and Location
+ * - Tags
+ * - Lottery disclaimer
+ */
+
 public class EventDetailsDialogFragment extends DialogFragment {
 
     public static EventDetailsDialogFragment newInstance(
