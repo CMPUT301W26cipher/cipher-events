@@ -1,5 +1,6 @@
 package com.example.cipher_events.pages;
 
+import android.content.Intent;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -32,15 +33,33 @@ public class HomeFragment extends Fragment {
 
         loadUpcomingEvents();
 
-        adapter = new EventAdapter(upcomingEvents);
+        // Pass click listener into adapter
+        adapter = new EventAdapter(upcomingEvents, event -> {
+            ArrayList<String> tags = new ArrayList<>();
+            tags.add("Tech");
+            tags.add("Free");
+            tags.add("Outdoors");
+
+            EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
+                    event.getName(),
+                    event.getDescription(),
+                    event.getTime(),
+                    event.getLocation(),
+                    event.getAttendees().size(),
+                    tags
+            );
+
+            dialog.show(getParentFragmentManager(), "EventDetailsDialog");
+        });
+
+
+
         recyclerView.setAdapter(adapter);
 
         return view;
     }
 
     private void loadUpcomingEvents() {
-
-        // place holder for events, TESTING
         upcomingEvents.add(new Event(
                 "Tech Expo 2025",
                 "A huge tech showcase",

@@ -20,14 +20,25 @@ import java.util.List;
  * Displays a list of Event objects
  * - fills in event title, date, location
  * - if URL is added for event poster, Glide is used to load it (no url = grey blank background)
+ *
+ * References for Glide:
+ * https://www.geeksforgeeks.org/android/image-loading-caching-library-android-set-2/
  */
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
     private List<Event> events;
+    private OnEventClickListener listener;
 
-    public EventAdapter(List<Event> events) {
-        this.events = events;
+    public interface OnEventClickListener {
+        void onEventClick(Event event);
     }
+
+
+    public EventAdapter(List<Event> events, OnEventClickListener listener) {
+        this.events = events;
+        this.listener = listener;
+    }
+
 
     @NonNull
     @Override
@@ -62,6 +73,15 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
         // debugging: testing if image url loads
         Log.d("EVENT_DEBUG", "Poster URL for " + event.getName() + ": " + url);
+
+
+        holder.itemView.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onEventClick(event);
+            }
+        });
+
+
     }
 
     @Override
