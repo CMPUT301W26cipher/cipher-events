@@ -11,8 +11,12 @@ import java.util.UUID;
 
 /**
  * US 02.01.01
- * Organizer creates a new event and generates a unique promotional QR code
+ * Organizer creates a new event and generates a unique promotional QR payload
  * that links to the event inside the app.
+ *
+ * Note:
+ * This service does NOT generate Bitmap directly, so it can be unit-tested.
+ * UI code can generate QR bitmap later from qrPayload.
  */
 public class OrganizerEventService {
     private final EventRepository eventRepository;
@@ -32,8 +36,12 @@ public class OrganizerEventService {
                                                                  Organizer organizer,
                                                                  String posterPictureURL,
                                                                  int qrWidth,
-                                                                 int qrHeight) throws WriterException {
+                                                                 int qrHeight) {
         validateRequiredEventFields(name, description, time, location, organizer);
+
+        if (qrWidth <= 0 || qrHeight <= 0) {
+            throw new IllegalArgumentException("QR width and height must be positive.");
+        }
 
         Event event = new Event(
                 name.trim(),
@@ -48,7 +56,6 @@ public class OrganizerEventService {
 
         String eventId = UUID.randomUUID().toString();
         String qrPayload = EventQrCodeGenerator.buildPayload(eventId);
-        Bitmap qrBitmap = EventQrCodeGenerator.generateQrBitmap(qrPayload, qrWidth, qrHeight);
 
         EventRecord record = new EventRecord(
                 eventId,
@@ -59,7 +66,7 @@ public class OrganizerEventService {
 
         eventRepository.save(record);
 
-        return new OrganizerEventCreationResult(eventId, event, qrPayload, qrBitmap);
+        return new OrganizerEventCreationResult(eventId, event, qrPayload);
     }
 
     public EventRecord getEventRecord(String eventId) {
