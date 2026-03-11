@@ -26,6 +26,8 @@ import com.example.cipher_events.user.UserProfileService;
 import com.example.cipher_events.user.UserRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.zxing.WriterException;
+
 import com.example.cipher_events.waitinglist.WaitingListService;
 
 import java.util.ArrayList;

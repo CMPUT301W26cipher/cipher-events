@@ -36,6 +36,7 @@ android {
 }
 
 dependencies {
+    implementation("com.google.zxing:core:3.5.3")
     implementation(libs.appcompat)
     implementation(libs.material)
     implementation(libs.activity)
