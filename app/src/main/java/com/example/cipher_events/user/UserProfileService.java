@@ -7,6 +7,7 @@ import com.example.cipher_events.user.Status;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Service for:
@@ -101,7 +102,38 @@ public class UserProfileService {
         UserEventHistoryRecord record = new UserEventHistoryRecord(event, status);
         historyRepository.addRecord(deviceId, record);
     }
+    /**
+    * Optional helper:
+    * update a user's event status if the event already exists in history;
+    * otherwise add a new history record.
+    */
+    public void upsertEventHistory(String deviceId, Event event, Status newStatus) {
+        if (deviceId == null || deviceId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Device ID is required.");
+        }
+        if (!userRepository.exists(deviceId)) {
+            throw new IllegalArgumentException("User not found.");
+        }
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+        if (newStatus == null) {
+            throw new IllegalArgumentException("Selection status cannot be null.");
+        }
 
+        List<UserEventHistoryRecord> records = historyRepository.getHistory(deviceId);
+        for (UserEventHistoryRecord record : records) {
+            if (record.getEvent() == event ||
+                    (record.getEvent() != null
+                            && record.getEvent().getName() != null
+                            && record.getEvent().getName().equals(event.getName()))) {
+                record.setStatus(newStatus);
+                return;
+            }
+        }
+
+        addEventHistory(deviceId, event, newStatus);
+    }
     /**
      * US 01.02.03
      * Get the user's full event history.
