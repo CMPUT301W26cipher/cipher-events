@@ -92,5 +92,17 @@
         android:lineSpacingExtra="4dp"
         tools:text="Placeholder guidelines text for preview." />
 
+    <Button
+        android:id="@+id/scan_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Scan to Join Waitlist"
+        android:padding="12dp"
+        android:layout_marginTop="24dp"
+        android:textColor="@android:color/white"
+        android:textSize="16sp"
+        android:textStyle="bold"/>
+
+
 
 </LinearLayout>
