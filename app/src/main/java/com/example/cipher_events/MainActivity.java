@@ -14,9 +14,13 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.cipher_events.database.Admin;
+import com.example.cipher_events.database.AdminDB;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.database.UserDB;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.FavouritesFragment;
@@ -41,17 +45,15 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     //
-
+    DBProxy DB = DBProxy.getInstance();
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
 
     private UserRepository userRepository;
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
-
     private OrganizerEventService organizerEventService;
     private EntrantEventService entrantEventService;
-
     private WaitingListService waitingListService;
 
     private final List<Event> allEvents = new ArrayList<>();
@@ -111,6 +113,61 @@ public class MainActivity extends AppCompatActivity {
             fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
         }
     }
+
+    @Override
+    protected void onDestroy () {
+        DB.shutdown();
+        super.onDestroy();
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ================== LOTS OF CODE HERE ====================
+
 
     // =========================================================
     // US 01.02.01
