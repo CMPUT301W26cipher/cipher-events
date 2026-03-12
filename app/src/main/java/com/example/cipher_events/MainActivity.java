@@ -222,6 +222,8 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return null;
+        } catch (WriterException e) {
+            throw new RuntimeException(e);
         }
     }
 
