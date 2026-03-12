@@ -10,7 +10,6 @@ import androidx.test.espresso.contrib.RecyclerViewActions;
 import androidx.test.espresso.matcher.ViewMatchers;
 
 import com.example.cipher_events.pages.HomeFragment;
-import com.example.cipher_events.R;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;

@@ -26,6 +26,8 @@ public class Admin {
         this.profilePictureURL = profilePictureURL;
     }
 
+    public Admin() {};
+
     public String getDeviceID() {
         return deviceID;
     }
