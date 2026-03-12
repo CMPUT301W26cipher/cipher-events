@@ -7,6 +7,7 @@
     android:layout_height="wrap_content"
     android:gravity="center_horizontal">
 
+
     <TextView
         android:id="@+id/detail_title"
         android:layout_width="match_parent"

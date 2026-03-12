@@ -1,4 +1,5 @@
 package com.example.cipher_events.waitinglist;
+import java.util.Random;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
@@ -211,4 +212,98 @@ public class WaitingListService {
 
         return a.getDeviceID().equals(b.getDeviceID());
     }
+    // =========================================================
+// US 01.05.02
+// Accept Invitation
+// =========================================================
+    public boolean acceptInvitation(User user, Event event) {
+
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        ArrayList<User> entrants = event.getEntrants();
+        ArrayList<User> attendees = event.getAttendees();
+
+        if (entrants == null || attendees == null) {
+            return false;
+        }
+
+        for (int i = 0; i < entrants.size(); i++) {
+
+            User current = entrants.get(i);
+
+            if (sameUser(current, user)) {
+
+                entrants.remove(i);
+                attendees.add(user);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+    // =========================================================
+// US 01.05.03
+// Decline Invitation
+// =========================================================
+    public boolean declineInvitation(User user, Event event) {
+
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        ArrayList<User> entrants = event.getEntrants();
+
+        if (entrants == null) {
+            return false;
+        }
+
+        for (int i = 0; i < entrants.size(); i++) {
+
+            User current = entrants.get(i);
+
+            if (sameUser(current, user)) {
+
+                entrants.remove(i);
+
+                return true;
+            }
+        }
+
+        return false;
+    }
+    // =========================================================
+// US 01.05.01
+// Re-draw Lottery
+// =========================================================
+    public User redrawLottery(Event event) {
+
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        ArrayList<User> entrants = event.getEntrants();
+
+        if (entrants == null || entrants.isEmpty()) {
+            return null;
+        }
+
+        Random random = new Random();
+        int index = random.nextInt(entrants.size());
+
+        return entrants.get(index);
+    }
+
+
+
 }
