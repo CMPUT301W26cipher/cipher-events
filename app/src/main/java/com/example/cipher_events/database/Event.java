@@ -1,6 +1,7 @@
 package com.example.cipher_events.database;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 /*
  * Represents an event.
@@ -8,6 +9,7 @@ import java.util.ArrayList;
  */
 
 public class Event {
+    private String eventID;
     private String name;
     private String description;
     private String time;
@@ -22,6 +24,7 @@ public class Event {
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
     public Event(String name, String description, String time, String location, Organizer organizer, ArrayList<User> entrants, ArrayList<User> attendees, String posterPictureURL) {
+        this.eventID = UUID.randomUUID().toString();
         this.name = name;
         this.description = description;
         this.time = time;
@@ -31,6 +34,16 @@ public class Event {
         this.attendees = attendees;
         this.posterPictureURL = posterPictureURL;
         this.waitingListCapacity = null; // default unlimited
+    }
+
+    public Event() {}
+
+    public String getEventID() {
+        return eventID;
+    }
+
+    public void setEventID(String eventID) {
+        this.eventID = eventID;
     }
 
     public String getName() {
