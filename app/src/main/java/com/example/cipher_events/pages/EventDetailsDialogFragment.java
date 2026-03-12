@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -110,6 +111,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
                         "• If you're not selected, you may be placed on a waitlist.\n\n" +
                         "This system helps keep things fair and avoids first‑come‑first‑served pressure."
         );
+
 
         return view;
     }
