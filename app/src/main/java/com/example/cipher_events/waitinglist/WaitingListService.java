@@ -304,6 +304,80 @@ public class WaitingListService {
         return entrants.get(index);
     }
 
+    // =========================================================
+    // US 02.06.01
+    // View Invited Entrants List
+    // =========================================================
+    public List<User> getInvitedEntrants(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+        if (event.getInvitedEntrants() == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(event.getInvitedEntrants());
+    }
+
+    // =========================================================
+    // US 02.06.02
+    // View Cancelled Entrants List
+    // =========================================================
+    public List<User> getCancelledEntrants(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+        if (event.getCancelledEntrants() == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(event.getCancelledEntrants());
+    }
+
+    // =========================================================
+    // US 02.06.03
+    // View Final Enrolled List
+    // =========================================================
+    public List<User> getEnrolledEntrants(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+        if (event.getEnrolledEntrants() == null) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(event.getEnrolledEntrants());
+    }
+
+    // =========================================================
+    // US 02.06.04
+    // Cancel Non-Responsive Entrants
+    // =========================================================
+    public boolean markAsNoShow(User user, Event event) {
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
+        }
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        ArrayList<User> invited = event.getInvitedEntrants();
+        if (invited == null) {
+            return false;
+        }
+
+        for (int i = 0; i < invited.size(); i++) {
+            User current = invited.get(i);
+            if (sameUser(current, user)) {
+                invited.remove(i);
+                event.getCancelledEntrants().add(user);
+                historyRepository.addRecord(
+                        user.getDeviceID(),
+                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                );
+                return true;
+            }
+        }
+        return false;
+    }
+
 
 
 }
