@@ -282,11 +282,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (WriterException e) {
             throw new RuntimeException(e);
         }
-        catch (WriterException e) {   // ⭐ ADD THIS
-            Toast.makeText(this, "QR generation failed", Toast.LENGTH_LONG).show();
-            e.printStackTrace();
-            return null;
-        }
     }
 
     /**
