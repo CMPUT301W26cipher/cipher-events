@@ -25,6 +25,8 @@ public class User {
         this.profilePictureURL = profilePictureURL;
     }
 
+    public User() {};
+
     public String getDeviceID() {
         return deviceID;
     }
