@@ -1,5 +1,6 @@
 package com.example.cipher_events;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -14,11 +15,16 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.organizer.OrganizerEventCreationResult;
+import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
 import com.example.cipher_events.pages.ProfileFragment;
 import com.example.cipher_events.pages.SearchFragment;
+import com.example.cipher_events.user.EntrantEventService;
+import com.example.cipher_events.user.EntrantQrScanResult;
 import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
@@ -26,6 +32,9 @@ import com.example.cipher_events.user.UserProfileService;
 import com.example.cipher_events.user.UserRepository;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
+import com.google.zxing.WriterException;
+
+import com.example.cipher_events.waitinglist.WaitingListService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,6 +49,11 @@ public class MainActivity extends AppCompatActivity {
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
 
+    private OrganizerEventService organizerEventService;
+    private EntrantEventService entrantEventService;
+
+    private WaitingListService waitingListService;
+
     private final List<Event> allEvents = new ArrayList<>();
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,9 +63,16 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
+        //User-related services
         userRepository = new UserRepository();
         historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService(userRepository, historyRepository);
+
+        //QR / Event-related services
+        organizerEventService = new OrganizerEventService();
+        entrantEventService = new EntrantEventService();
+
+        waitingListService = new WaitingListService(historyRepository);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -164,5 +185,218 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
+    }
+
+    // =========================================================
+    // US 02.01.01
+    // Organizer creates event and generates QR code
+    // =========================================================
+    public OrganizerEventCreationResult createEventAndGenerateQr(String name,
+                                                                 String description,
+                                                                 String time,
+                                                                 String location,
+                                                                 Organizer organizer,
+                                                                 String posterPictureURL,
+                                                                 int qrWidth,
+                                                                 int qrHeight) {
+        try {
+            OrganizerEventCreationResult result = organizerEventService.createEventAndGenerateQr(
+                    name,
+                    description,
+                    time,
+                    location,
+                    organizer,
+                    posterPictureURL,
+                    qrWidth,
+                    qrHeight
+            );
+
+            // Keep a local reference for profile deletion/history operations
+            Event createdEvent = result.getEvent();
+            if (createdEvent != null && !allEvents.contains(createdEvent)) {
+                allEvents.add(createdEvent);
+            }
+
+            Toast.makeText(this, "Event created and QR generated", Toast.LENGTH_SHORT).show();
+            return result;
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    /**
+     * Convenience helper if you only want the QR bitmap in UI code.
+     */
+    public String createEventAndGetQrPayload(String name,
+                                             String description,
+                                             String time,
+                                             String location,
+                                             Organizer organizer,
+                                             String posterPictureURL,
+                                             int qrWidth,
+                                             int qrHeight) {
+        OrganizerEventCreationResult result = createEventAndGenerateQr(
+                name,
+                description,
+                time,
+                location,
+                organizer,
+                posterPictureURL,
+                qrWidth,
+                qrHeight
+        );
+
+        return result == null ? null : result.getQrPayload();
+    }
+
+    public android.graphics.Bitmap generateQrBitmapFromPayload(String qrPayload, int width, int height) {
+        try {
+            return com.example.cipher_events.organizer.EventQrCodeGenerator
+                    .generateQrBitmap(qrPayload, width, height);
+        } catch (Exception e) {
+            Toast.makeText(this, "Failed to generate QR bitmap", Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    // =========================================================
+    // US 01.06.01
+    // Entrant scans QR and views event details
+    // =========================================================
+    public EntrantQrScanResult getEventDetailsFromScannedQr(String scannedQrText) {
+        try {
+            return entrantEventService.getEventDetailsFromScannedQr(scannedQrText);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return null;
+        }
+    }
+
+    // =========================================================
+    // US 01.06.02
+    // Entrant signs up for event from event details
+    // =========================================================
+    public void signUpForEventFromDetails(String eventId, User entrant) {
+        try {
+            entrantEventService.signUpForEventFromDetails(eventId, entrant);
+            Toast.makeText(this, "Successfully joined the event waiting list", Toast.LENGTH_SHORT).show();
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    // =========================================================
+    // Utility methods
+    // =========================================================
+    public User getUserByDeviceId(String deviceId) {
+        return userRepository.findByDeviceId(deviceId);
+    }
+
+    public void addEventToSystem(Event event) {
+        if (event != null && !allEvents.contains(event)) {
+            allEvents.add(event);
+        }
+    }
+
+    public void setAllEvents(List<Event> events) {
+        allEvents.clear();
+        if (events != null) {
+            allEvents.addAll(events);
+        }
+    }
+
+    public List<Event> getAllEvents() {
+        return new ArrayList<>(allEvents);
+    }
+
+    public UserProfileService getUserProfileService() {
+        return userProfileService;
+    }
+
+    public OrganizerEventService getOrganizerEventService() {
+        return organizerEventService;
+    }
+
+    public EntrantEventService getEntrantEventService() {
+        return entrantEventService;
+    }
+
+    // =========================================================
+    // US 01.01.01
+    // Join Waiting List
+    // =========================================================
+    public boolean joinWaitingList(User user, Event event) {
+        try {
+
+            boolean joined = waitingListService.joinWaitingList(user, event);
+
+            if (joined) {
+                Toast.makeText(this, "Successfully joined waiting list", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "Unable to join waiting list", Toast.LENGTH_LONG).show();
+            }
+
+            return joined;
+
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    // =========================================================
+    // US 01.01.02
+    // Leave Waiting List
+    // =========================================================
+    public boolean leaveWaitingList(User user, Event event) {
+        try {
+
+            boolean removed = waitingListService.leaveWaitingList(user, event);
+
+            if (removed) {
+                Toast.makeText(this, "Removed from waiting list", Toast.LENGTH_SHORT).show();
+            } else {
+                Toast.makeText(this, "User not in waiting list", Toast.LENGTH_LONG).show();
+            }
+
+            return removed;
+
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return false;
+        }
+    }
+
+    // =========================================================
+    // US 01.05.04
+    // View Waiting List Count
+    // =========================================================
+    public int getWaitingListCount(Event event) {
+        return waitingListService.getWaitingListCount(event);
+    }
+
+    // =========================================================
+    // US 02.02.01
+    // View Waiting List
+    // =========================================================
+    public List<User> getWaitingList(Event event) {
+        return waitingListService.getWaitingList(event);
+    }
+
+    // =========================================================
+    // US 02.03.01
+    // Set Waiting List Capacity
+    // =========================================================
+    public void setWaitingListCapacity(Event event, Integer capacity) {
+        waitingListService.setWaitingListCapacity(event, capacity);
+    }
+
+    // =========================================================
+    // US 02.07.01
+    // Notify Waiting List Entrants (Placeholder)
+    // =========================================================
+    public void notifyAllWaitingListEntrants(Event event, String message) {
+        waitingListService.notifyAllEntrants(event, message);
     }
 }
