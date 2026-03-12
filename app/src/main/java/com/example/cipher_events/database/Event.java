@@ -20,6 +20,10 @@ public class Event {
     private String posterPictureURL; // optional poster picture
     private Integer waitingListCapacity; // Optional waiting list capacity (null means unlimited)
 
+    private ArrayList<User> invitedEntrants;
+    private ArrayList<User> cancelledEntrants;
+    private ArrayList<User> enrolledEntrants;
+
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
@@ -34,6 +38,10 @@ public class Event {
         this.attendees = attendees;
         this.posterPictureURL = posterPictureURL;
         this.waitingListCapacity = null; // default unlimited
+
+        this.invitedEntrants = new ArrayList<>();
+        this.cancelledEntrants = new ArrayList<>();
+        this.enrolledEntrants = new ArrayList<>();
     }
 
     public Event() {}
@@ -131,5 +139,30 @@ public class Event {
                 ", attendees=" + attendees +
                 ", posterPictureURL='" + posterPictureURL + '\'' +
                 '}';
+    }
+
+
+    public ArrayList<User> getInvitedEntrants() {
+        return invitedEntrants;
+    }
+
+    public void setInvitedEntrants(ArrayList<User> invitedEntrants) {
+        this.invitedEntrants = invitedEntrants;
+    }
+
+    public ArrayList<User> getCancelledEntrants() {
+        return cancelledEntrants;
+    }
+
+    public void setCancelledEntrants(ArrayList<User> cancelledEntrants) {
+        this.cancelledEntrants = cancelledEntrants;
+    }
+
+    public ArrayList<User> getEnrolledEntrants() {
+        return enrolledEntrants;
+    }
+
+    public void setEnrolledEntrants(ArrayList<User> enrolledEntrants) {
+        this.enrolledEntrants = enrolledEntrants;
     }
 }
