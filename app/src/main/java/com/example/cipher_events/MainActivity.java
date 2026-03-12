@@ -223,6 +223,11 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return null;
         }
+        catch (WriterException e) {   // ⭐ ADD THIS
+            Toast.makeText(this, "QR generation failed", Toast.LENGTH_LONG).show();
+            e.printStackTrace();
+            return null;
+        }
     }
 
     /**
