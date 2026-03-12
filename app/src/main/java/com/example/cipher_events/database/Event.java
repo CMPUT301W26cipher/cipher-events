@@ -16,6 +16,7 @@ public class Event {
     private ArrayList<User> entrants;
     private ArrayList<User> attendees;
     private String posterPictureURL; // optional poster picture
+    private Integer waitingListCapacity; // Optional waiting list capacity (null means unlimited)
 
     // Constructor
     // pass empty lists for entrants and attendees if not provided
@@ -29,6 +30,7 @@ public class Event {
         this.entrants = entrants;
         this.attendees = attendees;
         this.posterPictureURL = posterPictureURL;
+        this.waitingListCapacity = null; // default unlimited
     }
 
     public String getName() {
@@ -93,6 +95,14 @@ public class Event {
 
     public void setPosterPictureURL(String posterPictureURL) {
         this.posterPictureURL = posterPictureURL;
+    }
+
+    public Integer getWaitingListCapacity() {
+        return waitingListCapacity;
+    }
+
+    public void setWaitingListCapacity(Integer waitingListCapacity) {
+        this.waitingListCapacity = waitingListCapacity;
     }
 
     // String representation for debugging purposes
