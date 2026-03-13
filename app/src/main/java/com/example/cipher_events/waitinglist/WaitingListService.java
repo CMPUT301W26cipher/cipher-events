@@ -229,8 +229,13 @@ public class WaitingListService {
         ArrayList<User> entrants = event.getEntrants();
         ArrayList<User> attendees = event.getAttendees();
 
-        if (entrants == null || attendees == null) {
+        if (entrants == null) {
             return false;
+        }
+
+        if (attendees == null) {
+            attendees = new ArrayList<>();
+            event.setAttendees(attendees);
         }
 
         for (int i = 0; i < entrants.size(); i++) {
@@ -241,6 +246,11 @@ public class WaitingListService {
 
                 entrants.remove(i);
                 attendees.add(user);
+
+                historyRepository.addRecord(
+                        user.getDeviceID(),
+                        new UserEventHistoryRecord(event, Status.ACCEPTED)
+                );
 
                 return true;
             }
@@ -276,6 +286,11 @@ public class WaitingListService {
 
                 entrants.remove(i);
 
+                historyRepository.addRecord(
+                        user.getDeviceID(),
+                        new UserEventHistoryRecord(event, Status.DECLINED)
+                );
+
                 return true;
             }
         }
@@ -301,7 +316,14 @@ public class WaitingListService {
         Random random = new Random();
         int index = random.nextInt(entrants.size());
 
-        return entrants.get(index);
+        User selected = entrants.get(index);
+
+        historyRepository.addRecord(
+                selected.getDeviceID(),
+                new UserEventHistoryRecord(event, Status.INVITED)
+        );
+
+        return selected;
     }
 
 
