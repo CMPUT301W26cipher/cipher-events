@@ -25,6 +25,8 @@ public class Organizer {
         this.profilePictureURL = profilePictureURL;
     }
 
+    public Organizer() {}
+
     public String getDeviceID() {
         return deviceID;
     }

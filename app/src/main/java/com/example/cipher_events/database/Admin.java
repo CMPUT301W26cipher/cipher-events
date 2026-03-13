@@ -13,7 +13,8 @@ public class Admin {
     private String email;
     private String password;
     private String phoneNumber; // optional phone number
-    private String profilePictureURL; // optional profile picture
+    private String profilePictureURL;
+    // optional profile picture
 
     // Constructor; pass null for optional fields if not provided
     public Admin(String name, String email, String password, String phoneNumber, String profilePictureURL) {
@@ -24,6 +25,8 @@ public class Admin {
         this.phoneNumber = phoneNumber;
         this.profilePictureURL = profilePictureURL;
     }
+
+    public Admin() {};
 
     public String getDeviceID() {
         return deviceID;
