@@ -53,7 +53,6 @@ public class MainActivity extends AppCompatActivity {
     private String currentRole = "";
 
     // Firestore-backed services
-    private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
     private EntrantEventService entrantEventService;
@@ -71,7 +70,7 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
         //User-related services
-        historyRepository = new UserEventHistoryRepository();
+        UserEventHistoryRepository historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService();
 
         //QR / Event-related services
@@ -92,41 +91,36 @@ public class MainActivity extends AppCompatActivity {
         // Show role selection first
         replaceFragment(new RoleSelectionFragment());
 
-        bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-                Fragment selectedFragment = null;
-                int id = menuItem.getItemId();
+        bottomNavigationView.setOnItemSelectedListener(menuItem -> {
+            Fragment selectedFragment = null;
+            int id = menuItem.getItemId();
 
-                if ("ENTRANT".equals(currentRole)) {
-                    if (id == R.id.menu_home) {
-                        selectedFragment = new HomeFragment();
-                    } else if (id == R.id.menu_search) {
-                        selectedFragment = new SearchFragment();
-                    } else if (id == R.id.menu_favourites) {
-                        selectedFragment = new FavouritesFragment();
-                    } else if (id == R.id.menu_profile) {
-                        selectedFragment = new ProfileFragment();
-                    }
-                } else if ("ORGANIZER".equals(currentRole)) {
-                    if (id == R.id.menu_home) {
-                        selectedFragment = new OrganizerHomeFragment();
-                    } else if (id == R.id.menu_create) {
-                        showCreateEventDialog();
-                        return false; // Show as a popup instead of switching fragments
-                        selectedFragment = new OrganizerAddEventFragment(); // Replace with Create Fragment if available
-                        Toast.makeText(MainActivity.this, "Create Event", Toast.LENGTH_SHORT).show();
-                    } else if (id == R.id.menu_history) {
-                        selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
-                        Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
-                    } else if (id == R.id.menu_profile) {
-                        selectedFragment = new OrganizerProfileFragment();
-                    }
+            if ("ENTRANT".equals(currentRole)) {
+                if (id == R.id.menu_home) {
+                    selectedFragment = new HomeFragment();
+                } else if (id == R.id.menu_search) {
+                    selectedFragment = new SearchFragment();
+                } else if (id == R.id.menu_favourites) {
+                    selectedFragment = new FavouritesFragment();
+                } else if (id == R.id.menu_profile) {
+                    selectedFragment = new ProfileFragment();
                 }
-
-                replaceFragment(selectedFragment);
-                return true;
+            } else if ("ORGANIZER".equals(currentRole)) {
+                if (id == R.id.menu_home) {
+                    selectedFragment = new OrganizerHomeFragment();
+                } else if (id == R.id.menu_create) {
+                    showCreateEventDialog();
+                    return false; // Show as a popup instead of switching fragments
+                } else if (id == R.id.menu_history) {
+                    selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
+                    Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
+                } else if (id == R.id.menu_profile) {
+                    selectedFragment = new OrganizerProfileFragment();
+                }
             }
+
+            replaceFragment(selectedFragment);
+            return true;
         });
     }
 
@@ -145,6 +139,9 @@ public class MainActivity extends AppCompatActivity {
                     null
             );
             
+            // Set the optional waiting list capacity
+            newEvent.setWaitingListCapacity(capacity);
+
             // Set the optional waiting list capacity
             newEvent.setWaitingListCapacity(capacity);
 
