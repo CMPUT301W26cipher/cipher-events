@@ -96,9 +96,7 @@ public class UserProfileService {
         }
 
         return historyRepository.getHistory(deviceId);
-    }
 
-        addEventHistory(deviceId, event, newStatus);
     }
     /**
      * Optional helper if you still want to manually add a user to an event history state.
