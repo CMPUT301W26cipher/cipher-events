@@ -1,6 +1,5 @@
 package com.example.cipher_events.pages;
 
-import android.content.Intent;
 import android.os.Bundle;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -10,6 +9,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.Event;
@@ -46,21 +46,29 @@ public class HomeFragment extends Fragment {
                     event.getDescription(),
                     event.getTime(),
                     event.getLocation(),
-                    event.getAttendees().size(),
+                    event.getAttendees() != null ? event.getAttendees().size() : 0,
                     tags
             );
 
             dialog.show(getParentFragmentManager(), "EventDetailsDialog");
         });
 
-
-
         recyclerView.setAdapter(adapter);
 
         return view;
     }
 
+    public void addEvent(Event event) {
+        if (event != null) {
+            upcomingEvents.add(event);
+            if (adapter != null) {
+                adapter.notifyItemInserted(upcomingEvents.size() - 1);
+            }
+        }
+    }
+
     private void loadUpcomingEvents() {
+        upcomingEvents.clear();
         upcomingEvents.add(new Event(
                 "Tech Expo 2025",
                 "A huge tech showcase",
@@ -82,5 +90,11 @@ public class HomeFragment extends Fragment {
                 new ArrayList<>(),
                 null
         ));
+
+        // Add events created during this session
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            upcomingEvents.addAll(activity.getAllEvents());
+        }
     }
 }
