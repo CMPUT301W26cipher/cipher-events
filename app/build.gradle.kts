@@ -41,8 +41,6 @@ dependencies {
     implementation(libs.material)
     implementation(libs.activity)
     implementation(libs.constraintlayout)
-    implementation(libs.fragment.testing)
-    implementation(libs.espresso.contrib)
     implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
     implementation("com.google.firebase:firebase-firestore")
     testImplementation(libs.junit)
@@ -50,4 +48,5 @@ dependencies {
     androidTestImplementation(libs.espresso.core)
     implementation("com.github.bumptech.glide:glide:4.16.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+    testImplementation("org.mockito:mockito-core:5.12.0")
 }

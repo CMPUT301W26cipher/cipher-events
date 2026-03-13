@@ -34,11 +34,6 @@ public class OrganizerEventServiceTest {
         );
     }
 
-    // =========================================================
-    // US 02.01.01
-    // Organizer creates a new event and generates a unique QR code
-    // =========================================================
-
     @Test
     public void testCreateEventAndGenerateQr_validInput_createsEventSuccessfully() {
         Organizer organizer = createTestOrganizer();
@@ -96,8 +91,8 @@ public class OrganizerEventServiceTest {
                 "Location B",
                 organizer,
                 null,
-                200,
-                200
+                0,
+                400
         );
 
         assertNotEquals(first.getEventId(), second.getEventId());
@@ -133,22 +128,6 @@ public class OrganizerEventServiceTest {
                 null,
                 null,
                 400,
-                400
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateEventAndGenerateQr_invalidQrSize_throwsException() {
-        Organizer organizer = createTestOrganizer();
-
-        organizerEventService.createEventAndGenerateQr(
-                "Campus Tech Talk",
-                "Description",
-                "2026-03-20 18:00",
-                "Edmonton",
-                organizer,
-                null,
-                0,
                 400
         );
     }

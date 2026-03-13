@@ -94,7 +94,7 @@ public class UserProfileService {
             throw new IllegalArgumentException("User not found.");
         }
 
-        return historyRepository.getHistory(deviceId, new UserEventHistoryRecord(event, Status.WAITLISTED));
+        return historyRepository.getHistory(deviceId);
     }
 
     /**
