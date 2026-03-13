@@ -9,6 +9,7 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.Event;
@@ -42,7 +43,7 @@ public class OrganizerHomeFragment extends Fragment {
                     event.getDescription(),
                     event.getTime(),
                     event.getLocation(),
-                    event.getAttendees().size(),
+                    event.getAttendees() != null ? event.getAttendees().size() : 0,
                     tags,
                     true // Set as organizer view
             );
@@ -55,7 +56,17 @@ public class OrganizerHomeFragment extends Fragment {
         return view;
     }
 
+    public void addEvent(Event event) {
+        if (event != null) {
+            organizedEvents.add(event);
+            if (adapter != null) {
+                adapter.notifyItemInserted(organizedEvents.size() - 1);
+            }
+        }
+    }
+
     private void loadOrganizedEvents() {
+        organizedEvents.clear();
         // Placeholder for organizer's events
         organizedEvents.add(new Event(
                 "Event 1",
@@ -67,5 +78,11 @@ public class OrganizerHomeFragment extends Fragment {
                 new ArrayList<>(),
                 null
         ));
+
+        // Add events created during this session
+        MainActivity activity = (MainActivity) getActivity();
+        if (activity != null) {
+            organizedEvents.addAll(activity.getAllEvents());
+        }
     }
 }
