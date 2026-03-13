@@ -117,8 +117,6 @@ public class MainActivity extends AppCompatActivity {
                     } else if (id == R.id.menu_create) {
                         showCreateEventDialog();
                         return false; // Show as a popup instead of switching fragments
-                        selectedFragment = new OrganizerAddEventFragment(); // Replace with Create Fragment if available
-                        Toast.makeText(MainActivity.this, "Create Event", Toast.LENGTH_SHORT).show();
                     } else if (id == R.id.menu_history) {
                         selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
                         Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
