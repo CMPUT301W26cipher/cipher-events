@@ -21,6 +21,7 @@ import com.example.cipher_events.database.User;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminHomeFragment;
+import com.example.cipher_events.pages.CreateEventDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
 import com.example.cipher_events.pages.OrganizerAddEventFragment;
@@ -111,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
                     if (id == R.id.menu_home) {
                         selectedFragment = new OrganizerHomeFragment();
                     } else if (id == R.id.menu_create) {
+                        showCreateEventDialog();
+                        return false; // Show as a popup instead of switching fragments
                         selectedFragment = new OrganizerAddEventFragment(); // Replace with Create Fragment if available
                         Toast.makeText(MainActivity.this, "Create Event", Toast.LENGTH_SHORT).show();
                     } else if (id == R.id.menu_history) {
@@ -125,6 +128,38 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             }
         });
+    }
+
+    private void showCreateEventDialog() {
+        CreateEventDialogFragment dialog = new CreateEventDialogFragment();
+        dialog.setCreateEventListener((title, date, time, location, description) -> {
+            // Create a new event object
+            Event newEvent = new Event(
+                    title,
+                    description,
+                    date + " " + time,
+                    location,
+                    new Organizer("Temp Organizer", "org@example.com", "", "", null),
+                    new ArrayList<>(),
+                    new ArrayList<>(),
+                    null
+            );
+
+            // Add to system and database
+            addEventToSystem(newEvent);
+            DB.addEvent(newEvent);
+
+            // Notify the current fragment if it's a home fragment
+            Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
+            if (currentFragment instanceof HomeFragment) {
+                ((HomeFragment) currentFragment).addEvent(newEvent);
+            } else if (currentFragment instanceof OrganizerHomeFragment) {
+                ((OrganizerHomeFragment) currentFragment).addEvent(newEvent);
+            }
+
+            Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
+        });
+        dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
 
     public void onRoleSelected(String role) {
@@ -378,10 +413,6 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public List<Event> getAllEvents() {
-        ArrayList<Event> dbEvents = DB.getAllEvents();
-        if (dbEvents != null && !dbEvents.isEmpty()) {
-            return new ArrayList<>(dbEvents);
-        }
         return new ArrayList<>(allEvents);
     }
 
