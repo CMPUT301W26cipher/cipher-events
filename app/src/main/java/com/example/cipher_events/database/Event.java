@@ -54,7 +54,7 @@ public class Event {
         this.eventID = eventID;
     }
 
-    public Event() {}
+
 
     public String getEventID() {
         return eventID;
