@@ -17,7 +17,7 @@ public class UserEventHistoryRepository {
         this.db = DBProxy.getInstance();
     }
 
-    public List<UserEventHistoryRecord> getHistory(String deviceId, UserEventHistoryRecord userEventHistoryRecord) {
+    public List<UserEventHistoryRecord> getHistory(String deviceId) {
         List<UserEventHistoryRecord> history = new ArrayList<>();
 
         if (deviceId == null || deviceId.trim().isEmpty()) {

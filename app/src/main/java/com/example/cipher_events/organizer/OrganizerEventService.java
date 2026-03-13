@@ -30,7 +30,7 @@ public class OrganizerEventService {
                                                                  Organizer organizer,
                                                                  String posterPictureURL,
                                                                  int qrWidth,
-                                                                 int qrHeight) throws WriterException {
+                                                                 int qrHeight) {
         validateRequiredEventFields(name, description, time, location, organizer);
 
         Event event = new Event(
@@ -56,7 +56,7 @@ public class OrganizerEventService {
 
         eventRepository.save(record);
 
-        return new OrganizerEventCreationResult(eventId, event, qrPayload, qrBitmap);
+        return new OrganizerEventCreationResult(eventId, event, qrPayload);
     }
 
     public EventRecord getEventRecord(String eventId) {

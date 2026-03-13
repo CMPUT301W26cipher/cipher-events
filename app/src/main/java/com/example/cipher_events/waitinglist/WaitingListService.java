@@ -3,8 +3,6 @@ import java.util.Random;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
-import com.example.cipher_events.user.Status;
-import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
 import java.util.ArrayList;
@@ -56,8 +54,7 @@ public class WaitingListService {
         entrants.add(user);
 
         historyRepository.getHistory(
-                user.getDeviceID(),
-                new UserEventHistoryRecord(event, Status.WAITLISTED)
+                user.getDeviceID()
         );
 
         return true;
@@ -92,8 +89,7 @@ public class WaitingListService {
                 entrants.remove(i);
 
                 historyRepository.getHistory(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                        user.getDeviceID()
                 );
 
                 return true;
@@ -368,9 +364,8 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                historyRepository.getHistory(
+                        user.getDeviceID()
                 );
                 return true;
             }

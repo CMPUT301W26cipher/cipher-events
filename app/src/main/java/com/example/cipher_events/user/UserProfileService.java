@@ -95,37 +95,8 @@ public class UserProfileService {
             throw new IllegalArgumentException("User not found.");
         }
 
-        return historyRepository.getHistory(deviceId, new UserEventHistoryRecord(event, Status.WAITLISTED));
+        return historyRepository.getHistory(deviceId);
     }
-    /**
-    * Optional helper:
-    * update a user's event status if the event already exists in history;
-    * otherwise add a new history record.
-    */
-    public void upsertEventHistory(String deviceId, Event event, Status newStatus) {
-        if (deviceId == null || deviceId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Device ID is required.");
-        }
-        if (!userRepository.exists(deviceId)) {
-            throw new IllegalArgumentException("User not found.");
-        }
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-        if (newStatus == null) {
-            throw new IllegalArgumentException("Selection status cannot be null.");
-        }
-
-        List<UserEventHistoryRecord> records = historyRepository.getHistory(deviceId);
-        for (UserEventHistoryRecord record : records) {
-            if (record.getEvent() == event ||
-                    (record.getEvent() != null
-                            && record.getEvent().getName() != null
-                            && record.getEvent().getName().equals(event.getName()))) {
-                record.setStatus(newStatus);
-                return;
-            }
-        }
 
         addEventHistory(deviceId, event, newStatus);
     }
@@ -173,8 +144,8 @@ public class UserProfileService {
 
             case NOT_SELECTED:
             case CANCELLED:
-                // For your current Event model there is no dedicated stored list.
-                // We simply remove the user from entrant/attendee lists.
+                // Current Event model has no dedicated list for these states.
+                // User is simply removed from entrant/attendee lists.
                 break;
         }
 
