@@ -98,8 +98,8 @@ public class UserProfileService {
         }
 
         return historyRepository.getHistory(deviceId);
-    }
 
+    }
     /**
      * Optional helper to update the user's status in an event.
      */
