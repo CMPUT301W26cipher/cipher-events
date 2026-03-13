@@ -490,6 +490,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public List<Event> getAllEvents() {
+        ArrayList<Event> dbEvents = DB.getAllEvents();
+        if (dbEvents != null && !dbEvents.isEmpty()) {
+            return new ArrayList<>(dbEvents);
+        }
         return new ArrayList<>(allEvents);
     }
 

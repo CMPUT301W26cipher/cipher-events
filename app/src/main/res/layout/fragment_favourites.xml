@@ -37,8 +37,21 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="24dp"
             android:text="Attending"
-            android:textColor="@color/black"
-            android:textSize="16sp" />
+            android:textColor="#CFCFCF"
+            android:textSize="15sp"
+            android:background="@drawable/tab_selector_background" />
+
+        <!-- Favourite Tab -->
+        <TextView
+            android:id="@+id/tab_favourite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:text="Favourite"
+            android:textColor="#CFCFCF"
+            android:textSize="15sp"
+            android:background="@drawable/tab_selector_background" />
 
     </LinearLayout>
 
