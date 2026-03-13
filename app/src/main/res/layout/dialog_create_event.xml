@@ -68,12 +68,12 @@
         app:layout_constraintTop_toBottomOf="@id/label_title" />
 
     <LinearLayout
-        android:id="@+id/row_date_time_duration"
+        android:id="@+id/row_date_time"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp"
         android:orientation="horizontal"
-        android:weightSum="3"
+        android:weightSum="2"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/et_event_title">
@@ -107,7 +107,6 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="8dp"
             android:orientation="vertical">
 
             <TextView
@@ -127,28 +126,6 @@
                 android:paddingHorizontal="12dp"
                 android:textColor="@color/white" />
         </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Duration"
-                android:textColor="@color/text_label" />
-
-            <EditText
-                android:id="@+id/et_event_duration"
-                android:layout_width="match_parent"
-                android:layout_height="48dp"
-                android:layout_marginTop="4dp"
-                android:background="@drawable/input_bg"
-                android:paddingHorizontal="12dp"
-                android:textColor="@color/white" />
-        </LinearLayout>
     </LinearLayout>
 
     <TextView
@@ -160,7 +137,7 @@
         android:textColor="@color/text_label"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/row_date_time_duration" />
+        app:layout_constraintTop_toBottomOf="@id/row_date_time" />
 
     <EditText
         android:id="@+id/et_event_location"
@@ -177,6 +154,32 @@
         app:layout_constraintTop_toBottomOf="@id/label_location" />
 
     <TextView
+        android:id="@+id/label_description"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:text="Description"
+        android:textColor="@color/text_label"
+        android:textSize="16sp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/et_event_location" />
+
+    <EditText
+        android:id="@+id/et_event_description"
+        android:layout_width="0dp"
+        android:layout_height="80dp"
+        android:layout_marginTop="8dp"
+        android:background="@drawable/input_bg"
+        android:gravity="top"
+        android:hint="Event description"
+        android:padding="12dp"
+        android:textColor="@color/white"
+        android:textColorHint="@color/text_hint"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/label_description" />
+
+    <TextView
         android:id="@+id/label_tags"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -185,7 +188,7 @@
         android:textColor="@color/text_label"
         android:textSize="16sp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/et_event_location" />
+        app:layout_constraintTop_toBottomOf="@id/et_event_description" />
 
     <LinearLayout
         android:id="@+id/row_tags"

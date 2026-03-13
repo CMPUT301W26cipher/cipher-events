@@ -130,11 +130,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, duration) -> {
+        dialog.setCreateEventListener((title, date, time, location, description) -> {
             // Create a new event object
             Event newEvent = new Event(
                     title,
-                    "Duration: " + duration,
+                    description,
                     date + " " + time,
                     location,
                     new Organizer("Temp Organizer", "org@example.com", "", "", null),

@@ -18,7 +18,7 @@ import com.example.cipher_events.R;
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
-        void onEventCreated(String title, String date, String time, String location, String duration);
+        void onEventCreated(String title, String date, String time, String location, String description);
     }
 
     private CreateEventListener listener;
@@ -36,7 +36,7 @@ public class CreateEventDialogFragment extends DialogFragment {
         EditText etDate = view.findViewById(R.id.et_event_date);
         EditText etTime = view.findViewById(R.id.et_event_time);
         EditText etLocation = view.findViewById(R.id.et_event_location);
-        EditText etDuration = view.findViewById(R.id.et_event_duration);
+        EditText etDescription = view.findViewById(R.id.et_event_description);
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
 
         btnAddEvent.setOnClickListener(v -> {
@@ -44,10 +44,10 @@ public class CreateEventDialogFragment extends DialogFragment {
             String date = etDate.getText().toString();
             String time = etTime.getText().toString();
             String location = etLocation.getText().toString();
-            String duration = etDuration.getText().toString();
+            String description = etDescription.getText().toString();
 
             if (listener != null) {
-                listener.onEventCreated(title, date, time, location, duration);
+                listener.onEventCreated(title, date, time, location, description);
             }
             dismiss();
         });
