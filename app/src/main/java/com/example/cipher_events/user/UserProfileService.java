@@ -3,20 +3,20 @@ package com.example.cipher_events.user;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.user.Status;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Firestore-backed service for:
+ * Service for:
  * US 01.02.01 Create profile
  * US 01.02.02 Update profile
  * US 01.02.03 View event history
  * US 01.02.04 Delete profile
  */
 public class UserProfileService {
-
     private final DBProxy db;
     private final UserEventHistoryRepository historyRepository;
 
@@ -31,14 +31,14 @@ public class UserProfileService {
     }
 
     /**
-     * US 01.02.01 - Create profile
+     * US 01.02.01
+     * Create a new user profile with required name/email and optional phone.
      */
     public User createUserProfile(String name,
                                   String email,
                                   String password,
                                   String phoneNumber,
                                   String profilePictureURL) {
-
         UserProfileValidator.validateRequiredProfileFields(name, email);
         UserProfileValidator.validateOptionalPhone(phoneNumber);
 
@@ -55,14 +55,14 @@ public class UserProfileService {
     }
 
     /**
-     * US 01.02.02 - Update profile
+     * US 01.02.02
+     * Update existing user profile fields.
      */
     public User updateUserProfile(String deviceId,
                                   String newName,
                                   String newEmail,
                                   String newPhoneNumber,
                                   String newProfilePictureURL) {
-
         if (deviceId == null || deviceId.trim().isEmpty()) {
             throw new IllegalArgumentException("Device ID is required.");
         }
@@ -85,7 +85,9 @@ public class UserProfileService {
     }
 
     /**
-     * US 01.02.03 - View event history
+     * US 01.02.03
+     * Record one event status for a user.
+     * Example: WAITLISTED, SELECTED, NOT_SELECTED, REGISTERED, CANCELLED.
      */
     public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
@@ -98,10 +100,11 @@ public class UserProfileService {
         }
 
         return historyRepository.getHistory(deviceId);
-
     }
+
     /**
-     * Optional helper to update the user's status in an event.
+     * Optional helper if you still want to manually add a user to an event history state.
+     * This updates the actual Event lists in Firestore-backed storage.
      */
     public void addEventHistory(String deviceId, Event event, Status status) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
@@ -143,19 +146,24 @@ public class UserProfileService {
 
             case NOT_SELECTED:
             case CANCELLED:
-                // No list for these states; user is simply removed.
+                // Current Event model has no dedicated list for these states.
+                // User is simply removed from entrant/attendee lists.
                 break;
         }
 
         db.updateEvent(storedEvent);
     }
 
+    /**
+     * Optional helper to update/overwrite the user's status in a specific event.
+     */
     public void upsertEventHistory(String deviceId, Event event, Status status) {
         addEventHistory(deviceId, event, status);
     }
 
     /**
-     * US 01.02.04 - Delete profile
+     * US 01.02.04
+     * Delete user profile and remove user from all provided events/history.
      */
     public void deleteUserProfile(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
@@ -170,7 +178,9 @@ public class UserProfileService {
         ArrayList<Event> allEvents = db.getAllEvents();
         if (allEvents != null) {
             for (Event event : allEvents) {
-                if (event == null) continue;
+                if (event == null) {
+                    continue;
+                }
 
                 ensureLists(event);
                 boolean changed = false;
@@ -187,8 +197,6 @@ public class UserProfileService {
         db.deleteUser(deviceId);
     }
 
-    // ---------------- Helper Methods ----------------
-
     private void ensureLists(Event event) {
         if (event.getEntrants() == null) {
             event.setEntrants(new ArrayList<>());
@@ -204,15 +212,17 @@ public class UserProfileService {
     }
 
     private boolean removeUserFromList(ArrayList<User> users, String deviceId) {
-        if (users == null || deviceId == null) return false;
+        if (users == null || deviceId == null) {
+            return false;
+        }
 
         boolean removed = false;
         Iterator<User> iterator = users.iterator();
-
         while (iterator.hasNext()) {
             User current = iterator.next();
-            if (current != null &&
-                    deviceId.equals(current.getDeviceID())) {
+            if (current != null
+                    && current.getDeviceID() != null
+                    && current.getDeviceID().equals(deviceId)) {
                 iterator.remove();
                 removed = true;
             }
@@ -221,11 +231,14 @@ public class UserProfileService {
     }
 
     private boolean containsUser(ArrayList<User> users, String deviceId) {
-        if (users == null || deviceId == null) return false;
+        if (users == null || deviceId == null) {
+            return false;
+        }
 
         for (User user : users) {
-            if (user != null &&
-                    deviceId.equals(user.getDeviceID())) {
+            if (user != null
+                    && user.getDeviceID() != null
+                    && user.getDeviceID().equals(deviceId)) {
                 return true;
             }
         }
@@ -233,7 +246,9 @@ public class UserProfileService {
     }
 
     private String normalizeOptional(String value) {
-        if (value == null || value.trim().isEmpty()) return null;
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
         return value.trim();
     }
 }
