@@ -33,12 +33,9 @@ import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
-import com.example.cipher_events.user.UserRepository;
+import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
-import com.google.zxing.WriterException;
-
-import com.example.cipher_events.waitinglist.WaitingListService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,14 +46,19 @@ public class MainActivity extends AppCompatActivity {
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
 
-    private UserRepository userRepository;
+    private FragmentManager fragmentManager;
+    private BottomNavigationView bottomNavigationView;
+
+    // Firestore-backed services
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
     private EntrantEventService entrantEventService;
     private WaitingListService waitingListService;
 
+    // Optional local cache for UI convenience
     private final List<Event> allEvents = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -102,15 +104,16 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 replaceFragment(selectedFragment);
-
                 return true;
             }
         });
     }
 
-    private void replaceFragment(Fragment fragment){
+    private void replaceFragment(Fragment fragment) {
         if (fragment != null) {
-            fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
         }
     }
 
@@ -221,11 +224,34 @@ public class MainActivity extends AppCompatActivity {
 
     // =========================================================
     // US 01.02.03
-    // Add one event history record
+    // View user event history
     // =========================================================
+    public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
+        try {
+            return userProfileService.getUserEventHistory(deviceId);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Optional helper if you still want to force a status update on an event.
+     */
     public void addUserEventHistory(String deviceId, Event event, Status status) {
         try {
             userProfileService.addEventHistory(deviceId, event, status);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Optional helper to overwrite/update a user's event status.
+     */
+    public void upsertUserEventHistory(String deviceId, Event event, Status status) {
+        try {
+            userProfileService.upsertEventHistory(deviceId, event, status);
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -237,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public void deleteUserProfile(String deviceId) {
         try {
-            userProfileService.deleteUserProfile(deviceId, allEvents);
+            userProfileService.deleteUserProfile(deviceId);
             Toast.makeText(this, "Profile deleted successfully", Toast.LENGTH_SHORT).show();
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -282,7 +308,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (WriterException e) {
             throw new RuntimeException(e);
         }
-
     }
 
     /**
@@ -388,7 +413,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean joinWaitingList(User user, Event event) {
         try {
-
             boolean joined = waitingListService.joinWaitingList(user, event);
 
             if (joined) {
@@ -398,7 +422,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return joined;
-
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
@@ -411,7 +434,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean leaveWaitingList(User user, Event event) {
         try {
-
             boolean removed = waitingListService.leaveWaitingList(user, event);
 
             if (removed) {
@@ -421,7 +443,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return removed;
-
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
