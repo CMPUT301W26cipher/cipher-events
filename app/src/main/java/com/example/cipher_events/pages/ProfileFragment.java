@@ -13,7 +13,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import com.example.cipher_events.pages.WaitingListFragment;
 
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.User;
@@ -26,7 +25,7 @@ import com.example.cipher_events.database.User;
  * Navigation buttons are included below
  * - Waitlist: navigates to a waitlist fragment to view events that user has joined the waitlist for
  * - History: displays past events of user
- * - Edit Profile: allows user to edit their profile (dialog fragment pop up --> TO BE ADDED)
+ * - Edit Profile: allows user to edit their profile (navigates to UserProfileFragment)
  * - Sign Out: signs user out of their account, navigates back to sign up/login screen
  */
 
@@ -58,11 +57,9 @@ public class ProfileFragment extends Fragment {
         );
 
         // Bind views
-
         nameText = view.findViewById(R.id.profile_name);
         emailText = view.findViewById(R.id.profile_email);
         locationText = view.findViewById(R.id.profile_location);
-
 
         nameEdit = view.findViewById(R.id.profile_name_edit);
         emailEdit = view.findViewById(R.id.profile_email_edit);
@@ -79,11 +76,19 @@ public class ProfileFragment extends Fragment {
         setupEditableField(locationText, locationEdit, "location");
 
         Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
-
         waitlistBtn.setOnClickListener(v -> {
-
             WaitingListFragment fragment = new WaitingListFragment();
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
+        // edit profile button
+        Button editProfileBtn = view.findViewById(R.id.edit_profile_btn);
+        editProfileBtn.setOnClickListener(v -> {
+            UserProfileFragment fragment = new UserProfileFragment();
             getParentFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, fragment)
