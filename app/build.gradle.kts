@@ -6,7 +6,6 @@ plugins {
 }
 
 android {
-
     namespace = "com.example.cipher_events"
     compileSdk = 35
     defaultConfig {
