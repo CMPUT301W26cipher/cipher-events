@@ -377,7 +377,4 @@ public class WaitingListService {
         }
         return false;
     }
-
-
-
 }
