@@ -3,6 +3,7 @@ package com.example.cipher_events;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -23,9 +24,15 @@ import com.example.cipher_events.database.User;
 import com.example.cipher_events.database.UserDB;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
+import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
+import com.example.cipher_events.pages.OrganizerAddEventFragment;
+import com.example.cipher_events.pages.OrganizerHistoryFragment;
+import com.example.cipher_events.pages.OrganizerHomeFragment;
+import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
+import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
 import com.example.cipher_events.user.EntrantEventService;
 import com.example.cipher_events.user.EntrantQrScanResult;
@@ -47,6 +54,8 @@ public class MainActivity extends AppCompatActivity {
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
 
+    private String currentRole = "";
+
     // Firestore-backed services
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
@@ -54,9 +63,7 @@ public class MainActivity extends AppCompatActivity {
     private EntrantEventService entrantEventService;
     private WaitingListService waitingListService;
 
-    // Optional local cache for UI convenience
     private final List<Event> allEvents = new ArrayList<>();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -81,29 +88,66 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        replaceFragment(new HomeFragment());
-
         bottomNavigationView = findViewById(R.id.bottom_nav);
+        bottomNavigationView.setVisibility(View.GONE); // Hide by default
+
+        // Show role selection first
+        replaceFragment(new RoleSelectionFragment());
+
         bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
             @Override
             public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
                 Fragment selectedFragment = null;
                 int id = menuItem.getItemId();
 
-                if (id == R.id.menu_home) {
-                    selectedFragment = new HomeFragment();
-                } else if (id == R.id.menu_search) {
-                    selectedFragment = new SearchFragment();
-                } else if (id == R.id.menu_favourites) {
-                    selectedFragment = new FavouritesFragment();
-                } else if (id == R.id.menu_profile) {
-                    selectedFragment = new ProfileFragment();
+                if ("ENTRANT".equals(currentRole)) {
+                    if (id == R.id.menu_home) {
+                        selectedFragment = new HomeFragment();
+                    } else if (id == R.id.menu_search) {
+                        selectedFragment = new SearchFragment();
+                    } else if (id == R.id.menu_favourites) {
+                        selectedFragment = new FavouritesFragment();
+                    } else if (id == R.id.menu_profile) {
+                        selectedFragment = new ProfileFragment();
+                    }
+                } else if ("ORGANIZER".equals(currentRole)) {
+                    if (id == R.id.menu_home) {
+                        selectedFragment = new OrganizerHomeFragment();
+                    } else if (id == R.id.menu_create) {
+                        selectedFragment = new OrganizerAddEventFragment(); // Replace with Create Fragment if available
+                        Toast.makeText(MainActivity.this, "Create Event", Toast.LENGTH_SHORT).show();
+                    } else if (id == R.id.menu_history) {
+                        selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
+                        Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
+                    } else if (id == R.id.menu_profile) {
+                        selectedFragment = new OrganizerProfileFragment();
+                    }
                 }
 
                 replaceFragment(selectedFragment);
+
                 return true;
             }
         });
+    }
+
+    public void onRoleSelected(String role) {
+        this.currentRole = role;
+        bottomNavigationView.setVisibility(View.VISIBLE);
+
+        if ("ORGANIZER".equals(role)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
+            replaceFragment(new OrganizerHomeFragment());
+        } else if ("ADMIN".equals(role)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new AdminHomeFragment());
+        } else {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new HomeFragment());
+        }
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -119,55 +163,6 @@ public class MainActivity extends AppCompatActivity {
         DB.shutdown();
         super.onDestroy();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ================== LOTS OF CODE HERE ====================
-
 
     // =========================================================
     // US 01.02.01
@@ -412,6 +407,7 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean joinWaitingList(User user, Event event) {
         try {
+
             boolean joined = waitingListService.joinWaitingList(user, event);
 
             if (joined) {
@@ -421,6 +417,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return joined;
+
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
@@ -433,6 +430,7 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean leaveWaitingList(User user, Event event) {
         try {
+
             boolean removed = waitingListService.leaveWaitingList(user, event);
 
             if (removed) {
@@ -442,6 +440,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return removed;
+
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;

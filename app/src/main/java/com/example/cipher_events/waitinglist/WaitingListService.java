@@ -3,6 +3,8 @@ import java.util.Random;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.user.Status;
+import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
 import java.util.ArrayList;

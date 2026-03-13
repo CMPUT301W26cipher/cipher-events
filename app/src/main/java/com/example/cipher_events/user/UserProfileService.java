@@ -3,13 +3,14 @@ package com.example.cipher_events.user;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.user.Status;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
 /**
- * Firestore-backed service for:
+ * Service for:
  * US 01.02.01 Create profile
  * US 01.02.02 Update profile
  * US 01.02.03 View event history
@@ -31,6 +32,7 @@ public class UserProfileService {
 
     /**
      * US 01.02.01
+     * Create a new user profile with required name/email and optional phone.
      */
     public User createUserProfile(String name,
                                   String email,
@@ -54,6 +56,7 @@ public class UserProfileService {
 
     /**
      * US 01.02.02
+     * Update existing user profile fields.
      */
     public User updateUserProfile(String deviceId,
                                   String newName,
@@ -83,6 +86,8 @@ public class UserProfileService {
 
     /**
      * US 01.02.03
+     * Record one event status for a user.
+     * Example: WAITLISTED, SELECTED, NOT_SELECTED, REGISTERED, CANCELLED.
      */
     public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
@@ -158,6 +163,7 @@ public class UserProfileService {
 
     /**
      * US 01.02.04
+     * Delete user profile and remove user from all provided events/history.
      */
     public void deleteUserProfile(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
