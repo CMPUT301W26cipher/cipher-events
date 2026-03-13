@@ -1,6 +1,7 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,6 +16,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.User;
 
 /**
@@ -33,11 +35,18 @@ public class ProfileFragment extends Fragment {
 
     private TextView nameText, emailText, locationText;
     private EditText nameEdit, emailEdit, locationEdit;
-
-    // TEMP user — replace with real Firebase or DB user later
+    private DBProxy dbProxy;
+    private String deviceId;
     private User currentUser;
 
     public ProfileFragment() {}
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        dbProxy = DBProxy.getInstance();
+        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
 
     @Nullable
     @Override
@@ -46,15 +55,6 @@ public class ProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
-
-        // Load a user (replace with real user later)
-        currentUser = new User(
-                "User",
-                "user@example.com",
-                "password123",
-                "123-456-7890",
-                null
-        );
 
         // Bind views
         nameText = view.findViewById(R.id.profile_name);
@@ -65,10 +65,18 @@ public class ProfileFragment extends Fragment {
         emailEdit = view.findViewById(R.id.profile_email_edit);
         locationEdit = view.findViewById(R.id.profile_location_edit);
 
-        // Load user data into UI
-        nameText.setText(currentUser.getName());
-        emailText.setText(currentUser.getEmail());
-        locationText.setText("Edmonton, AB"); // SAVE LOCATION IN USER CLASS
+        // Load real user data from database
+        currentUser = dbProxy.getUser(deviceId);
+        if (currentUser != null) {
+            nameText.setText(currentUser.getName());
+            emailText.setText(currentUser.getEmail());
+            // locationText.setText("Edmonton, AB"); // Or from user if added
+        } else {
+            // Default values if user doesn't exist (e.g. after deletion)
+            nameText.setText("Name");
+            emailText.setText("Email");
+            locationText.setText("Location");
+        }
 
         // Make fields editable
         setupEditableField(nameText, nameEdit, "name");
@@ -114,6 +122,12 @@ public class ProfileFragment extends Fragment {
                 String newValue = editText.getText().toString();
                 textView.setText(newValue);
 
+                if (currentUser == null) {
+                    currentUser = new User(newValue, "Email", "", "", null);
+                    currentUser.setDeviceID(deviceId);
+                    dbProxy.addUser(currentUser);
+                }
+
                 // Update the User object
                 switch (fieldType) {
                     case "name":
@@ -126,6 +140,8 @@ public class ProfileFragment extends Fragment {
                         // You can add a location field to User class later
                         break;
                 }
+                
+                dbProxy.updateUser(currentUser);
 
                 editText.setVisibility(View.GONE);
                 textView.setVisibility(View.VISIBLE);
