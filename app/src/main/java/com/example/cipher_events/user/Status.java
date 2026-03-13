@@ -8,5 +8,8 @@ public enum Status {
     SELECTED,
     NOT_SELECTED,
     REGISTERED,
-    CANCELLED
+    CANCELLED,
+    DECLINED,
+    ACCEPTED,
+    INVITED
 }
