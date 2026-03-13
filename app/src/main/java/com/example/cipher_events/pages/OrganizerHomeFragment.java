@@ -1,13 +1,13 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
-import androidx.fragment.app.Fragment;
-import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
-
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
@@ -16,29 +16,26 @@ import com.example.cipher_events.database.Event;
 
 import java.util.ArrayList;
 
-public class HomeFragment extends Fragment {
+public class OrganizerHomeFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private EventAdapter adapter;
-    private ArrayList<Event> upcomingEvents = new ArrayList<>();
+    private ArrayList<Event> organizedEvents = new ArrayList<>();
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        View view = inflater.inflate(R.layout.fragment_home, container, false);
+        View view = inflater.inflate(R.layout.fragment_organizer_home, container, false);
 
-        recyclerView = view.findViewById(R.id.recycler_events);
+        recyclerView = view.findViewById(R.id.recycler_organizer_events);
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
-        loadUpcomingEvents();
+        loadOrganizedEvents();
 
-        // Pass click listener into adapter
-        adapter = new EventAdapter(upcomingEvents, event -> {
+        adapter = new EventAdapter(organizedEvents, event -> {
             ArrayList<String> tags = new ArrayList<>();
-            tags.add("Tech");
-            tags.add("Free");
-            tags.add("Outdoors");
+            tags.add("Organizer View");
 
             EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
                     event.getEventID(),
@@ -47,7 +44,8 @@ public class HomeFragment extends Fragment {
                     event.getTime(),
                     event.getLocation(),
                     event.getAttendees() != null ? event.getAttendees().size() : 0,
-                    tags
+                    tags,
+                    true // Set as organizer view
             );
 
             dialog.show(getParentFragmentManager(), "EventDetailsDialog");
@@ -60,31 +58,21 @@ public class HomeFragment extends Fragment {
 
     public void addEvent(Event event) {
         if (event != null) {
-            upcomingEvents.add(event);
+            organizedEvents.add(event);
             if (adapter != null) {
-                adapter.notifyItemInserted(upcomingEvents.size() - 1);
+                adapter.notifyItemInserted(organizedEvents.size() - 1);
             }
         }
     }
 
-    private void loadUpcomingEvents() {
-        upcomingEvents.clear();
-        upcomingEvents.add(new Event(
-                "Tech Expo 2025",
-                "A huge tech showcase",
-                "2025-04-12 10:00 AM",
-                "Edmonton Convention Centre",
-                null,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                "https://pinkcaviar.com.au/wp-content/uploads/2022/09/Professional-and-Stress-Free-Event-Management-Banner-1.jpg"
-        ));
-
-        upcomingEvents.add(new Event(
-                "Music Festival",
-                "Outdoor festival with multiple stages",
-                "2025-05-01 6:00 PM",
-                "Calgary",
+    private void loadOrganizedEvents() {
+        organizedEvents.clear();
+        // Placeholder for organizer's events
+        organizedEvents.add(new Event(
+                "Event 1",
+                "Description ",
+                "2025-06-12 10:00 AM",
+                "Location",
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
@@ -94,7 +82,7 @@ public class HomeFragment extends Fragment {
         // Add events created during this session
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
-            upcomingEvents.addAll(activity.getAllEvents());
+            organizedEvents.addAll(activity.getAllEvents());
         }
     }
 }
