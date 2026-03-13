@@ -130,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description) -> {
+        dialog.setCreateEventListener((title, date, time, location, description, capacity) -> {
             // Create a new event object
             Event newEvent = new Event(
                     title,
@@ -142,6 +142,9 @@ public class MainActivity extends AppCompatActivity {
                     new ArrayList<>(),
                     null
             );
+            
+            // Set the optional waiting list capacity
+            newEvent.setWaitingListCapacity(capacity);
 
             // Add to system and database
             addEventToSystem(newEvent);
