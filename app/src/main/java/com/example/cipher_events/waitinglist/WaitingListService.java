@@ -3,6 +3,8 @@ import java.util.Random;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.user.Status;
+import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
 import java.util.ArrayList;
@@ -314,7 +316,6 @@ public class WaitingListService {
         return new ArrayList<>(event.getInvitedEntrants());
     }
 
-
     // =========================================================
     // US 02.06.02
     // View Cancelled Entrants List
@@ -365,10 +366,15 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                //history tracked via firestore
+                historyRepository.getHistory(
+                        user.getDeviceID()
+                );
                 return true;
             }
         }
         return false;
     }
+
+
+
 }

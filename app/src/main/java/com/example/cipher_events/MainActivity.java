@@ -1,5 +1,6 @@
 package com.example.cipher_events;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.view.View;
@@ -14,16 +15,21 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.cipher_events.database.Admin;
+import com.example.cipher_events.database.AdminDB;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.database.UserDB;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.CreateEventDialogFragment;
+import com.example.cipher_events.pages.EventDetailsDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
+import com.example.cipher_events.pages.LoginFragment;
 import com.example.cipher_events.pages.OrganizerAddEventFragment;
 import com.example.cipher_events.pages.OrganizerHistoryFragment;
 import com.example.cipher_events.pages.OrganizerHomeFragment;
@@ -31,12 +37,16 @@ import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
 import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
+import com.example.cipher_events.pages.SignupFragment;
+import com.example.cipher_events.pages.UserProfileFragment;
+import com.example.cipher_events.pages.WaitingListFragment;
 import com.example.cipher_events.user.EntrantEventService;
 import com.example.cipher_events.user.EntrantQrScanResult;
 import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
+import com.example.cipher_events.user.UserRepository;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -51,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
 
     private String currentRole = "";
-
+    private boolean isLoggedIn = false;
     // Firestore-backed services
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
@@ -138,9 +148,6 @@ public class MainActivity extends AppCompatActivity {
                     new ArrayList<>(),
                     null
             );
-            
-            // Set the optional waiting list capacity
-            newEvent.setWaitingListCapacity(capacity);
 
             // Set the optional waiting list capacity
             newEvent.setWaitingListCapacity(capacity);
@@ -163,14 +170,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onRoleSelected(String role) {
-        this.currentRole = role;
+        currentRole = role;
+        isLoggedIn = false;
+        bottomNavigationView.setVisibility(View.GONE);
+        replaceFragment(new LoginFragment());
+    }
+
+    /**
+     * Call this after successful login to open the correct first home page for the selected role.
+     */
+    public void onLoginSuccess() {
+        isLoggedIn = true;
         bottomNavigationView.setVisibility(View.VISIBLE);
 
-        if ("ORGANIZER".equals(role)) {
+        if ("ORGANIZER".equals(currentRole)) {
             bottomNavigationView.getMenu().clear();
             bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
             replaceFragment(new OrganizerHomeFragment());
-        } else if ("ADMIN".equals(role)) {
+        } else if ("ADMIN".equals(currentRole)) {
             bottomNavigationView.getMenu().clear();
             bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
             replaceFragment(new AdminHomeFragment());
@@ -179,6 +196,66 @@ public class MainActivity extends AppCompatActivity {
             bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
             replaceFragment(new HomeFragment());
         }
+    }
+
+    /**
+     * Signup page helper.
+     */
+    public void openSignupFragment() {
+        replaceFragment(new SignupFragment());
+    }
+
+    /**
+     * Login page helper.
+     */
+    public void openLoginFragment() {
+        replaceFragment(new LoginFragment());
+    }
+
+    /**
+     * Entrant account edit/profile management page.
+     */
+    public void openUserProfileFragment() {
+        replaceFragment(new UserProfileFragment());
+    }
+
+    /**
+     * Organizer helper if you want to use the provided OrganizerAddEventFragment
+     * as a full page in addition to the existing create-event dialog.
+     */
+    public void openOrganizerAddEventFragment() {
+        replaceFragment(new OrganizerAddEventFragment());
+    }
+
+    /**
+     * Event details popup helper.
+     */
+    public void showEventDetailsDialog(String eventId,
+                                       String name,
+                                       String description,
+                                       String time,
+                                       String location,
+                                       int attendeeCount,
+                                       ArrayList<String> tags,
+                                       boolean isOrganizerView) {
+        EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
+                eventId,
+                name,
+                description,
+                time,
+                location,
+                attendeeCount,
+                tags,
+                isOrganizerView
+        );
+        dialog.show(getSupportFragmentManager(), "EventDetailsDialog");
+    }
+
+    /**
+     * Waiting list page helper.
+     */
+    public void openWaitingListFragment(String eventId) {
+        replaceFragment(WaitingListFragment.newInstance(eventId));
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -413,6 +490,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public List<Event> getAllEvents() {
+        ArrayList<Event> dbEvents = DB.getAllEvents();
+        if (dbEvents != null && !dbEvents.isEmpty()) {
+            return new ArrayList<>(dbEvents);
+        }
         return new ArrayList<>(allEvents);
     }
 
