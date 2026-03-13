@@ -33,6 +33,7 @@ import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
+import com.example.cipher_events.user.UserRepository;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -45,9 +46,6 @@ public class MainActivity extends AppCompatActivity {
     DBProxy DB = DBProxy.getInstance();
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
-
-    private FragmentManager fragmentManager;
-    private BottomNavigationView bottomNavigationView;
 
     // Firestore-backed services
     private UserEventHistoryRepository historyRepository;
@@ -68,9 +66,8 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
         //User-related services
-        userRepository = new UserRepository();
         historyRepository = new UserEventHistoryRepository();
-        userProfileService = new UserProfileService(userRepository, historyRepository);
+        userProfileService = new UserProfileService();
 
         //QR / Event-related services
         organizerEventService = new OrganizerEventService();
@@ -305,8 +302,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return null;
-        } catch (WriterException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -375,7 +370,7 @@ public class MainActivity extends AppCompatActivity {
     // Utility methods
     // =========================================================
     public User getUserByDeviceId(String deviceId) {
-        return userRepository.findByDeviceId(deviceId);
+        return DB.getUser(deviceId);
     }
 
     public void addEventToSystem(Event event) {
@@ -392,6 +387,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public List<Event> getAllEvents() {
+        ArrayList<Event> dbEvents = DB.getAllEvents();
+        if (dbEvents != null && !dbEvents.isEmpty()) {
+            return new ArrayList<>(dbEvents);
+        }
         return new ArrayList<>(allEvents);
     }
 
