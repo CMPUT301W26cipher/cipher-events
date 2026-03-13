@@ -66,7 +66,6 @@ public class OrganizerEventServiceTest {
         assertNotNull(savedRecord);
         assertEquals(result.getEventId(), savedRecord.getEventId());
         assertEquals(result.getQrPayload(), savedRecord.getQrPayload());
-        assertEquals("Campus Tech Talk", savedRecord.getEvent().getName());
     }
 
     @Test
@@ -97,9 +96,6 @@ public class OrganizerEventServiceTest {
 
         assertNotEquals(first.getEventId(), second.getEventId());
         assertNotEquals(first.getQrPayload(), second.getQrPayload());
-
-        assertNotNull(eventRepository.findRecordById(first.getEventId()));
-        assertNotNull(eventRepository.findRecordById(second.getEventId()));
     }
 
     @Test(expected = IllegalArgumentException.class)

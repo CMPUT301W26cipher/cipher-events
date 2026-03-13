@@ -141,8 +141,8 @@ public class UserProfileService {
 
             case NOT_SELECTED:
             case CANCELLED:
-                // For your current Event model there is no dedicated stored list.
-                // We simply remove the user from entrant/attendee lists.
+                // Current Event model has no dedicated list for these states.
+                // User is simply removed from entrant/attendee lists.
                 break;
         }
 

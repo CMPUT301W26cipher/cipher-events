@@ -1,5 +1,6 @@
 package com.example.cipher_events;
 
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -13,10 +14,13 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
+import com.example.cipher_events.database.Admin;
+import com.example.cipher_events.database.AdminDB;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.database.UserDB;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.FavouritesFragment;
@@ -29,6 +33,7 @@ import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
+import com.example.cipher_events.user.UserRepository;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
@@ -37,11 +42,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-
-    private final DBProxy DB = DBProxy.getInstance();
-
-    private FragmentManager fragmentManager;
-    private BottomNavigationView bottomNavigationView;
+    //
+    DBProxy DB = DBProxy.getInstance();
+    FragmentManager fragmentManager = getSupportFragmentManager();
+    BottomNavigationView bottomNavigationView;
 
     // Firestore-backed services
     private UserEventHistoryRepository historyRepository;
@@ -61,15 +65,14 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
-        // Firestore-backed user services
+        //User-related services
         historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService();
 
-        // QR / Event-related services
+        //QR / Event-related services
         organizerEventService = new OrganizerEventService();
         entrantEventService = new EntrantEventService();
 
-        // Waiting list service
         waitingListService = new WaitingListService(historyRepository);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -112,10 +115,59 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    protected void onDestroy () {
         DB.shutdown();
         super.onDestroy();
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // ================== LOTS OF CODE HERE ====================
+
 
     // =========================================================
     // US 01.02.01
@@ -239,6 +291,7 @@ public class MainActivity extends AppCompatActivity {
                     qrHeight
             );
 
+            // Keep a local reference for profile deletion/history operations
             Event createdEvent = result.getEvent();
             if (createdEvent != null && !allEvents.contains(createdEvent)) {
                 allEvents.add(createdEvent);
@@ -252,6 +305,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * Convenience helper if you only want the QR bitmap in UI code.
+     */
     public String createEventAndGetQrPayload(String name,
                                              String description,
                                              String time,
@@ -270,6 +326,7 @@ public class MainActivity extends AppCompatActivity {
                 qrWidth,
                 qrHeight
         );
+
         return result == null ? null : result.getQrPayload();
     }
 

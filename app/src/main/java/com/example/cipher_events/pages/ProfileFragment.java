@@ -6,12 +6,14 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import com.example.cipher_events.pages.WaitingListFragment;
 
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.User;
@@ -56,9 +58,11 @@ public class ProfileFragment extends Fragment {
         );
 
         // Bind views
+
         nameText = view.findViewById(R.id.profile_name);
         emailText = view.findViewById(R.id.profile_email);
         locationText = view.findViewById(R.id.profile_location);
+
 
         nameEdit = view.findViewById(R.id.profile_name_edit);
         emailEdit = view.findViewById(R.id.profile_email_edit);
@@ -73,6 +77,19 @@ public class ProfileFragment extends Fragment {
         setupEditableField(nameText, nameEdit, "name");
         setupEditableField(emailText, emailEdit, "email");
         setupEditableField(locationText, locationEdit, "location");
+
+        Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
+
+        waitlistBtn.setOnClickListener(v -> {
+
+            WaitingListFragment fragment = new WaitingListFragment();
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         return view;
     }
