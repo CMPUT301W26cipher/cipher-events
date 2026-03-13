@@ -138,6 +138,9 @@ public class MainActivity extends AppCompatActivity {
                     new ArrayList<>(),
                     null
             );
+            
+            // Set the optional waiting list capacity
+            newEvent.setWaitingListCapacity(capacity);
 
             // Set the optional waiting list capacity
             newEvent.setWaitingListCapacity(capacity);
