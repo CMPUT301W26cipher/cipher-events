@@ -3,8 +3,6 @@ import java.util.Random;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
-import com.example.cipher_events.user.Status;
-import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
 import java.util.ArrayList;
@@ -56,8 +54,7 @@ public class WaitingListService {
         entrants.add(user);
 
         historyRepository.getHistory(
-                user.getDeviceID(),
-                new UserEventHistoryRecord(event, Status.WAITLISTED)
+                user.getDeviceID()
         );
 
         return true;
@@ -92,8 +89,7 @@ public class WaitingListService {
                 entrants.remove(i);
 
                 historyRepository.getHistory(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                        user.getDeviceID()
                 );
 
                 return true;
@@ -229,13 +225,8 @@ public class WaitingListService {
         ArrayList<User> entrants = event.getEntrants();
         ArrayList<User> attendees = event.getAttendees();
 
-        if (entrants == null) {
+        if (entrants == null || attendees == null) {
             return false;
-        }
-
-        if (attendees == null) {
-            attendees = new ArrayList<>();
-            event.setAttendees(attendees);
         }
 
         for (int i = 0; i < entrants.size(); i++) {
@@ -246,11 +237,6 @@ public class WaitingListService {
 
                 entrants.remove(i);
                 attendees.add(user);
-
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.ACCEPTED)
-                );
 
                 return true;
             }
@@ -286,11 +272,6 @@ public class WaitingListService {
 
                 entrants.remove(i);
 
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.DECLINED)
-                );
-
                 return true;
             }
         }
@@ -316,14 +297,7 @@ public class WaitingListService {
         Random random = new Random();
         int index = random.nextInt(entrants.size());
 
-        User selected = entrants.get(index);
-
-        historyRepository.addRecord(
-                selected.getDeviceID(),
-                new UserEventHistoryRecord(event, Status.INVITED)
-        );
-
-        return selected;
+        return entrants.get(index);
     }
 
     // =========================================================
@@ -390,9 +364,8 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                historyRepository.getHistory(
+                        user.getDeviceID()
                 );
                 return true;
             }
