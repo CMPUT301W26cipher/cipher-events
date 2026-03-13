@@ -7,6 +7,7 @@ import com.example.cipher_events.database.User;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * Firestore-backed service for:
@@ -97,6 +98,8 @@ public class UserProfileService {
         return historyRepository.getHistory(deviceId);
     }
 
+        addEventHistory(deviceId, event, newStatus);
+    }
     /**
      * Optional helper if you still want to manually add a user to an event history state.
      * This updates the actual Event lists in Firestore-backed storage.
