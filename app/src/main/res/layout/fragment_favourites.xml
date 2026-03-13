@@ -2,7 +2,6 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
@@ -20,27 +19,56 @@
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"/>
 
-    <!-- Tabs -->
+    <!-- Tabs Container -->
     <LinearLayout
         android:id="@+id/tab_layout"
-        android:layout_width="wrap_content"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="12dp"
         android:layout_marginStart="20dp"
-        app:layout_constraintTop_toBottomOf="@id/title_events"
-        app:layout_constraintStart_toStartOf="parent">
+        android:layout_marginEnd="20dp"
+        android:layout_marginTop="16dp"
+        android:orientation="horizontal"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/title_events">
 
+        <!-- Attending Tab -->
         <TextView
             android:id="@+id/tab_attending"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:layout_marginEnd="12dp"
             android:text="Attending"
             android:textColor="#CFCFCF"
-            android:textSize="16sp"
-            android:layout_marginEnd="24dp"/>
+            android:textSize="15sp"
+            android:background="@drawable/tab_selector_background" />
+
+        <!-- Favourite Tab -->
+        <TextView
+            android:id="@+id/tab_favourite"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingHorizontal="16dp"
+            android:paddingVertical="10dp"
+            android:text="Favourite"
+            android:textColor="#CFCFCF"
+            android:textSize="15sp"
+            android:background="@drawable/tab_selector_background" />
 
     </LinearLayout>
+
+    <!-- Divider -->
+    <View
+        android:id="@+id/tab_divider"
+        android:layout_width="0dp"
+        android:layout_height="1dp"
+        android:background="#2E2A3D"
+        android:layout_marginTop="0dp"
+        app:layout_constraintTop_toBottomOf="@id/tab_layout"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
 
     <!-- RecyclerView -->
     <androidx.recyclerview.widget.RecyclerView
@@ -48,21 +76,10 @@
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/tab_layout"
+        android:clipToPadding="false"
+        app:layout_constraintTop_toBottomOf="@id/tab_divider"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"/>
-
-    <TextView
-        android:id="@+id/tab_favourite"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Favorite"
-        android:textColor="#B388FF"
-        android:textSize="16sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.097"
-        tools:layout_editor_absoluteX="283dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

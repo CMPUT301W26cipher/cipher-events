@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1079449253598",
+    "project_id": "cipher-123a4",
+    "storage_bucket": "cipher-123a4.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1079449253598:android:f29743362d89816c12b44f",
+        "android_client_info": {
+          "package_name": "com.example.cipher_events"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDZhbJVDYIzkhyg3QbtpNJen-DLqLkZKZw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
