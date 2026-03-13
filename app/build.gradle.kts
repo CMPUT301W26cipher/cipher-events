@@ -2,10 +2,11 @@ import org.gradle.kotlin.dsl.implementation
 
 plugins {
     alias(libs.plugins.android.application)
-    id( "com.google.gms.google-services")
+    id("com.google.gms.google-services")
 }
 
 android {
+
     namespace = "com.example.cipher_events"
     compileSdk {
         version = release(36)
@@ -29,10 +30,15 @@ android {
             )
         }
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+}
+
+configurations.all {
+    exclude(group = "com.google.protobuf", module = "protobuf-lite")
 }
 
 dependencies {
@@ -43,11 +49,14 @@ dependencies {
     implementation(libs.constraintlayout)
     implementation(libs.fragment.testing)
     implementation(libs.espresso.contrib)
+
     implementation(platform("com.google.firebase:firebase-bom:34.10.0"))
     implementation("com.google.firebase:firebase-firestore")
+
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
+
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation("com.github.bumptech.glide:glide:4.16.0")
-    annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
 }
