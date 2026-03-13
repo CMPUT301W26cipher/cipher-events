@@ -54,6 +54,16 @@ public class Event {
         this.eventID = eventID;
     }
 
+    public Event() {}
+
+    public String getEventID() {
+        return eventID;
+    }
+
+    public void setEventID(String eventID) {
+        this.eventID = eventID;
+    }
+
     public String getName() {
         return name;
     }
