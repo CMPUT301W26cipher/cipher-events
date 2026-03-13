@@ -28,7 +28,6 @@
 
         <activity android:name=".pages.EventDetailsActivity" />
 
-
     </application>
 
 </manifest>
