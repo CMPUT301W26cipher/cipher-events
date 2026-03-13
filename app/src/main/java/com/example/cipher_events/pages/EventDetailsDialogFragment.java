@@ -31,7 +31,11 @@ import java.util.ArrayList;
 
 public class EventDetailsDialogFragment extends DialogFragment {
 
+    private boolean isOrganizerView = false;
+    private String eventId;
+
     public static EventDetailsDialogFragment newInstance(
+            String eventId,
             String name,
             String description,
             String time,
@@ -39,14 +43,29 @@ public class EventDetailsDialogFragment extends DialogFragment {
             int attendeeCount,
             ArrayList<String> tags
     ) {
+        return newInstance(eventId, name, description, time, location, attendeeCount, tags, false);
+    }
+
+    public static EventDetailsDialogFragment newInstance(
+            String eventId,
+            String name,
+            String description,
+            String time,
+            String location,
+            int attendeeCount,
+            ArrayList<String> tags,
+            boolean isOrganizerView
+    ) {
         EventDetailsDialogFragment fragment = new EventDetailsDialogFragment();
         Bundle args = new Bundle();
+        args.putString("eventId", eventId);
         args.putString("name", name);
         args.putString("description", description);
         args.putString("time", time);
         args.putString("location", location);
         args.putInt("attendeeCount", attendeeCount);
         args.putStringArrayList("tags", tags);
+        args.putBoolean("isOrganizerView", isOrganizerView);
         fragment.setArguments(args);
         return fragment;
     }
@@ -71,13 +90,16 @@ public class EventDetailsDialogFragment extends DialogFragment {
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
         TextView lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
+        Button actionButton = view.findViewById(R.id.scan_button);
 
         Bundle args = getArguments();
         if (args != null) {
+            eventId = args.getString("eventId");
             title.setText(args.getString("name"));
             attendees.setText(args.getInt("attendeeCount") + " people attending");
             description.setText(args.getString("description"));
             dateLocation.setText(args.getString("location") + " • " + args.getString("time"));
+            isOrganizerView = args.getBoolean("isOrganizerView", false);
 
             ArrayList<String> tags = args.getStringArrayList("tags");
             if (tags != null) {
@@ -97,6 +119,21 @@ public class EventDetailsDialogFragment extends DialogFragment {
                     tagContainer.addView(chip);
                 }
             }
+        }
+
+        if (isOrganizerView) {
+            actionButton.setText("View Waitlist");
+            actionButton.setOnClickListener(v -> {
+                dismiss();
+                WaitingListFragment fragment = WaitingListFragment.newInstance(eventId);
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+        } else {
+            actionButton.setText("Scan to Join Waitlist");
         }
 
         // Lottery guidelines text
