@@ -314,6 +314,7 @@ public class WaitingListService {
         return new ArrayList<>(event.getInvitedEntrants());
     }
 
+
     // =========================================================
     // US 02.06.02
     // View Cancelled Entrants List
@@ -364,15 +365,10 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                historyRepository.getHistory(
-                        user.getDeviceID()
-                );
+                //history tracked via firestore
                 return true;
             }
         }
         return false;
     }
-
-
-
 }
