@@ -4,8 +4,6 @@ import android.graphics.Bitmap;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
-import com.google.zxing.WriterException;
-
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -32,7 +30,7 @@ public class OrganizerEventService {
                                                                  Organizer organizer,
                                                                  String posterPictureURL,
                                                                  int qrWidth,
-                                                                 int qrHeight) throws WriterException {
+                                                                 int qrHeight) {
         validateRequiredEventFields(name, description, time, location, organizer);
 
         Event event = new Event(
@@ -48,7 +46,6 @@ public class OrganizerEventService {
 
         String eventId = UUID.randomUUID().toString();
         String qrPayload = EventQrCodeGenerator.buildPayload(eventId);
-        Bitmap qrBitmap = EventQrCodeGenerator.generateQrBitmap(qrPayload, qrWidth, qrHeight);
 
         EventRecord record = new EventRecord(
                 eventId,
@@ -59,7 +56,7 @@ public class OrganizerEventService {
 
         eventRepository.save(record);
 
-        return new OrganizerEventCreationResult(eventId, event, qrPayload, qrBitmap);
+        return new OrganizerEventCreationResult(eventId, event, qrPayload);
     }
 
     public EventRecord getEventRecord(String eventId) {

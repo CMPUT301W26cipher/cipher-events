@@ -41,6 +41,7 @@ public class HomeFragment extends Fragment {
             tags.add("Outdoors");
 
             EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
+                    event.getEventID(),
                     event.getName(),
                     event.getDescription(),
                     event.getTime(),

@@ -1,0 +1,26 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="100"
+    android:viewportHeight="100">
+
+    <path
+        android:strokeColor="@android:color/black"
+        android:strokeWidth="6"
+        android:pathData="M 50,50 m -40,0 a 40,40 0 1,0 80,0 a 40,40 0 1,0 -80,0" />
+
+    <path
+        android:name="hours"
+        android:strokeColor="@android:color/black"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M 50,50 L 24,50" />
+
+    <path
+        android:name="minutes"
+        android:strokeColor="@android:color/black"
+        android:strokeWidth="6"
+        android:strokeLineCap="round"
+        android:pathData="M 50,50 L 50,12" />
+
+</vector>
