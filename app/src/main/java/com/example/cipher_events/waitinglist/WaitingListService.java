@@ -54,7 +54,7 @@ public class WaitingListService {
 
         entrants.add(user);
 
-        historyRepository.addRecord(
+        historyRepository.getHistory(
                 user.getDeviceID(),
                 new UserEventHistoryRecord(event, Status.WAITLISTED)
         );
@@ -90,7 +90,7 @@ public class WaitingListService {
 
                 entrants.remove(i);
 
-                historyRepository.addRecord(
+                historyRepository.getHistory(
                         user.getDeviceID(),
                         new UserEventHistoryRecord(event, Status.CANCELLED)
                 );

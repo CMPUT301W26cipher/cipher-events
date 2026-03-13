@@ -1,6 +1,5 @@
 package com.example.cipher_events;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -14,13 +13,10 @@ import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 
-import com.example.cipher_events.database.Admin;
-import com.example.cipher_events.database.AdminDB;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
-import com.example.cipher_events.database.UserDB;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.FavouritesFragment;
@@ -33,30 +29,30 @@ import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
-import com.example.cipher_events.user.UserRepository;
+import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
-import com.google.zxing.WriterException;
-
-import com.example.cipher_events.waitinglist.WaitingListService;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
-    //
-    DBProxy DB = DBProxy.getInstance();
-    FragmentManager fragmentManager = getSupportFragmentManager();
-    BottomNavigationView bottomNavigationView;
 
-    private UserRepository userRepository;
+    private final DBProxy DB = DBProxy.getInstance();
+
+    private FragmentManager fragmentManager;
+    private BottomNavigationView bottomNavigationView;
+
+    // Firestore-backed services
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
     private EntrantEventService entrantEventService;
     private WaitingListService waitingListService;
 
+    // Optional local cache for UI convenience
     private final List<Event> allEvents = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -65,15 +61,15 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
-        //User-related services
-        userRepository = new UserRepository();
+        // Firestore-backed user services
         historyRepository = new UserEventHistoryRepository();
-        userProfileService = new UserProfileService(userRepository, historyRepository);
+        userProfileService = new UserProfileService();
 
-        //QR / Event-related services
+        // QR / Event-related services
         organizerEventService = new OrganizerEventService();
         entrantEventService = new EntrantEventService();
 
+        // Waiting list service
         waitingListService = new WaitingListService(historyRepository);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
@@ -102,72 +98,24 @@ public class MainActivity extends AppCompatActivity {
                 }
 
                 replaceFragment(selectedFragment);
-
                 return true;
             }
         });
     }
 
-    private void replaceFragment(Fragment fragment){
+    private void replaceFragment(Fragment fragment) {
         if (fragment != null) {
-            fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
         }
     }
 
     @Override
-    protected void onDestroy () {
+    protected void onDestroy() {
         DB.shutdown();
         super.onDestroy();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ================== LOTS OF CODE HERE ====================
-
 
     // =========================================================
     // US 01.02.01
@@ -221,11 +169,34 @@ public class MainActivity extends AppCompatActivity {
 
     // =========================================================
     // US 01.02.03
-    // Add one event history record
+    // View user event history
     // =========================================================
+    public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
+        try {
+            return userProfileService.getUserEventHistory(deviceId);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Optional helper if you still want to force a status update on an event.
+     */
     public void addUserEventHistory(String deviceId, Event event, Status status) {
         try {
             userProfileService.addEventHistory(deviceId, event, status);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Optional helper to overwrite/update a user's event status.
+     */
+    public void upsertUserEventHistory(String deviceId, Event event, Status status) {
+        try {
+            userProfileService.upsertEventHistory(deviceId, event, status);
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -237,7 +208,7 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public void deleteUserProfile(String deviceId) {
         try {
-            userProfileService.deleteUserProfile(deviceId, allEvents);
+            userProfileService.deleteUserProfile(deviceId);
             Toast.makeText(this, "Profile deleted successfully", Toast.LENGTH_SHORT).show();
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -268,7 +239,6 @@ public class MainActivity extends AppCompatActivity {
                     qrHeight
             );
 
-            // Keep a local reference for profile deletion/history operations
             Event createdEvent = result.getEvent();
             if (createdEvent != null && !allEvents.contains(createdEvent)) {
                 allEvents.add(createdEvent);
@@ -284,9 +254,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Convenience helper if you only want the QR bitmap in UI code.
-     */
     public String createEventAndGetQrPayload(String name,
                                              String description,
                                              String time,
@@ -305,7 +272,6 @@ public class MainActivity extends AppCompatActivity {
                 qrWidth,
                 qrHeight
         );
-
         return result == null ? null : result.getQrPayload();
     }
 
@@ -349,7 +315,7 @@ public class MainActivity extends AppCompatActivity {
     // Utility methods
     // =========================================================
     public User getUserByDeviceId(String deviceId) {
-        return userRepository.findByDeviceId(deviceId);
+        return DB.getUser(deviceId);
     }
 
     public void addEventToSystem(Event event) {
@@ -366,6 +332,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public List<Event> getAllEvents() {
+        ArrayList<Event> dbEvents = DB.getAllEvents();
+        if (dbEvents != null && !dbEvents.isEmpty()) {
+            return new ArrayList<>(dbEvents);
+        }
         return new ArrayList<>(allEvents);
     }
 
@@ -387,7 +357,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean joinWaitingList(User user, Event event) {
         try {
-
             boolean joined = waitingListService.joinWaitingList(user, event);
 
             if (joined) {
@@ -397,7 +366,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return joined;
-
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
@@ -410,7 +378,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean leaveWaitingList(User user, Event event) {
         try {
-
             boolean removed = waitingListService.leaveWaitingList(user, event);
 
             if (removed) {
@@ -420,7 +387,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return removed;
-
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;

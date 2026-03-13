@@ -34,6 +34,11 @@ public class OrganizerEventServiceTest {
         );
     }
 
+    // =========================================================
+    // US 02.01.01
+    // Organizer creates a new event and generates a unique QR code
+    // =========================================================
+
     @Test
     public void testCreateEventAndGenerateQr_validInput_createsEventSuccessfully() {
         Organizer organizer = createTestOrganizer();
@@ -66,6 +71,7 @@ public class OrganizerEventServiceTest {
         assertNotNull(savedRecord);
         assertEquals(result.getEventId(), savedRecord.getEventId());
         assertEquals(result.getQrPayload(), savedRecord.getQrPayload());
+        assertEquals("Campus Tech Talk", savedRecord.getEvent().getName());
     }
 
     @Test
@@ -96,6 +102,9 @@ public class OrganizerEventServiceTest {
 
         assertNotEquals(first.getEventId(), second.getEventId());
         assertNotEquals(first.getQrPayload(), second.getQrPayload());
+
+        assertNotNull(eventRepository.findRecordById(first.getEventId()));
+        assertNotNull(eventRepository.findRecordById(second.getEventId()));
     }
 
     @Test(expected = IllegalArgumentException.class)

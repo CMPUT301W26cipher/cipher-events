@@ -1,4 +1,5 @@
 package com.example.cipher_events;
+
 import static org.junit.Assert.*;
 
 import com.example.cipher_events.database.Event;
@@ -27,9 +28,6 @@ public class EntrantEventServiceTest {
         entrantEventService = new EntrantEventService(eventRepository);
     }
 
-    /**
-     * Adjust this helper if your Organizer constructor is different.
-     */
     private Organizer createTestOrganizer() {
         return new Organizer(
                 "Organizer One",

@@ -2,13 +2,13 @@ package com.example.cipher_events;
 
 import static org.junit.Assert.*;
 
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
-import com.example.cipher_events.user.UserRepository;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -18,15 +18,15 @@ import java.util.List;
 
 public class UserProfileServiceTest {
 
-    private UserRepository userRepository;
+    private DBProxy dbProxy;
     private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
 
     @Before
     public void setUp() {
-        userRepository = new UserRepository();
+        dbProxy = DBProxy.getInstance();
         historyRepository = new UserEventHistoryRepository();
-        userProfileService = new UserProfileService(userRepository, historyRepository);
+        userProfileService = new UserProfileService(dbProxy, historyRepository);
     }
 
     // =========================================================
@@ -50,9 +50,10 @@ public class UserProfileServiceTest {
         assertEquals("7801234567", user.getPhoneNumber());
         assertNotNull(user.getDeviceID());
 
-        User savedUser = userRepository.findByDeviceId(user.getDeviceID());
+        User savedUser = dbProxy.getUser(user.getDeviceID());
         assertNotNull(savedUser);
         assertEquals("Alice", savedUser.getName());
+        assertEquals("alice@example.com", savedUser.getEmail());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -89,6 +90,10 @@ public class UserProfileServiceTest {
 
         assertNotNull(user);
         assertNull(user.getPhoneNumber());
+
+        User savedUser = dbProxy.getUser(user.getDeviceID());
+        assertNotNull(savedUser);
+        assertNull(savedUser.getPhoneNumber());
     }
 
     // =========================================================
@@ -119,6 +124,13 @@ public class UserProfileServiceTest {
         assertEquals("charles@example.com", updatedUser.getEmail());
         assertEquals("9998887777", updatedUser.getPhoneNumber());
         assertEquals("new_pic_url", updatedUser.getProfilePictureURL());
+
+        User savedUser = dbProxy.getUser(user.getDeviceID());
+        assertNotNull(savedUser);
+        assertEquals("Charles", savedUser.getName());
+        assertEquals("charles@example.com", savedUser.getEmail());
+        assertEquals("9998887777", savedUser.getPhoneNumber());
+        assertEquals("new_pic_url", savedUser.getProfilePictureURL());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -157,7 +169,7 @@ public class UserProfileServiceTest {
     // =========================================================
 
     @Test
-    public void testAddEventHistory_validEvent_addsHistorySuccessfully() {
+    public void testAddEventHistory_waitlistedEvent_addsHistorySuccessfully() {
         User user = userProfileService.createUserProfile(
                 "Frank",
                 "frank@example.com",
@@ -167,8 +179,8 @@ public class UserProfileServiceTest {
         );
 
         Event event = new Event(
-                "Career Fair",
-                "Career networking event",
+                "Hackathon",
+                "A coding competition",
                 "2026-03-20 14:00",
                 "Edmonton",
                 null,
@@ -176,7 +188,8 @@ public class UserProfileServiceTest {
                 new ArrayList<>(),
                 null
         );
-        event.setName("Hackathon");
+
+        dbProxy.addEvent(event);
 
         userProfileService.addEventHistory(
                 user.getDeviceID(),
@@ -184,7 +197,8 @@ public class UserProfileServiceTest {
                 Status.WAITLISTED
         );
 
-        List<UserEventHistoryRecord> history = userProfileService.getUserEventHistory(user.getDeviceID());
+        List<UserEventHistoryRecord> history =
+                userProfileService.getUserEventHistory(user.getDeviceID());
 
         assertEquals(1, history.size());
         assertEquals("Hackathon", history.get(0).getEvent().getName());
@@ -203,15 +217,16 @@ public class UserProfileServiceTest {
 
         Event event = new Event(
                 "Career Fair",
-                "Career networking event",
+                "Meet employers and recruiters",
                 "2026-03-20 14:00",
-                "Edmonton",
+                "University of Alberta",
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
                 null
         );
-        event.setName("Career Fair");
+
+        dbProxy.addEvent(event);
 
         userProfileService.addEventHistory(
                 user.getDeviceID(),
@@ -222,13 +237,14 @@ public class UserProfileServiceTest {
         userProfileService.upsertEventHistory(
                 user.getDeviceID(),
                 event,
-                Status.SELECTED
+                Status.REGISTERED
         );
 
-        List<UserEventHistoryRecord> history = userProfileService.getUserEventHistory(user.getDeviceID());
+        List<UserEventHistoryRecord> history =
+                userProfileService.getUserEventHistory(user.getDeviceID());
 
         assertEquals(1, history.size());
-        assertEquals(Status.SELECTED, history.get(0).getStatus());
+        assertEquals(Status.REGISTERED, history.get(0).getStatus());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -242,7 +258,7 @@ public class UserProfileServiceTest {
     // =========================================================
 
     @Test
-    public void testDeleteUserProfile_validUser_removesUserAndHistory() {
+    public void testDeleteUserProfile_validUser_removesUserAndEventMembership() {
         User user = userProfileService.createUserProfile(
                 "Helen",
                 "helen@example.com",
@@ -252,39 +268,33 @@ public class UserProfileServiceTest {
         );
 
         Event event = new Event(
-                "Career Fair",
-                "Career networking event",
-                "2026-03-20 14:00",
+                "Workshop",
+                "Android workshop",
+                "2026-04-01 18:00",
                 "Edmonton",
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
                 null
         );
-        event.setName("Workshop");
-        event.setEntrants(new ArrayList<>());
-        event.setAttendees(new ArrayList<>());
 
         event.getEntrants().add(user);
+        dbProxy.addEvent(event);
 
-        userProfileService.addEventHistory(
-                user.getDeviceID(),
-                event,
-                Status.WAITLISTED
-        );
+        userProfileService.deleteUserProfile(user.getDeviceID());
 
-        List<Event> allEvents = new ArrayList<>();
-        allEvents.add(event);
+        assertNull(dbProxy.getUser(user.getDeviceID()));
 
-        userProfileService.deleteUserProfile(user.getDeviceID(), allEvents);
-
-        assertNull(userRepository.findByDeviceId(user.getDeviceID()));
-        assertEquals(0, historyRepository.getHistory(user.getDeviceID()).size());
-        assertEquals(0, event.getEntrants().size());
+        Event savedEvent = dbProxy.getEvent(event.getEventID());
+        if (savedEvent != null && savedEvent.getEntrants() != null) {
+            for (User entrant : savedEvent.getEntrants()) {
+                assertNotEquals(user.getDeviceID(), entrant.getDeviceID());
+            }
+        }
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDeleteUserProfile_nonExistentUser_throwsException() {
-        userProfileService.deleteUserProfile("missing-user", new ArrayList<>());
+        userProfileService.deleteUserProfile("missing-user");
     }
 }

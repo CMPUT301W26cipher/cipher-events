@@ -1,53 +1,72 @@
 package com.example.cipher_events.user;
 
-import com.example.cipher_events.user.UserEventHistoryRecord;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.User;
 
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
- * Stores event history per user device ID.
+ * Builds user event history from Firestore-backed Event records.
  */
 public class UserEventHistoryRepository {
-    private final Map<String, List<UserEventHistoryRecord>> historyByUserId;
+    private final DBProxy db;
 
     public UserEventHistoryRepository() {
-        this.historyByUserId = new HashMap<>();
+        this.db = DBProxy.getInstance();
     }
 
-    public void addRecord(String deviceId, UserEventHistoryRecord record) {
+    public List<UserEventHistoryRecord> getHistory(String deviceId, UserEventHistoryRecord userEventHistoryRecord) {
+        List<UserEventHistoryRecord> history = new ArrayList<>();
+
         if (deviceId == null || deviceId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Device ID cannot be empty.");
-        }
-        if (record == null) {
-            throw new IllegalArgumentException("History record cannot be null.");
+            return history;
         }
 
-        historyByUserId
-                .computeIfAbsent(deviceId, k -> new ArrayList<>())
-                .add(record);
+        ArrayList<Event> events = db.getAllEvents();
+        if (events == null) {
+            return history;
+        }
+
+        for (Event event : events) {
+            if (event == null) {
+                continue;
+            }
+
+            Status status = resolveStatus(event, deviceId);
+            if (status != null) {
+                history.add(new UserEventHistoryRecord(event, status));
+            }
+        }
+
+        return history;
     }
 
-    public List<UserEventHistoryRecord> getHistory(String deviceId) {
-        List<UserEventHistoryRecord> records = historyByUserId.get(deviceId);
-        if (records == null) {
-            return new ArrayList<>();
+    private Status resolveStatus(Event event, String deviceId) {
+        if (containsUser(event.getAttendees(), deviceId)) {
+            return Status.REGISTERED;
         }
-        return new ArrayList<>(records);
+
+        if (containsUser(event.getEntrants(), deviceId)) {
+            return Status.WAITLISTED;
+        }
+
+        return null;
     }
 
-    public void clearHistory(String deviceId) {
-        historyByUserId.remove(deviceId);
-    }
-
-    public List<UserEventHistoryRecord> getUnmodifiableHistory(String deviceId) {
-        List<UserEventHistoryRecord> records = historyByUserId.get(deviceId);
-        if (records == null) {
-            return Collections.emptyList();
+    private boolean containsUser(ArrayList<User> users, String deviceId) {
+        if (users == null || deviceId == null) {
+            return false;
         }
-        return Collections.unmodifiableList(records);
+
+        for (User user : users) {
+            if (user != null
+                    && user.getDeviceID() != null
+                    && user.getDeviceID().equals(deviceId)) {
+                return true;
+            }
+        }
+        return false;
     }
 }
