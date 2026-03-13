@@ -365,10 +365,7 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
-                );
+                //history tracked via firestore
                 return true;
             }
         }
