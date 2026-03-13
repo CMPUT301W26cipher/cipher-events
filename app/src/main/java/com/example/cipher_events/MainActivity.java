@@ -52,8 +52,6 @@ public class MainActivity extends AppCompatActivity {
 
     private String currentRole = "";
 
-    // Firestore-backed services
-    private UserEventHistoryRepository historyRepository;
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
     private EntrantEventService entrantEventService;
@@ -71,7 +69,8 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
         //User-related services
-        historyRepository = new UserEventHistoryRepository();
+        // Firestore-backed services
+        UserEventHistoryRepository historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService();
 
         //QR / Event-related services
@@ -114,8 +113,7 @@ public class MainActivity extends AppCompatActivity {
                     } else if (id == R.id.menu_create) {
                         showCreateEventDialog();
                         return false; // Show as a popup instead of switching fragments
-                        selectedFragment = new OrganizerAddEventFragment(); // Replace with Create Fragment if available
-                        Toast.makeText(MainActivity.this, "Create Event", Toast.LENGTH_SHORT).show();
+                        // Replace with Create Fragment if available
                     } else if (id == R.id.menu_history) {
                         selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
                         Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
@@ -132,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity) -> {
+        dialog.setCreateEventListener((title, date, time, location, description) -> {
             // Create a new event object
             Event newEvent = new Event(
                     title,
@@ -144,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                     new ArrayList<>(),
                     null
             );
-            
+
             // Set the optional waiting list capacity
             newEvent.setWaitingListCapacity(capacity);
 
