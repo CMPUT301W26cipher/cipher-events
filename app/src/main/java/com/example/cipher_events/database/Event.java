@@ -44,6 +44,7 @@ public class Event {
         this.enrolledEntrants = new ArrayList<>();
     }
 
+
     public Event() {}
 
     public String getEventID() {

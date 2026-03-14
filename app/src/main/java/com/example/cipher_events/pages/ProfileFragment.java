@@ -1,6 +1,7 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,9 +14,9 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
-import com.example.cipher_events.pages.WaitingListFragment;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.User;
 
 /**
@@ -26,7 +27,7 @@ import com.example.cipher_events.database.User;
  * Navigation buttons are included below
  * - Waitlist: navigates to a waitlist fragment to view events that user has joined the waitlist for
  * - History: displays past events of user
- * - Edit Profile: allows user to edit their profile (dialog fragment pop up --> TO BE ADDED)
+ * - Edit Profile: allows user to edit their profile (navigates to UserProfileFragment)
  * - Sign Out: signs user out of their account, navigates back to sign up/login screen
  */
 
@@ -34,11 +35,18 @@ public class ProfileFragment extends Fragment {
 
     private TextView nameText, emailText, locationText;
     private EditText nameEdit, emailEdit, locationEdit;
-
-    // TEMP user — replace with real Firebase or DB user later
+    private DBProxy dbProxy;
+    private String deviceId;
     private User currentUser;
 
     public ProfileFragment() {}
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        dbProxy = DBProxy.getInstance();
+        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
 
     @Nullable
     @Override
@@ -48,30 +56,27 @@ public class ProfileFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        // Load a user (replace with real user later)
-        currentUser = new User(
-                "User",
-                "user@example.com",
-                "password123",
-                "123-456-7890",
-                null
-        );
-
         // Bind views
-
         nameText = view.findViewById(R.id.profile_name);
         emailText = view.findViewById(R.id.profile_email);
         locationText = view.findViewById(R.id.profile_location);
-
 
         nameEdit = view.findViewById(R.id.profile_name_edit);
         emailEdit = view.findViewById(R.id.profile_email_edit);
         locationEdit = view.findViewById(R.id.profile_location_edit);
 
-        // Load user data into UI
-        nameText.setText(currentUser.getName());
-        emailText.setText(currentUser.getEmail());
-        locationText.setText("Edmonton, AB"); // SAVE LOCATION IN USER CLASS
+        // Load real user data from database
+        currentUser = dbProxy.getUser(deviceId);
+        if (currentUser != null) {
+            nameText.setText(currentUser.getName());
+            emailText.setText(currentUser.getEmail());
+            // locationText.setText("Edmonton, AB"); // Or from user if added
+        } else {
+            // Default values if user doesn't exist (e.g. after deletion)
+            nameText.setText("Name");
+            emailText.setText("Email");
+            locationText.setText("Location");
+        }
 
         // Make fields editable
         setupEditableField(nameText, nameEdit, "name");
@@ -79,11 +84,19 @@ public class ProfileFragment extends Fragment {
         setupEditableField(locationText, locationEdit, "location");
 
         Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
-
         waitlistBtn.setOnClickListener(v -> {
-
             WaitingListFragment fragment = new WaitingListFragment();
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
+        // edit profile button
+        Button editProfileBtn = view.findViewById(R.id.edit_profile_btn);
+        editProfileBtn.setOnClickListener(v -> {
+            UserProfileFragment fragment = new UserProfileFragment();
             getParentFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, fragment)
@@ -109,6 +122,12 @@ public class ProfileFragment extends Fragment {
                 String newValue = editText.getText().toString();
                 textView.setText(newValue);
 
+                if (currentUser == null) {
+                    currentUser = new User(newValue, "Email", "", "", null);
+                    currentUser.setDeviceID(deviceId);
+                    dbProxy.addUser(currentUser);
+                }
+
                 // Update the User object
                 switch (fieldType) {
                     case "name":
@@ -121,6 +140,8 @@ public class ProfileFragment extends Fragment {
                         // You can add a location field to User class later
                         break;
                 }
+                
+                dbProxy.updateUser(currentUser);
 
                 editText.setVisibility(View.GONE);
                 textView.setVisibility(View.VISIBLE);

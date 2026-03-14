@@ -55,9 +55,8 @@ public class WaitingListService {
 
         entrants.add(user);
 
-        historyRepository.addRecord(
-                user.getDeviceID(),
-                new UserEventHistoryRecord(event, Status.WAITLISTED)
+        historyRepository.getHistory(
+                user.getDeviceID()
         );
 
         return true;
@@ -91,9 +90,8 @@ public class WaitingListService {
 
                 entrants.remove(i);
 
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                historyRepository.getHistory(
+                        user.getDeviceID()
                 );
 
                 return true;
@@ -368,9 +366,8 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                historyRepository.addRecord(
-                        user.getDeviceID(),
-                        new UserEventHistoryRecord(event, Status.CANCELLED)
+                historyRepository.getHistory(
+                        user.getDeviceID()
                 );
                 return true;
             }

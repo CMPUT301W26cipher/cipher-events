@@ -3,6 +3,7 @@ package com.example.cipher_events;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
@@ -23,10 +24,22 @@ import com.example.cipher_events.database.User;
 import com.example.cipher_events.database.UserDB;
 import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
+import com.example.cipher_events.pages.AdminHomeFragment;
+import com.example.cipher_events.pages.CreateEventDialogFragment;
+import com.example.cipher_events.pages.EventDetailsDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
+import com.example.cipher_events.pages.LoginFragment;
+import com.example.cipher_events.pages.OrganizerAddEventFragment;
+import com.example.cipher_events.pages.OrganizerHistoryFragment;
+import com.example.cipher_events.pages.OrganizerHomeFragment;
+import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
+import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
+import com.example.cipher_events.pages.SignupFragment;
+import com.example.cipher_events.pages.UserProfileFragment;
+import com.example.cipher_events.pages.WaitingListFragment;
 import com.example.cipher_events.user.EntrantEventService;
 import com.example.cipher_events.user.EntrantQrScanResult;
 import com.example.cipher_events.user.Status;
@@ -34,11 +47,9 @@ import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
 import com.example.cipher_events.user.UserRepository;
+import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 import com.google.android.material.navigation.NavigationBarView;
-import com.google.zxing.WriterException;
-
-import com.example.cipher_events.waitinglist.WaitingListService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -49,14 +60,17 @@ public class MainActivity extends AppCompatActivity {
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
 
-    private UserRepository userRepository;
-    private UserEventHistoryRepository historyRepository;
+    private String currentRole = "";
+    private boolean isLoggedIn = false;
+    // Firestore-backed services
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
     private EntrantEventService entrantEventService;
     private WaitingListService waitingListService;
 
+    // Optional local cache for UI convenience
     private final List<Event> allEvents = new ArrayList<>();
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,9 +80,8 @@ public class MainActivity extends AppCompatActivity {
         fragmentManager = getSupportFragmentManager();
 
         //User-related services
-        userRepository = new UserRepository();
-        historyRepository = new UserEventHistoryRepository();
-        userProfileService = new UserProfileService(userRepository, historyRepository);
+        UserEventHistoryRepository historyRepository = new UserEventHistoryRepository();
+        userProfileService = new UserProfileService();
 
         //QR / Event-related services
         organizerEventService = new OrganizerEventService();
@@ -82,15 +95,17 @@ public class MainActivity extends AppCompatActivity {
             return insets;
         });
 
-        replaceFragment(new HomeFragment());
-
         bottomNavigationView = findViewById(R.id.bottom_nav);
-        bottomNavigationView.setOnItemSelectedListener(new NavigationBarView.OnItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(@NonNull MenuItem menuItem) {
-                Fragment selectedFragment = null;
-                int id = menuItem.getItemId();
+        bottomNavigationView.setVisibility(View.GONE); // Hide by default
 
+        // Show role selection first
+        replaceFragment(new RoleSelectionFragment());
+
+        bottomNavigationView.setOnItemSelectedListener(menuItem -> {
+            Fragment selectedFragment = null;
+            int id = menuItem.getItemId();
+
+            if ("ENTRANT".equals(currentRole)) {
                 if (id == R.id.menu_home) {
                     selectedFragment = new HomeFragment();
                 } else if (id == R.id.menu_search) {
@@ -100,17 +115,154 @@ public class MainActivity extends AppCompatActivity {
                 } else if (id == R.id.menu_profile) {
                     selectedFragment = new ProfileFragment();
                 }
-
-                replaceFragment(selectedFragment);
-
-                return true;
+            } else if ("ORGANIZER".equals(currentRole)) {
+                if (id == R.id.menu_home) {
+                    selectedFragment = new OrganizerHomeFragment();
+                } else if (id == R.id.menu_create) {
+                    showCreateEventDialog();
+                    return false; // Show as a popup instead of switching fragments
+                } else if (id == R.id.menu_history) {
+                    selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
+                    Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
+                } else if (id == R.id.menu_profile) {
+                    selectedFragment = new OrganizerProfileFragment();
+                }
             }
+
+            replaceFragment(selectedFragment);
+            return true;
         });
     }
 
-    private void replaceFragment(Fragment fragment){
+    private void showCreateEventDialog() {
+        CreateEventDialogFragment dialog = new CreateEventDialogFragment();
+        dialog.setCreateEventListener((title, date, time, location, description, capacity) -> {
+            // Create a new event object
+            Event newEvent = new Event(
+                    title,
+                    description,
+                    date + " " + time,
+                    location,
+                    new Organizer("Temp Organizer", "org@example.com", "", "", null),
+                    new ArrayList<>(),
+                    new ArrayList<>(),
+                    null
+            );
+
+            // Set the optional waiting list capacity
+            newEvent.setWaitingListCapacity(capacity);
+
+            // Add to system and database
+            addEventToSystem(newEvent);
+            DB.addEvent(newEvent);
+
+            // Notify the current fragment if it's a home fragment
+            Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
+            if (currentFragment instanceof HomeFragment) {
+                ((HomeFragment) currentFragment).addEvent(newEvent);
+            } else if (currentFragment instanceof OrganizerHomeFragment) {
+                ((OrganizerHomeFragment) currentFragment).addEvent(newEvent);
+            }
+
+            Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
+        });
+        dialog.show(getSupportFragmentManager(), "CreateEventDialog");
+    }
+
+    public void onRoleSelected(String role) {
+        currentRole = role;
+        isLoggedIn = false;
+        bottomNavigationView.setVisibility(View.GONE);
+        replaceFragment(new LoginFragment());
+    }
+
+    /**
+     * Call this after successful login to open the correct first home page for the selected role.
+     */
+    public void onLoginSuccess() {
+        isLoggedIn = true;
+        bottomNavigationView.setVisibility(View.VISIBLE);
+
+        if ("ORGANIZER".equals(currentRole)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
+            replaceFragment(new OrganizerHomeFragment());
+        } else if ("ADMIN".equals(currentRole)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new AdminHomeFragment());
+        } else {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new HomeFragment());
+        }
+    }
+
+    /**
+     * Signup page helper.
+     */
+    public void openSignupFragment() {
+        replaceFragment(new SignupFragment());
+    }
+
+    /**
+     * Login page helper.
+     */
+    public void openLoginFragment() {
+        replaceFragment(new LoginFragment());
+    }
+
+    /**
+     * Entrant account edit/profile management page.
+     */
+    public void openUserProfileFragment() {
+        replaceFragment(new UserProfileFragment());
+    }
+
+    /**
+     * Organizer helper if you want to use the provided OrganizerAddEventFragment
+     * as a full page in addition to the existing create-event dialog.
+     */
+    public void openOrganizerAddEventFragment() {
+        replaceFragment(new OrganizerAddEventFragment());
+    }
+
+    /**
+     * Event details popup helper.
+     */
+    public void showEventDetailsDialog(String eventId,
+                                       String name,
+                                       String description,
+                                       String time,
+                                       String location,
+                                       int attendeeCount,
+                                       ArrayList<String> tags,
+                                       boolean isOrganizerView) {
+        EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
+                eventId,
+                name,
+                description,
+                time,
+                location,
+                attendeeCount,
+                tags,
+                isOrganizerView
+        );
+        dialog.show(getSupportFragmentManager(), "EventDetailsDialog");
+    }
+
+    /**
+     * Waiting list page helper.
+     */
+    public void openWaitingListFragment(String eventId) {
+        replaceFragment(WaitingListFragment.newInstance(eventId));
+    }
+
+    private void replaceFragment(Fragment fragment) {
         if (fragment != null) {
-            fragmentManager.beginTransaction().replace(R.id.fragment_container, fragment).commit();
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
         }
     }
 
@@ -119,55 +271,6 @@ public class MainActivity extends AppCompatActivity {
         DB.shutdown();
         super.onDestroy();
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // ================== LOTS OF CODE HERE ====================
-
 
     // =========================================================
     // US 01.02.01
@@ -221,11 +324,34 @@ public class MainActivity extends AppCompatActivity {
 
     // =========================================================
     // US 01.02.03
-    // Add one event history record
+    // View user event history
     // =========================================================
+    public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
+        try {
+            return userProfileService.getUserEventHistory(deviceId);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+            return new ArrayList<>();
+        }
+    }
+
+    /**
+     * Optional helper if you still want to force a status update on an event.
+     */
     public void addUserEventHistory(String deviceId, Event event, Status status) {
         try {
             userProfileService.addEventHistory(deviceId, event, status);
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
+        }
+    }
+
+    /**
+     * Optional helper to overwrite/update a user's event status.
+     */
+    public void upsertUserEventHistory(String deviceId, Event event, Status status) {
+        try {
+            userProfileService.upsertEventHistory(deviceId, event, status);
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
         }
@@ -237,7 +363,7 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public void deleteUserProfile(String deviceId) {
         try {
-            userProfileService.deleteUserProfile(deviceId, allEvents);
+            userProfileService.deleteUserProfile(deviceId);
             Toast.makeText(this, "Profile deleted successfully", Toast.LENGTH_SHORT).show();
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
@@ -279,8 +405,6 @@ public class MainActivity extends AppCompatActivity {
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return null;
-        } catch (WriterException e) {
-            throw new RuntimeException(e);
         }
     }
 
@@ -349,7 +473,7 @@ public class MainActivity extends AppCompatActivity {
     // Utility methods
     // =========================================================
     public User getUserByDeviceId(String deviceId) {
-        return userRepository.findByDeviceId(deviceId);
+        return DB.getUser(deviceId);
     }
 
     public void addEventToSystem(Event event) {
@@ -366,6 +490,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public List<Event> getAllEvents() {
+        ArrayList<Event> dbEvents = DB.getAllEvents();
+        if (dbEvents != null && !dbEvents.isEmpty()) {
+            return new ArrayList<>(dbEvents);
+        }
         return new ArrayList<>(allEvents);
     }
 
@@ -387,7 +515,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean joinWaitingList(User user, Event event) {
         try {
-
             boolean joined = waitingListService.joinWaitingList(user, event);
 
             if (joined) {
@@ -397,7 +524,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return joined;
-
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;
@@ -410,7 +536,6 @@ public class MainActivity extends AppCompatActivity {
     // =========================================================
     public boolean leaveWaitingList(User user, Event event) {
         try {
-
             boolean removed = waitingListService.leaveWaitingList(user, event);
 
             if (removed) {
@@ -420,7 +545,6 @@ public class MainActivity extends AppCompatActivity {
             }
 
             return removed;
-
         } catch (IllegalArgumentException e) {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
             return false;

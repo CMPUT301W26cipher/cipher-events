@@ -1,5 +1,6 @@
 package com.example.cipher_events.user;
 
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.user.Status;
@@ -7,7 +8,6 @@ import com.example.cipher_events.user.Status;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 
 /**
  * Service for:
@@ -17,12 +17,16 @@ import java.util.Optional;
  * US 01.02.04 Delete profile
  */
 public class UserProfileService {
-    private final UserRepository userRepository;
+    private final DBProxy db;
     private final UserEventHistoryRepository historyRepository;
 
-    public UserProfileService(UserRepository userRepository,
-                              UserEventHistoryRepository historyRepository) {
-        this.userRepository = userRepository;
+    public UserProfileService() {
+        this.db = DBProxy.getInstance();
+        this.historyRepository = new UserEventHistoryRepository();
+    }
+
+    public UserProfileService(DBProxy db, UserEventHistoryRepository historyRepository) {
+        this.db = db;
         this.historyRepository = historyRepository;
     }
 
@@ -46,7 +50,7 @@ public class UserProfileService {
                 normalizeOptional(profilePictureURL)
         );
 
-        userRepository.save(user);
+        db.addUser(user);
         return user;
     }
 
@@ -63,7 +67,7 @@ public class UserProfileService {
             throw new IllegalArgumentException("Device ID is required.");
         }
 
-        User existingUser = userRepository.findByDeviceId(deviceId);
+        User existingUser = db.getUser(deviceId);
         if (existingUser == null) {
             throw new IllegalArgumentException("User not found.");
         }
@@ -76,7 +80,7 @@ public class UserProfileService {
         existingUser.setPhoneNumber(normalizeOptional(newPhoneNumber));
         existingUser.setProfilePictureURL(normalizeOptional(newProfilePictureURL));
 
-        userRepository.save(existingUser);
+        db.updateUser(existingUser);
         return existingUser;
     }
 
@@ -85,64 +89,13 @@ public class UserProfileService {
      * Record one event status for a user.
      * Example: WAITLISTED, SELECTED, NOT_SELECTED, REGISTERED, CANCELLED.
      */
-    public void addEventHistory(String deviceId, Event event, Status status) {
-        if (deviceId == null || deviceId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Device ID is required.");
-        }
-        if (!userRepository.exists(deviceId)) {
-            throw new IllegalArgumentException("User not found.");
-        }
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-        if (status == null) {
-            throw new IllegalArgumentException("Selection status cannot be null.");
-        }
-
-        UserEventHistoryRecord record = new UserEventHistoryRecord(event, status);
-        historyRepository.addRecord(deviceId, record);
-    }
-    /**
-    * Optional helper:
-    * update a user's event status if the event already exists in history;
-    * otherwise add a new history record.
-    */
-    public void upsertEventHistory(String deviceId, Event event, Status newStatus) {
-        if (deviceId == null || deviceId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Device ID is required.");
-        }
-        if (!userRepository.exists(deviceId)) {
-            throw new IllegalArgumentException("User not found.");
-        }
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-        if (newStatus == null) {
-            throw new IllegalArgumentException("Selection status cannot be null.");
-        }
-
-        List<UserEventHistoryRecord> records = historyRepository.getHistory(deviceId);
-        for (UserEventHistoryRecord record : records) {
-            if (record.getEvent() == event ||
-                    (record.getEvent() != null
-                            && record.getEvent().getName() != null
-                            && record.getEvent().getName().equals(event.getName()))) {
-                record.setStatus(newStatus);
-                return;
-            }
-        }
-
-        addEventHistory(deviceId, event, newStatus);
-    }
-    /**
-     * US 01.02.03
-     * Get the user's full event history.
-     */
     public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
             throw new IllegalArgumentException("Device ID is required.");
         }
-        if (!userRepository.exists(deviceId)) {
+
+        User user = db.getUser(deviceId);
+        if (user == null) {
             throw new IllegalArgumentException("User not found.");
         }
 
@@ -150,60 +103,146 @@ public class UserProfileService {
     }
 
     /**
-     * US 01.02.04
-     * Delete user profile and remove user from all provided events/history.
+     * Optional helper if you still want to manually add a user to an event history state.
+     * This updates the actual Event lists in Firestore-backed storage.
      */
-    public void deleteUserProfile(String deviceId, List<Event> allEvents) {
+    public void addEventHistory(String deviceId, Event event, Status status) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
             throw new IllegalArgumentException("Device ID is required.");
         }
+        if (event == null) {
+            throw new IllegalArgumentException("Event is required.");
+        }
+        if (status == null) {
+            throw new IllegalArgumentException("Status is required.");
+        }
 
-        User user = userRepository.findByDeviceId(deviceId);
+        User user = db.getUser(deviceId);
         if (user == null) {
             throw new IllegalArgumentException("User not found.");
         }
 
-        removeUserFromAllEvents(user, allEvents);
-        historyRepository.clearHistory(deviceId);
-        userRepository.delete(deviceId);
-    }
-
-    private void removeUserFromAllEvents(User user, List<Event> allEvents) {
-        if (allEvents == null) {
-            return;
+        Event storedEvent = db.getEvent(event.getEventID());
+        if (storedEvent == null) {
+            throw new IllegalArgumentException("Event not found.");
         }
 
-        for (Event event : allEvents) {
-            if (event == null) {
-                continue;
+        ensureLists(storedEvent);
+        removeUserFromEventLists(storedEvent, deviceId);
+
+        switch (status) {
+            case WAITLISTED:
+                if (!containsUser(storedEvent.getEntrants(), deviceId)) {
+                    storedEvent.getEntrants().add(user);
+                }
+                break;
+
+            case REGISTERED:
+            case SELECTED:
+                if (!containsUser(storedEvent.getAttendees(), deviceId)) {
+                    storedEvent.getAttendees().add(user);
+                }
+                break;
+
+            case NOT_SELECTED:
+            case CANCELLED:
+                // Current Event model has no dedicated list for these states.
+                // User is simply removed from entrant/attendee lists.
+                break;
+        }
+
+        db.updateEvent(storedEvent);
+    }
+
+    /**
+     * Optional helper to update/overwrite the user's status in a specific event.
+     */
+    public void upsertEventHistory(String deviceId, Event event, Status status) {
+        addEventHistory(deviceId, event, status);
+    }
+
+    /**
+     * US 01.02.04
+     * Delete user profile and remove user from all provided events/history.
+     */
+    public void deleteUserProfile(String deviceId) {
+        if (deviceId == null || deviceId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Device ID is required.");
+        }
+
+        User user = db.getUser(deviceId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found.");
+        }
+
+        ArrayList<Event> allEvents = db.getAllEvents();
+        if (allEvents != null) {
+            for (Event event : allEvents) {
+                if (event == null) {
+                    continue;
+                }
+
+                ensureLists(event);
+                boolean changed = false;
+
+                changed |= removeUserFromList(event.getEntrants(), deviceId);
+                changed |= removeUserFromList(event.getAttendees(), deviceId);
+
+                if (changed) {
+                    db.updateEvent(event);
+                }
             }
+        }
 
-            removeUserFromList(user, event.getEntrants());
-            removeUserFromList(user, event.getAttendees());
+        db.deleteUser(deviceId);
+    }
+
+    private void ensureLists(Event event) {
+        if (event.getEntrants() == null) {
+            event.setEntrants(new ArrayList<>());
+        }
+        if (event.getAttendees() == null) {
+            event.setAttendees(new ArrayList<>());
         }
     }
 
-    private void removeUserFromList(User user, ArrayList<User> users) {
-        if (users == null) {
-            return;
+    private void removeUserFromEventLists(Event event, String deviceId) {
+        removeUserFromList(event.getEntrants(), deviceId);
+        removeUserFromList(event.getAttendees(), deviceId);
+    }
+
+    private boolean removeUserFromList(ArrayList<User> users, String deviceId) {
+        if (users == null || deviceId == null) {
+            return false;
         }
 
+        boolean removed = false;
         Iterator<User> iterator = users.iterator();
         while (iterator.hasNext()) {
             User current = iterator.next();
-            if (current != null && sameUser(current, user)) {
+            if (current != null
+                    && current.getDeviceID() != null
+                    && current.getDeviceID().equals(deviceId)) {
                 iterator.remove();
+                removed = true;
             }
         }
+        return removed;
     }
 
-    private boolean sameUser(User a, User b) {
-        if (a == null || b == null) {
+    private boolean containsUser(ArrayList<User> users, String deviceId) {
+        if (users == null || deviceId == null) {
             return false;
         }
-        return a.getDeviceID() != null
-                && b.getDeviceID() != null
-                && a.getDeviceID().equals(b.getDeviceID());
+
+        for (User user : users) {
+            if (user != null
+                    && user.getDeviceID() != null
+                    && user.getDeviceID().equals(deviceId)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private String normalizeOptional(String value) {

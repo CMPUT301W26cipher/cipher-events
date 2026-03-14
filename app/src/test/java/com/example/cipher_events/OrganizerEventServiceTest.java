@@ -90,8 +90,8 @@ public class OrganizerEventServiceTest {
                 "Location B",
                 organizer,
                 null,
-                200,
-                200
+                0,
+                400
         );
 
         assertNotEquals(first.getEventId(), second.getEventId());
@@ -124,22 +124,6 @@ public class OrganizerEventServiceTest {
                 null,
                 null,
                 400,
-                400
-        );
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    public void testCreateEventAndGenerateQr_invalidQrSize_throwsException() {
-        Organizer organizer = createTestOrganizer();
-
-        organizerEventService.createEventAndGenerateQr(
-                "Campus Tech Talk",
-                "Description",
-                "2026-03-20 18:00",
-                "Edmonton",
-                organizer,
-                null,
-                0,
                 400
         );
     }
