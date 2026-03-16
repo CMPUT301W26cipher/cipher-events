@@ -12,6 +12,7 @@ import android.view.ViewGroup;
 import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 
 import java.util.ArrayList;
@@ -94,7 +95,8 @@ public class HomeFragment extends Fragment {
         // Add events created during this session
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
-            upcomingEvents.addAll(activity.getAllEvents());
+            DBProxy db = DBProxy.getInstance();
+            upcomingEvents.addAll(db.getAllEvents());
         }
     }
 }
