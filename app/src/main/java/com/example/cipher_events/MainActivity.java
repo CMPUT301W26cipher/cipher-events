@@ -1,58 +1,37 @@
 package com.example.cipher_events;
 
-import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
 import android.widget.Toast;
-
 import androidx.activity.EdgeToEdge;
-import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
-
-import com.example.cipher_events.database.Admin;
-import com.example.cipher_events.database.AdminDB;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
-import com.example.cipher_events.database.User;
-import com.example.cipher_events.database.UserDB;
-import com.example.cipher_events.organizer.OrganizerEventCreationResult;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.CreateEventDialogFragment;
-import com.example.cipher_events.pages.EventDetailsDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
 import com.example.cipher_events.pages.LoginFragment;
-import com.example.cipher_events.pages.OrganizerAddEventFragment;
 import com.example.cipher_events.pages.OrganizerHistoryFragment;
 import com.example.cipher_events.pages.OrganizerHomeFragment;
 import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
 import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
-import com.example.cipher_events.pages.SignupFragment;
-import com.example.cipher_events.pages.UserProfileFragment;
-import com.example.cipher_events.pages.WaitingListFragment;
 import com.example.cipher_events.user.EntrantEventService;
-import com.example.cipher_events.user.EntrantQrScanResult;
-import com.example.cipher_events.user.Status;
-import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
-import com.example.cipher_events.user.UserRepository;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
-import com.google.android.material.navigation.NavigationBarView;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     //
@@ -68,9 +47,6 @@ public class MainActivity extends AppCompatActivity {
     private EntrantEventService entrantEventService;
     private WaitingListService waitingListService;
 
-    // Optional local cache for UI convenience
-    private final List<Event> allEvents = new ArrayList<>();
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -79,11 +55,11 @@ public class MainActivity extends AppCompatActivity {
 
         fragmentManager = getSupportFragmentManager();
 
-        //User-related services
+        // User-related services
         UserEventHistoryRepository historyRepository = new UserEventHistoryRepository();
         userProfileService = new UserProfileService();
 
-        //QR / Event-related services
+        // QR / Event-related services
         organizerEventService = new OrganizerEventService();
         entrantEventService = new EntrantEventService();
 
@@ -153,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
             newEvent.setWaitingListCapacity(capacity);
 
             // Add to system and database
-            addEventToSystem(newEvent);
             DB.addEvent(newEvent);
 
             // Notify the current fragment if it's a home fragment
@@ -176,9 +151,21 @@ public class MainActivity extends AppCompatActivity {
         replaceFragment(new LoginFragment());
     }
 
-    /**
-     * Call this after successful login to open the correct first home page for the selected role.
-     */
+    private void replaceFragment(Fragment fragment) {
+        if (fragment != null) {
+            fragmentManager.beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .commit();
+        }
+    }
+
+    @Override
+    protected void onDestroy () {
+        DB.shutdown();
+        super.onDestroy();
+    }
+
+    // Call this after successful login to open the correct first home page for the selected role.
     public void onLoginSuccess() {
         isLoggedIn = true;
         bottomNavigationView.setVisibility(View.VISIBLE);
@@ -196,390 +183,5 @@ public class MainActivity extends AppCompatActivity {
             bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
             replaceFragment(new HomeFragment());
         }
-    }
-
-    /**
-     * Signup page helper.
-     */
-    public void openSignupFragment() {
-        replaceFragment(new SignupFragment());
-    }
-
-    /**
-     * Login page helper.
-     */
-    public void openLoginFragment() {
-        replaceFragment(new LoginFragment());
-    }
-
-    /**
-     * Entrant account edit/profile management page.
-     */
-    public void openUserProfileFragment() {
-        replaceFragment(new UserProfileFragment());
-    }
-
-    /**
-     * Organizer helper if you want to use the provided OrganizerAddEventFragment
-     * as a full page in addition to the existing create-event dialog.
-     */
-    public void openOrganizerAddEventFragment() {
-        replaceFragment(new OrganizerAddEventFragment());
-    }
-
-    /**
-     * Event details popup helper.
-     */
-    public void showEventDetailsDialog(String eventId,
-                                       String name,
-                                       String description,
-                                       String time,
-                                       String location,
-                                       int attendeeCount,
-                                       ArrayList<String> tags,
-                                       boolean isOrganizerView) {
-        EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
-                eventId,
-                name,
-                description,
-                time,
-                location,
-                attendeeCount,
-                tags,
-                isOrganizerView
-        );
-        dialog.show(getSupportFragmentManager(), "EventDetailsDialog");
-    }
-
-    /**
-     * Waiting list page helper.
-     */
-    public void openWaitingListFragment(String eventId) {
-        replaceFragment(WaitingListFragment.newInstance(eventId));
-    }
-
-    private void replaceFragment(Fragment fragment) {
-        if (fragment != null) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .commit();
-        }
-    }
-
-    @Override
-    protected void onDestroy () {
-        DB.shutdown();
-        super.onDestroy();
-    }
-
-    // =========================================================
-    // US 01.02.01
-    // Create user profile
-    // =========================================================
-    public User createUserProfile(String name,
-                                  String email,
-                                  String password,
-                                  String phoneNumber,
-                                  String profilePictureURL) {
-        try {
-            User user = userProfileService.createUserProfile(
-                    name,
-                    email,
-                    password,
-                    phoneNumber,
-                    profilePictureURL
-            );
-            Toast.makeText(this, "Profile created successfully", Toast.LENGTH_SHORT).show();
-            return user;
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return null;
-        }
-    }
-
-    // =========================================================
-    // US 01.02.02
-    // Update existing user profile
-    // =========================================================
-    public User updateUserProfile(String deviceId,
-                                  String newName,
-                                  String newEmail,
-                                  String newPhoneNumber,
-                                  String newProfilePictureURL) {
-        try {
-            User updatedUser = userProfileService.updateUserProfile(
-                    deviceId,
-                    newName,
-                    newEmail,
-                    newPhoneNumber,
-                    newProfilePictureURL
-            );
-            Toast.makeText(this, "Profile updated successfully", Toast.LENGTH_SHORT).show();
-            return updatedUser;
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return null;
-        }
-    }
-
-    // =========================================================
-    // US 01.02.03
-    // View user event history
-    // =========================================================
-    public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
-        try {
-            return userProfileService.getUserEventHistory(deviceId);
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Optional helper if you still want to force a status update on an event.
-     */
-    public void addUserEventHistory(String deviceId, Event event, Status status) {
-        try {
-            userProfileService.addEventHistory(deviceId, event, status);
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    /**
-     * Optional helper to overwrite/update a user's event status.
-     */
-    public void upsertUserEventHistory(String deviceId, Event event, Status status) {
-        try {
-            userProfileService.upsertEventHistory(deviceId, event, status);
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    // =========================================================
-    // US 01.02.04
-    // Delete profile
-    // =========================================================
-    public void deleteUserProfile(String deviceId) {
-        try {
-            userProfileService.deleteUserProfile(deviceId);
-            Toast.makeText(this, "Profile deleted successfully", Toast.LENGTH_SHORT).show();
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    // =========================================================
-    // US 02.01.01
-    // Organizer creates event and generates QR code
-    // =========================================================
-    public OrganizerEventCreationResult createEventAndGenerateQr(String name,
-                                                                 String description,
-                                                                 String time,
-                                                                 String location,
-                                                                 Organizer organizer,
-                                                                 String posterPictureURL,
-                                                                 int qrWidth,
-                                                                 int qrHeight) {
-        try {
-            OrganizerEventCreationResult result = organizerEventService.createEventAndGenerateQr(
-                    name,
-                    description,
-                    time,
-                    location,
-                    organizer,
-                    posterPictureURL,
-                    qrWidth,
-                    qrHeight
-            );
-
-            // Keep a local reference for profile deletion/history operations
-            Event createdEvent = result.getEvent();
-            if (createdEvent != null && !allEvents.contains(createdEvent)) {
-                allEvents.add(createdEvent);
-            }
-
-            Toast.makeText(this, "Event created and QR generated", Toast.LENGTH_SHORT).show();
-            return result;
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return null;
-        }
-    }
-
-    /**
-     * Convenience helper if you only want the QR bitmap in UI code.
-     */
-    public String createEventAndGetQrPayload(String name,
-                                             String description,
-                                             String time,
-                                             String location,
-                                             Organizer organizer,
-                                             String posterPictureURL,
-                                             int qrWidth,
-                                             int qrHeight) {
-        OrganizerEventCreationResult result = createEventAndGenerateQr(
-                name,
-                description,
-                time,
-                location,
-                organizer,
-                posterPictureURL,
-                qrWidth,
-                qrHeight
-        );
-
-        return result == null ? null : result.getQrPayload();
-    }
-
-    public android.graphics.Bitmap generateQrBitmapFromPayload(String qrPayload, int width, int height) {
-        try {
-            return com.example.cipher_events.organizer.EventQrCodeGenerator
-                    .generateQrBitmap(qrPayload, width, height);
-        } catch (Exception e) {
-            Toast.makeText(this, "Failed to generate QR bitmap", Toast.LENGTH_LONG).show();
-            return null;
-        }
-    }
-
-    // =========================================================
-    // US 01.06.01
-    // Entrant scans QR and views event details
-    // =========================================================
-    public EntrantQrScanResult getEventDetailsFromScannedQr(String scannedQrText) {
-        try {
-            return entrantEventService.getEventDetailsFromScannedQr(scannedQrText);
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return null;
-        }
-    }
-
-    // =========================================================
-    // US 01.06.02
-    // Entrant signs up for event from event details
-    // =========================================================
-    public void signUpForEventFromDetails(String eventId, User entrant) {
-        try {
-            entrantEventService.signUpForEventFromDetails(eventId, entrant);
-            Toast.makeText(this, "Successfully joined the event waiting list", Toast.LENGTH_SHORT).show();
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-        }
-    }
-
-    // =========================================================
-    // Utility methods
-    // =========================================================
-    public User getUserByDeviceId(String deviceId) {
-        return DB.getUser(deviceId);
-    }
-
-    public void addEventToSystem(Event event) {
-        if (event != null && !allEvents.contains(event)) {
-            allEvents.add(event);
-        }
-    }
-
-    public void setAllEvents(List<Event> events) {
-        allEvents.clear();
-        if (events != null) {
-            allEvents.addAll(events);
-        }
-    }
-
-    public List<Event> getAllEvents() {
-        ArrayList<Event> dbEvents = DB.getAllEvents();
-        if (dbEvents != null && !dbEvents.isEmpty()) {
-            return new ArrayList<>(dbEvents);
-        }
-        return new ArrayList<>(allEvents);
-    }
-
-    public UserProfileService getUserProfileService() {
-        return userProfileService;
-    }
-
-    public OrganizerEventService getOrganizerEventService() {
-        return organizerEventService;
-    }
-
-    public EntrantEventService getEntrantEventService() {
-        return entrantEventService;
-    }
-
-    // =========================================================
-    // US 01.01.01
-    // Join Waiting List
-    // =========================================================
-    public boolean joinWaitingList(User user, Event event) {
-        try {
-            boolean joined = waitingListService.joinWaitingList(user, event);
-
-            if (joined) {
-                Toast.makeText(this, "Successfully joined waiting list", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "Unable to join waiting list", Toast.LENGTH_LONG).show();
-            }
-
-            return joined;
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
-
-    // =========================================================
-    // US 01.01.02
-    // Leave Waiting List
-    // =========================================================
-    public boolean leaveWaitingList(User user, Event event) {
-        try {
-            boolean removed = waitingListService.leaveWaitingList(user, event);
-
-            if (removed) {
-                Toast.makeText(this, "Removed from waiting list", Toast.LENGTH_SHORT).show();
-            } else {
-                Toast.makeText(this, "User not in waiting list", Toast.LENGTH_LONG).show();
-            }
-
-            return removed;
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_LONG).show();
-            return false;
-        }
-    }
-
-    // =========================================================
-    // US 01.05.04
-    // View Waiting List Count
-    // =========================================================
-    public int getWaitingListCount(Event event) {
-        return waitingListService.getWaitingListCount(event);
-    }
-
-    // =========================================================
-    // US 02.02.01
-    // View Waiting List
-    // =========================================================
-    public List<User> getWaitingList(Event event) {
-        return waitingListService.getWaitingList(event);
-    }
-
-    // =========================================================
-    // US 02.03.01
-    // Set Waiting List Capacity
-    // =========================================================
-    public void setWaitingListCapacity(Event event, Integer capacity) {
-        waitingListService.setWaitingListCapacity(event, capacity);
-    }
-
-    // =========================================================
-    // US 02.07.01
-    // Notify Waiting List Entrants (Placeholder)
-    // =========================================================
-    public void notifyAllWaitingListEntrants(Event event, String message) {
-        waitingListService.notifyAllEntrants(event, message);
     }
 }

@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 
 import java.util.ArrayList;
@@ -82,7 +83,8 @@ public class OrganizerHomeFragment extends Fragment {
         // Add events created during this session
         MainActivity activity = (MainActivity) getActivity();
         if (activity != null) {
-            organizedEvents.addAll(activity.getAllEvents());
+            DBProxy db = DBProxy.getInstance();
+            organizedEvents.addAll(db.getAllEvents());
         }
     }
 }
