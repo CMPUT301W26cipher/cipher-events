@@ -4,6 +4,10 @@ import com.example.cipher_events.database.Organizer;
 
 import java.util.Date;
 
+/*
+ * Represents a message.
+ * Each message has a date, title, body, and organizer.
+ */
 public class Message {
     private Date date;
     private String title;
