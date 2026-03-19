@@ -1,6 +1,9 @@
 package com.example.cipher_events.database;
 
-import java.util.UUID;
+import android.provider.Settings;
+
+import com.example.cipher_events.App;
+
 
 /*
  * Represents an organizer.
@@ -17,7 +20,10 @@ public class Organizer {
 
     // Constructor; pass null for optional fields if not provided
     public Organizer(String name, String email, String password, String phoneNumber, String profilePictureURL) {
-        this.deviceID = UUID.randomUUID().toString();
+        this.deviceID = Settings.Secure.getString(
+                App.getContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
         this.name = name;
         this.email = email;
         this.password = password;
