@@ -36,9 +36,9 @@ public class CreateEventDialogFragment extends DialogFragment {
         EditText etDate = view.findViewById(R.id.et_event_date);
         EditText etTime = view.findViewById(R.id.et_event_time);
         EditText etLocation = view.findViewById(R.id.et_event_location);
-        EditText etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
+        EditText etWaitingListCapacity = view.findViewById(R.id.et_waiting_list_capacity);
         EditText etDescription = view.findViewById(R.id.et_event_description);
-        EditText etCapacity = view.findViewById(R.id.et_event_capacity);
+        EditText etEventCapacity = view.findViewById(R.id.et_event_capacity);
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
 
         btnAddEvent.setOnClickListener(v -> {
@@ -47,7 +47,9 @@ public class CreateEventDialogFragment extends DialogFragment {
             String time = etTime.getText().toString();
             String location = etLocation.getText().toString();
             String description = etDescription.getText().toString();
-            String capacityStr = etCapacity != null ? etCapacity.getText().toString() : "";
+            
+            // Map the waiting list capacity to the listener's capacity parameter
+            String capacityStr = etWaitingListCapacity.getText().toString();
             Integer capacity = null;
             if (!capacityStr.isEmpty()) {
                 try {
