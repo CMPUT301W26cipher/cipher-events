@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentManager;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.CreateEventDialogFragment;
@@ -36,6 +37,7 @@ import java.util.ArrayList;
 public class MainActivity extends AppCompatActivity {
     //
     DBProxy DB = DBProxy.getInstance();
+    Notifier notifier;
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
 
@@ -53,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
+        Notifier notifier = Notifier.getInstance();
         fragmentManager = getSupportFragmentManager();
 
         // User-related services
@@ -149,6 +152,7 @@ public class MainActivity extends AppCompatActivity {
         isLoggedIn = false;
         bottomNavigationView.setVisibility(View.GONE);
         replaceFragment(new LoginFragment());
+        onLoginSuccess();
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -162,6 +166,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy () {
         DB.shutdown();
+        notifier.stopListener();
         super.onDestroy();
     }
 
