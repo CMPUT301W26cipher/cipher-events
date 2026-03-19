@@ -18,7 +18,8 @@ import com.example.cipher_events.R;
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
-        void onEventCreated(String title, String date, String time, String location, String description);
+        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity);
+
     }
 
     private CreateEventListener listener;
@@ -34,9 +35,11 @@ public class CreateEventDialogFragment extends DialogFragment {
 
         EditText etTitle = view.findViewById(R.id.et_event_title);
         EditText etDate = view.findViewById(R.id.et_event_date);
-        EditText etTime = view.findViewById(R.id.et_event_time);x`
+        EditText etTime = view.findViewById(R.id.et_event_time);
         EditText etLocation = view.findViewById(R.id.et_event_location);
         EditText etDescription = view.findViewById(R.id.et_event_description);
+
+        EditText etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
 
         btnAddEvent.setOnClickListener(v -> {
@@ -45,9 +48,16 @@ public class CreateEventDialogFragment extends DialogFragment {
             String time = etTime.getText().toString();
             String location = etLocation.getText().toString();
             String description = etDescription.getText().toString();
+            String capacityStr = etCapacity != null ? etCapacity.getText().toString() : "";
+            Integer capacity = null;
+            if(capacityStr.isEmpty()) {
+                try {
+                    capacity = Integer.parseInt(capacityStr);
+                } catch (NumberFormatException ignored) {}
+            }
 
             if (listener != null) {
-                listener.onEventCreated(title, date, time, location, description);
+                listener.onEventCreated(title, date, time, location, description, capacity);
             }
             dismiss();
         });
