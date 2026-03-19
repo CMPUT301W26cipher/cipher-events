@@ -38,7 +38,6 @@ public class CreateEventDialogFragment extends DialogFragment {
         EditText etTime = view.findViewById(R.id.et_event_time);
         EditText etLocation = view.findViewById(R.id.et_event_location);
         EditText etDescription = view.findViewById(R.id.et_event_description);
-
         EditText etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
 
