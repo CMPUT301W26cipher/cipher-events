@@ -22,7 +22,7 @@ import java.util.ArrayList;
  * Displays a popup upon clicking an event
  * pop up displays full event details:
  * - Event Title
- * - Number of attendees
+ * - Number of people in waitlist
  * - Event Description
  * - Date and Location
  * - Tags
@@ -40,10 +40,10 @@ public class EventDetailsDialogFragment extends DialogFragment {
             String description,
             String time,
             String location,
-            int attendeeCount,
+            int waitlistCount,
             ArrayList<String> tags
     ) {
-        return newInstance(eventId, name, description, time, location, attendeeCount, tags, false);
+        return newInstance(eventId, name, description, time, location, waitlistCount, tags, false);
     }
 
     public static EventDetailsDialogFragment newInstance(
@@ -52,7 +52,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
             String description,
             String time,
             String location,
-            int attendeeCount,
+            int waitlistCount,
             ArrayList<String> tags,
             boolean isOrganizerView
     ) {
@@ -63,7 +63,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
         args.putString("description", description);
         args.putString("time", time);
         args.putString("location", location);
-        args.putInt("attendeeCount", attendeeCount);
+        args.putInt("waitlistCount", waitlistCount);
         args.putStringArrayList("tags", tags);
         args.putBoolean("isOrganizerView", isOrganizerView);
         fragment.setArguments(args);
@@ -85,7 +85,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
 
         TextView title = view.findViewById(R.id.detail_title);
         TextView attendees = view.findViewById(R.id.detail_attendees);
-        TextView description = view.findViewById(R.id.detail_description);
+        //TextView description = view.findViewById(R.id.detail_description);
         TextView dateLocation = view.findViewById(R.id.detail_date_location);
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
         TextView lotteryHeader = view.findViewById(R.id.detail_lottery_header);
@@ -96,8 +96,8 @@ public class EventDetailsDialogFragment extends DialogFragment {
         if (args != null) {
             eventId = args.getString("eventId");
             title.setText(args.getString("name"));
-            attendees.setText(args.getInt("attendeeCount") + " people attending");
-            description.setText(args.getString("description"));
+            attendees.setText(args.getInt("waitlistCount") + " people in waitlist");
+            //description.setText(args.getString("description"));
             dateLocation.setText(args.getString("location") + " • " + args.getString("time"));
             isOrganizerView = args.getBoolean("isOrganizerView", false);
 
@@ -133,7 +133,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
                         .commit();
             });
         } else {
-            actionButton.setText("Scan to Join Waitlist");
+            actionButton.setText("Scan Info");
         }
 
         // Lottery guidelines text

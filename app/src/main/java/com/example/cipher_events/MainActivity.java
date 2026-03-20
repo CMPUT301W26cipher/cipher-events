@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     return false; // Show as a popup instead of switching fragments
                 } else if (id == R.id.menu_history) {
                     selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
-                    Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
                 } else if (id == R.id.menu_profile) {
                     selectedFragment = new OrganizerProfileFragment();
                 }
@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity {
                 ((OrganizerHomeFragment) currentFragment).addEvent(newEvent);
             }
 
-            Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
         });
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
