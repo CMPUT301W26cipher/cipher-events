@@ -35,7 +35,7 @@ public class EventCommentsFragment extends Fragment {
     private EditText etCommentInput;
     private Button btnPostComment;
 
-    private com.example.cipher_events.adapter.EventCommentAdapter adapter;
+    private com.example.cipher_events.adapters.EventCommentAdapter adapter;
     private EntrantCommentService commentService;
 
     public static EventCommentsFragment newInstance(String eventID, String deviceID) {
@@ -71,7 +71,7 @@ public class EventCommentsFragment extends Fragment {
         etCommentInput = view.findViewById(R.id.etCommentInput);
         btnPostComment = view.findViewById(R.id.btnPostComment);
 
-        adapter = new com.example.cipher_events.adapter.EventCommentAdapter();
+        adapter = new com.example.cipher_events.adapters.EventCommentAdapter();
         rvComments.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvComments.setAdapter(adapter);
 

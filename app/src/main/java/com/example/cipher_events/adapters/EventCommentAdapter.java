@@ -1,4 +1,4 @@
-package com.example.cipher_events.adapter;
+package com.example.cipher_events.adapters;
 
 import android.view.LayoutInflater;
 import android.view.View;
