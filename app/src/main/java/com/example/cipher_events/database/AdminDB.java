@@ -43,13 +43,15 @@ public class AdminDB {
                     Log.w(TAG, "Listen failed.", error);
                     return;
                 }
-                if (value != null && !value.isEmpty()) {
+                if (value != null) {
                     admins.clear();
                     for (DocumentSnapshot doc : value) {
                         Admin admin = doc.toObject(Admin.class);
-                        admins.add(admin);
-                        Log.d(TAG, doc.getId() + " => " + doc.getData());
+                        if (admin != null) {
+                            admins.add(admin);
+                        }
                     }
+                    DBProxy.getInstance().notifyListeners();
                 }
             }
         });
@@ -66,7 +68,6 @@ public class AdminDB {
         adminsRef
                 .document(admin.getDeviceID())
                 .set(admin);
-        admins.add(admin);
     }
 
     protected Admin get(String deviceID) {
@@ -85,25 +86,13 @@ public class AdminDB {
     protected void update(Admin admin) {
         String deviceID = admin.getDeviceID();
         adminsRef.document(deviceID).set(admin);
-        for (int i = 0; i < admins.size(); i++) {
-            if (admins.get(i).getDeviceID().equals(deviceID)) {
-                admins.set(i, admin);
-            }
-        }
     }
 
     protected void delete(Admin admin) {
         adminsRef.document(admin.getDeviceID()).delete();
-        admins.remove(admin);
     }
 
     protected void delete(String deviceID) {
         adminsRef.document(deviceID).delete();
-        for (int i = 0; i < admins.size(); i++) {
-            if (admins.get(i).getDeviceID().equals(deviceID)) {
-                admins.remove(i);
-                return;
-            }
-        }
     }
 }
