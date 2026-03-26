@@ -42,13 +42,15 @@ public class UserDB {
                     Log.w(TAG, "Listen failed.", error);
                     return;
                 }
-                if (value != null && !value.isEmpty()) {
+                if (value != null) {
                     users.clear();
                     for (DocumentSnapshot doc : value) {
                         User user = doc.toObject(User.class);
-                        users.add(user);
-                        Log.d(TAG, doc.getId() + " => " + doc.getData());
+                        if (user != null) {
+                            users.add(user);
+                        }
                     }
+                    DBProxy.getInstance().notifyListeners();
                 }
             }
         });
@@ -65,7 +67,6 @@ public class UserDB {
         usersRef
                 .document(user.getDeviceID())
                 .set(user);
-        users.add(user);
     }
 
     protected User get(String deviceID) {
@@ -84,25 +85,13 @@ public class UserDB {
     protected void update(User user) {
         String deviceID = user.getDeviceID();
         usersRef.document(deviceID).set(user);
-        for (int i = 0; i < users.size(); i++) {
-            if (users.get(i).getDeviceID().equals(deviceID)) {
-                users.set(i, user);
-            }
-        }
     }
 
     protected void delete(User user) {
         usersRef.document(user.getDeviceID()).delete();
-        users.remove(user);
     }
 
     protected void delete(String deviceID) {
         usersRef.document(deviceID).delete();
-        for (int i = 0; i < users.size(); i++) {
-            if (users.get(i).getDeviceID().equals(deviceID)) {
-                users.remove(i);
-                return;
-            }
-        }
     }
 }

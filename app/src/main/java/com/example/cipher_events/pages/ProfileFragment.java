@@ -83,15 +83,15 @@ public class ProfileFragment extends Fragment {
         setupEditableField(emailText, emailEdit, "email");
         setupEditableField(locationText, locationEdit, "location");
 
-        Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
-        waitlistBtn.setOnClickListener(v -> {
-            WaitingListFragment fragment = new WaitingListFragment();
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+        //Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
+        //waitlistBtn.setOnClickListener(v -> {
+        //    WaitingListFragment fragment = new WaitingListFragment();
+        //    getParentFragmentManager()
+        //           .beginTransaction()
+        //            .replace(R.id.fragment_container, fragment)
+        //            .addToBackStack(null)
+        //            .commit();
+        //});
 
         // edit profile button
         Button editProfileBtn = view.findViewById(R.id.edit_profile_btn);
