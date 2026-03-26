@@ -27,4 +27,3 @@ firebase-functions = { group = "com.google.firebase", name = "firebase-functions
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
-

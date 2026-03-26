@@ -43,13 +43,15 @@ public class OrganizerDB {
                     Log.w(TAG, "Listen failed.", error);
                     return;
                 }
-                if (value != null && !value.isEmpty()) {
+                if (value != null) {
                     organizers.clear();
                     for (DocumentSnapshot doc : value) {
                         Organizer organizer = doc.toObject(Organizer.class);
-                        organizers.add(organizer);
-                        Log.d(TAG, doc.getId() + " => " + doc.getData());
+                        if (organizer != null) {
+                            organizers.add(organizer);
+                        }
                     }
+                    DBProxy.getInstance().notifyListeners();
                 }
             }
         });
@@ -66,7 +68,6 @@ public class OrganizerDB {
         organizersRef
                 .document(organizer.getDeviceID())
                 .set(organizer);
-        organizers.add(organizer);
     }
 
     protected Organizer get(String deviceID) {
@@ -85,25 +86,13 @@ public class OrganizerDB {
     protected void update(Organizer user) {
         String deviceID = user.getDeviceID();
         organizersRef.document(deviceID).set(user);
-        for (int i = 0; i < organizers.size(); i++) {
-            if (organizers.get(i).getDeviceID().equals(deviceID)) {
-                organizers.set(i, user);
-            }
-        }
     }
 
     protected void delete(Organizer organizer) {
         organizersRef.document(organizer.getDeviceID()).delete();
-        organizers.remove(organizer);
     }
 
     protected void delete(String deviceID) {
         organizersRef.document(deviceID).delete();
-        for (int i = 0; i < organizers.size(); i++) {
-            if (organizers.get(i).getDeviceID().equals(deviceID)) {
-                organizers.remove(i);
-                return;
-            }
-        }
     }
 }
