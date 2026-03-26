@@ -36,4 +36,3 @@ service-account*.json
 
 # Other
 *.DS_Store
-cipher/
