@@ -1,5 +1,7 @@
 package com.example.cipher_events.database;
 
+import com.example.cipher_events.comment.EventComment;
+
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -24,6 +26,7 @@ public class Event {
     private ArrayList<User> cancelledEntrants;
     private ArrayList<User> enrolledEntrants;
 
+    private ArrayList<EventComment> comments;
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
@@ -42,6 +45,8 @@ public class Event {
         this.invitedEntrants = new ArrayList<>();
         this.cancelledEntrants = new ArrayList<>();
         this.enrolledEntrants = new ArrayList<>();
+
+        this.comments = new ArrayList<>();
     }
 
 
@@ -165,5 +170,16 @@ public class Event {
 
     public void setEnrolledEntrants(ArrayList<User> enrolledEntrants) {
         this.enrolledEntrants = enrolledEntrants;
+    }
+
+    public ArrayList<EventComment> getComments() {
+        if (comments == null) {
+            comments = new ArrayList<>();
+        }
+        return comments;
+    }
+
+    public void setComments(ArrayList<EventComment> comments) {
+        this.comments = comments;
     }
 }
