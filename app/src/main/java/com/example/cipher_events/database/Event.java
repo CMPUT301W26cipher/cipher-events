@@ -27,10 +27,11 @@ public class Event {
     private ArrayList<User> enrolledEntrants;
 
     private ArrayList<EventComment> comments;
+    private boolean publicEvent;
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
-    public Event(String name, String description, String time, String location, Organizer organizer, ArrayList<User> entrants, ArrayList<User> attendees, String posterPictureURL) {
+    public Event(String name, String description, String time, String location, Organizer organizer, ArrayList<User> entrants, ArrayList<User> attendees, String posterPictureURL, boolean publicEvent) {
         this.eventID = UUID.randomUUID().toString();
         this.name = name;
         this.description = description;
@@ -40,6 +41,7 @@ public class Event {
         this.entrants = entrants;
         this.attendees = attendees;
         this.posterPictureURL = posterPictureURL;
+        this.publicEvent = publicEvent;
         this.waitingListCapacity = null; // default unlimited
 
         this.invitedEntrants = new ArrayList<>();
@@ -181,5 +183,13 @@ public class Event {
 
     public void setComments(ArrayList<EventComment> comments) {
         this.comments = comments;
+    }
+
+    public boolean isPublicEvent() {
+        return publicEvent;
+    }
+
+    public void setPublicEvent(boolean publicEvent) {
+        this.publicEvent = publicEvent;
     }
 }

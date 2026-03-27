@@ -15,7 +15,8 @@ public class EventTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                true
         );
         assertNotNull(event);
     }
@@ -30,7 +31,8 @@ public class EventTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                true
         );
         assertEquals("Tech Expo 2026", event.getName());
         assertEquals("Discover the future of technology", event.getDescription());
@@ -48,7 +50,8 @@ public class EventTest {
                 null,
                 null,
                 null,
-                null
+                null,
+                false
         );
         event.setName("Tech Expo 2025");
         event.setDescription("Discover the future of technology in 2025");
