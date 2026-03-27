@@ -137,17 +137,32 @@ public class UserProfileService {
                 }
                 break;
 
-            case REGISTERED:
+            case INVITED:
             case SELECTED:
+                if (storedEvent.getInvitedEntrants() == null) {
+                    storedEvent.setInvitedEntrants(new ArrayList<>());
+                }
+                if (!containsUser(storedEvent.getInvitedEntrants(), deviceId)) {
+                    storedEvent.getInvitedEntrants().add(user);
+                }
+                break;
+
+            case REGISTERED:
+            case ACCEPTED:
                 if (!containsUser(storedEvent.getAttendees(), deviceId)) {
                     storedEvent.getAttendees().add(user);
                 }
                 break;
 
-            case NOT_SELECTED:
             case CANCELLED:
-                // Current Event model has no dedicated list for these states.
-                // User is simply removed from entrant/attendee lists.
+            case DECLINED:
+            case NOT_SELECTED:
+                if (storedEvent.getCancelledEntrants() == null) {
+                    storedEvent.setCancelledEntrants(new ArrayList<>());
+                }
+                if (!containsUser(storedEvent.getCancelledEntrants(), deviceId)) {
+                    storedEvent.getCancelledEntrants().add(user);
+                }
                 break;
         }
 
@@ -204,11 +219,19 @@ public class UserProfileService {
         if (event.getAttendees() == null) {
             event.setAttendees(new ArrayList<>());
         }
+        if (event.getInvitedEntrants() == null) {
+            event.setInvitedEntrants(new ArrayList<>());
+        }
+        if (event.getCancelledEntrants() == null) {
+            event.setCancelledEntrants(new ArrayList<>());
+        }
     }
 
     private void removeUserFromEventLists(Event event, String deviceId) {
         removeUserFromList(event.getEntrants(), deviceId);
         removeUserFromList(event.getAttendees(), deviceId);
+        removeUserFromList(event.getInvitedEntrants(), deviceId);
+        removeUserFromList(event.getCancelledEntrants(), deviceId);
     }
 
     private boolean removeUserFromList(ArrayList<User> users, String deviceId) {
