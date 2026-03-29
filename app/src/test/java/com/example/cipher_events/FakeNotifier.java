@@ -1,6 +1,8 @@
-package com.example.cipher_events.notifications;
+package com.example.cipher_events;
 
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.NotificationService;
+
 import java.util.ArrayList;
 import java.util.List;
 

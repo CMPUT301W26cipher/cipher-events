@@ -35,12 +35,16 @@ public class WaitingListService {
     // =========================================================
     public boolean joinWaitingList(User user, Event event) {
 
-        if (!event.isPublicEvent()) {
-            return false;
-        }
-
         if (user == null) {
             throw new IllegalArgumentException("User cannot be null.");
+        }
+
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        if (!event.isPublicEvent()) {
+            return false;
         }
 
         ArrayList<User> entrants = event.getEntrants();
@@ -161,7 +165,7 @@ public class WaitingListService {
 
     // =========================================================
     // US 02.07.01
-    // Notify Waiting List (Placeholder)
+    // Notify Waiting List
     // =========================================================
     public void notifyAllEntrants(Event event, String message) {
 
@@ -169,23 +173,63 @@ public class WaitingListService {
             throw new IllegalArgumentException("Event cannot be null.");
         }
 
-        if (event.getEntrants() == null) {
+        if (notificationService == null) {
+            return; // safety guard for tests or misconfigured service
+        }
+
+        if (event.getEntrants() == null || event.getEntrants().isEmpty()) {
             return;
         }
 
-        for (User user : event.getEntrants()) {
+        String title = "Event Update: " + event.getName();
 
-            System.out.println(
-                    "Notify user: "
-                            + user.getName()
-                            + " Message: "
-                            + message
+        notificationService.notifyUsers(
+                event.getEntrants(),
+                title,
+                message
+        );
+    }
+
+    // =========================================================
+    // US 02.01.03
+    // Invite user to private event
+    // =========================================================
+    public boolean inviteUser(User user, Event event) {
+
+        if (user == null || event == null) {
+            throw new IllegalArgumentException("User/Event cannot be null.");
+        }
+
+        if (event.isPublicEvent()) {
+            return false; // only private event supports invite
+        }
+
+        ArrayList<User> invited = event.getInvitedEntrants();
+
+        if (invited == null) {
+            invited = new ArrayList<>();
+            event.setInvitedEntrants(invited);
+        }
+
+        for (User u : invited) {
+            if (sameUser(u, user)) {
+                return false;
+            }
+        }
+
+        invited.add(user);
+
+        if (notificationService != null) {
+            notificationService.notifyUser(
+                    user,
+                    "Private Event Invitation",
+                    "You are invited to: " + event.getName()
             );
         }
 
-        // TODO US 02.07.01
-        // Replace with Firebase Cloud Messaging later
+        return true;
     }
+
 
     private boolean isUserInWaitingList(User user, Event event) {
 

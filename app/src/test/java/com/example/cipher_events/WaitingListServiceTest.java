@@ -5,7 +5,6 @@ import static org.mockito.Mockito.*;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
-import com.example.cipher_events.notifications.FakeNotifier;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
@@ -441,5 +440,16 @@ public class WaitingListServiceTest {
         boolean result = waitingListService.joinWaitingList(user1, event);
 
         assertFalse(result);
+    }
+
+    @Test
+    public void testNotifyAllEntrants_sendsNotifications() {
+
+        waitingListService.joinWaitingList(user1, event);
+        waitingListService.joinWaitingList(user2, event);
+
+        waitingListService.notifyAllEntrants(event, "Test message");
+
+        assertEquals(2, fakeNotifier.getRecords().size());
     }
 }
