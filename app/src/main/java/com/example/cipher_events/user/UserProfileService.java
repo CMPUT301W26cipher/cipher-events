@@ -3,14 +3,14 @@ package com.example.cipher_events.user;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.user.Status;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 
 /**
- * Firestore-backed service for:
+ * Service for:
  * US 01.02.01 Create profile
  * US 01.02.02 Update profile
  * US 01.02.03 View event history
@@ -32,6 +32,7 @@ public class UserProfileService {
 
     /**
      * US 01.02.01
+     * Create a new user profile with required name/email and optional phone.
      */
     public User createUserProfile(String name,
                                   String email,
@@ -55,6 +56,7 @@ public class UserProfileService {
 
     /**
      * US 01.02.02
+     * Update existing user profile fields.
      */
     public User updateUserProfile(String deviceId,
                                   String newName,
@@ -84,6 +86,8 @@ public class UserProfileService {
 
     /**
      * US 01.02.03
+     * Record one event status for a user.
+     * Example: WAITLISTED, SELECTED, NOT_SELECTED, REGISTERED, CANCELLED.
      */
     public List<UserEventHistoryRecord> getUserEventHistory(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
@@ -96,8 +100,8 @@ public class UserProfileService {
         }
 
         return historyRepository.getHistory(deviceId);
-
     }
+
     /**
      * Optional helper if you still want to manually add a user to an event history state.
      * This updates the actual Event lists in Firestore-backed storage.
@@ -133,17 +137,32 @@ public class UserProfileService {
                 }
                 break;
 
-            case REGISTERED:
+            case INVITED:
             case SELECTED:
+                if (storedEvent.getInvitedEntrants() == null) {
+                    storedEvent.setInvitedEntrants(new ArrayList<>());
+                }
+                if (!containsUser(storedEvent.getInvitedEntrants(), deviceId)) {
+                    storedEvent.getInvitedEntrants().add(user);
+                }
+                break;
+
+            case REGISTERED:
+            case ACCEPTED:
                 if (!containsUser(storedEvent.getAttendees(), deviceId)) {
                     storedEvent.getAttendees().add(user);
                 }
                 break;
 
-            case NOT_SELECTED:
             case CANCELLED:
-                // Current Event model has no dedicated list for these states.
-                // User is simply removed from entrant/attendee lists.
+            case DECLINED:
+            case NOT_SELECTED:
+                if (storedEvent.getCancelledEntrants() == null) {
+                    storedEvent.setCancelledEntrants(new ArrayList<>());
+                }
+                if (!containsUser(storedEvent.getCancelledEntrants(), deviceId)) {
+                    storedEvent.getCancelledEntrants().add(user);
+                }
                 break;
         }
 
@@ -159,6 +178,7 @@ public class UserProfileService {
 
     /**
      * US 01.02.04
+     * Delete user profile and remove user from all provided events/history.
      */
     public void deleteUserProfile(String deviceId) {
         if (deviceId == null || deviceId.trim().isEmpty()) {
@@ -199,11 +219,19 @@ public class UserProfileService {
         if (event.getAttendees() == null) {
             event.setAttendees(new ArrayList<>());
         }
+        if (event.getInvitedEntrants() == null) {
+            event.setInvitedEntrants(new ArrayList<>());
+        }
+        if (event.getCancelledEntrants() == null) {
+            event.setCancelledEntrants(new ArrayList<>());
+        }
     }
 
     private void removeUserFromEventLists(Event event, String deviceId) {
         removeUserFromList(event.getEntrants(), deviceId);
         removeUserFromList(event.getAttendees(), deviceId);
+        removeUserFromList(event.getInvitedEntrants(), deviceId);
+        removeUserFromList(event.getCancelledEntrants(), deviceId);
     }
 
     private boolean removeUserFromList(ArrayList<User> users, String deviceId) {

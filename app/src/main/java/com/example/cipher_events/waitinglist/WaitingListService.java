@@ -3,6 +3,8 @@ import java.util.Random;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.user.Status;
+import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
 import java.util.ArrayList;
@@ -373,6 +375,122 @@ public class WaitingListService {
         return false;
     }
 
+    // =========================================================
+    // US 02.05.02
+    // Draw Lottery Winners
+    // =========================================================
+    public List<User> drawLotteryWinners(Event event, int n) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+        if (n <= 0) {
+            throw new IllegalArgumentException("N must be greater than 0.");
+        }
 
+        ArrayList<User> entrants = event.getEntrants();
+        if (entrants == null || entrants.isEmpty()) {
+            return new ArrayList<>();
+        }
+
+        // Copy list so we don't modify original
+        ArrayList<User> pool = new ArrayList<>(entrants);
+        ArrayList<User> selected = new ArrayList<>();
+        Random random = new Random();
+
+        int selectCount = Math.min(n, pool.size());
+
+        for (int i = 0; i < selectCount; i++) {
+            int index = random.nextInt(pool.size());
+            selected.add(pool.get(index));
+            pool.remove(index);
+        }
+
+        // Move selected to invitedEntrants
+        if (event.getInvitedEntrants() == null) {
+            event.setInvitedEntrants(new ArrayList<>());
+        }
+        event.getInvitedEntrants().addAll(selected);
+
+        // Remove selected from entrants
+        entrants.removeAll(selected);
+
+        return selected;
+    }
+
+    // =========================================================
+    // US 02.05.03
+    // Draw Replacement Entrant
+    // =========================================================
+    public User drawReplacementEntrant(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        ArrayList<User> entrants = event.getEntrants();
+        ArrayList<User> invited = event.getInvitedEntrants();
+
+        if (entrants == null || entrants.isEmpty()) {
+            return null;
+        }
+
+        // Filter out anyone already invited or previously selected
+        ArrayList<User> pool = new ArrayList<>();
+        for (User u : entrants) {
+            boolean alreadyInvited = invited != null && containsUser(invited, u);
+            if (!alreadyInvited) {
+                pool.add(u);
+            }
+        }
+
+        if (pool.isEmpty()) {
+            return null;
+        }
+
+        Random random = new Random();
+        int index = random.nextInt(pool.size());
+        User replacement = pool.get(index);
+
+        // Add to invited, remove from entrants
+        if (invited == null) {
+            event.setInvitedEntrants(new ArrayList<>());
+        }
+        event.getInvitedEntrants().add(replacement);
+        entrants.remove(replacement);
+
+        return replacement;
+    }
+
+    // =========================================================
+    // US 02.06.05
+    // Export Final Enrolled List (CSV)
+    // =========================================================
+    public String exportEnrolledListAsCsv(Event event) {
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        ArrayList<User> enrolled = event.getEnrolledEntrants();
+        if (enrolled == null || enrolled.isEmpty()) {
+            return "name,email,phone\n";
+        }
+
+        StringBuilder csv = new StringBuilder();
+        csv.append("name,email,phone\n");
+
+        for (User user : enrolled) {
+            csv.append(user.getName() == null ? "" : user.getName()).append(",");
+            csv.append(user.getEmail() == null ? "" : user.getEmail()).append(",");
+            csv.append(user.getPhoneNumber() == null ? "" : user.getPhoneNumber()).append("\n");
+        }
+
+        return csv.toString();
+    }
+
+    private boolean containsUser(ArrayList<User> users, User target) {
+        for (User u : users) {
+            if (sameUser(u, target)) return true;
+        }
+        return false;
+    }
 
 }

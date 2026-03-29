@@ -27,4 +27,8 @@ public class OrganizerEventCreationResult {
     public String getQrPayload() {
         return qrPayload;
     }
+
+    public boolean hasQrCode() {
+        return qrPayload != null && !qrPayload.trim().isEmpty();
+    }
 }

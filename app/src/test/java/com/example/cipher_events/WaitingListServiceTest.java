@@ -42,21 +42,17 @@ public class WaitingListServiceTest {
                 null
         );
 
-        user1 = new User(
-                "Alice",
-                "alice@example.com",
-                "pass123",
-                "7801111111",
-                null
-        );
+        user1 = new User();
+        user1.setDeviceID("device-alice");
+        user1.setName("Alice");
+        user1.setEmail("alice@example.com");
+        user1.setPhoneNumber("7801111111");
 
-        user2 = new User(
-                "Bob",
-                "bob@example.com",
-                "pass456",
-                "7802222222",
-                null
-        );
+        user2 = new User();
+        user2.setDeviceID("device-bob");
+        user2.setName("Bob");
+        user2.setEmail("bob@example.com");
+        user2.setPhoneNumber("7802222222");
     }
 
     // =========================================================
@@ -179,6 +175,228 @@ public class WaitingListServiceTest {
     public void testSetWaitingListCapacity_negativeCapacity_throwsException() {
 
         waitingListService.setWaitingListCapacity(event, -1);
+    }
+
+    // =========================================================
+    // US 02.06.01
+    // View Invited Entrants List
+    // =========================================================
+
+    @Test
+    public void testGetInvitedEntrants_returnsCorrectUsers() {
+        ArrayList<User> invited = new ArrayList<>();
+        invited.add(user1);
+        invited.add(user2);
+        event.setInvitedEntrants(invited);
+
+        List<User> result = waitingListService.getInvitedEntrants(event);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(user1));
+        assertTrue(result.contains(user2));
+    }
+
+    @Test
+    public void testGetInvitedEntrants_emptyList_returnsEmpty() {
+        event.setInvitedEntrants(new ArrayList<>());
+
+        List<User> result = waitingListService.getInvitedEntrants(event);
+
+        assertEquals(0, result.size());
+    }
+
+    // =========================================================
+    // US 02.06.02
+    // View Cancelled Entrants List
+    // =========================================================
+
+    @Test
+    public void testGetCancelledEntrants_returnsCorrectUsers() {
+        ArrayList<User> cancelled = new ArrayList<>();
+        cancelled.add(user1);
+        event.setCancelledEntrants(cancelled);
+
+        List<User> result = waitingListService.getCancelledEntrants(event);
+
+        assertEquals(1, result.size());
+        assertTrue(result.contains(user1));
+    }
+
+    @Test
+    public void testGetCancelledEntrants_emptyList_returnsEmpty() {
+        event.setCancelledEntrants(new ArrayList<>());
+
+        List<User> result = waitingListService.getCancelledEntrants(event);
+
+        assertEquals(0, result.size());
+    }
+
+    // =========================================================
+    // US 02.06.03
+    // View Final Enrolled List
+    // =========================================================
+
+    @Test
+    public void testGetEnrolledEntrants_returnsCorrectUsers() {
+        ArrayList<User> enrolled = new ArrayList<>();
+        enrolled.add(user1);
+        enrolled.add(user2);
+        event.setEnrolledEntrants(enrolled);
+
+        List<User> result = waitingListService.getEnrolledEntrants(event);
+
+        assertEquals(2, result.size());
+        assertTrue(result.contains(user1));
+        assertTrue(result.contains(user2));
+    }
+
+    @Test
+    public void testGetEnrolledEntrants_emptyList_returnsEmpty() {
+        event.setEnrolledEntrants(new ArrayList<>());
+
+        List<User> result = waitingListService.getEnrolledEntrants(event);
+
+        assertEquals(0, result.size());
+    }
+
+    // =========================================================
+    // US 02.06.04
+    // Cancel Non-Responsive Entrants
+    // =========================================================
+
+    @Test
+    public void testMarkAsNoShow_existingInvitedUser_movedToCancelled() {
+        ArrayList<User> invited = new ArrayList<>();
+        invited.add(user1);
+        event.setInvitedEntrants(invited);
+        event.setCancelledEntrants(new ArrayList<>());
+
+        boolean result = waitingListService.markAsNoShow(user1, event);
+
+        assertTrue(result);
+        assertEquals(0, event.getInvitedEntrants().size());
+        assertEquals(1, event.getCancelledEntrants().size());
+        assertTrue(event.getCancelledEntrants().contains(user1));
+    }
+
+    @Test
+    public void testMarkAsNoShow_userNotInvited_returnsFalse() {
+        event.setInvitedEntrants(new ArrayList<>());
+        event.setCancelledEntrants(new ArrayList<>());
+
+        boolean result = waitingListService.markAsNoShow(user1, event);
+
+        assertFalse(result);
+    }
+
+    // =========================================================
+    // US 02.05.02
+    // Draw Lottery Winners
+    // =========================================================
+
+    @Test
+    public void testDrawLotteryWinners_selectsCorrectNumber() {
+        waitingListService.joinWaitingList(user1, event);
+        waitingListService.joinWaitingList(user2, event);
+        event.setInvitedEntrants(new ArrayList<>());
+
+        List<User> winners = waitingListService.drawLotteryWinners(event, 1);
+
+        assertEquals(1, winners.size());
+        assertEquals(1, event.getInvitedEntrants().size());
+        assertEquals(1, event.getEntrants().size());
+    }
+
+    @Test
+    public void testDrawLotteryWinners_nLargerThanPool_selectsAll() {
+        waitingListService.joinWaitingList(user1, event);
+        waitingListService.joinWaitingList(user2, event);
+        event.setInvitedEntrants(new ArrayList<>());
+
+        List<User> winners = waitingListService.drawLotteryWinners(event, 10);
+
+        assertEquals(2, winners.size());
+        assertEquals(0, event.getEntrants().size());
+    }
+
+    @Test
+    public void testDrawLotteryWinners_emptyWaitingList_returnsEmpty() {
+        event.setInvitedEntrants(new ArrayList<>());
+
+        List<User> winners = waitingListService.drawLotteryWinners(event, 2);
+
+        assertEquals(0, winners.size());
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDrawLotteryWinners_invalidN_throwsException() {
+        waitingListService.drawLotteryWinners(event, 0);
+    }
+
+   // =========================================================
+   // US 02.05.03
+   // Draw Replacement Entrant
+   // =========================================================
+
+    @Test
+    public void testDrawReplacementEntrant_returnsUserFromPool() {
+        waitingListService.joinWaitingList(user1, event);
+        waitingListService.joinWaitingList(user2, event);
+        event.setInvitedEntrants(new ArrayList<>());
+
+        User replacement = waitingListService.drawReplacementEntrant(event);
+
+        assertNotNull(replacement);
+        assertEquals(1, event.getInvitedEntrants().size());
+        assertEquals(1, event.getEntrants().size());
+    }
+
+    @Test
+    public void testDrawReplacementEntrant_emptyPool_returnsNull() {
+        event.setInvitedEntrants(new ArrayList<>());
+
+        User replacement = waitingListService.drawReplacementEntrant(event);
+
+        assertNull(replacement);
+    }
+
+    @Test
+    public void testDrawReplacementEntrant_doesNotSelectAlreadyInvited() {
+        waitingListService.joinWaitingList(user1, event);
+        ArrayList<User> invited = new ArrayList<>();
+        invited.add(user1);
+        event.setInvitedEntrants(invited);
+
+        User replacement = waitingListService.drawReplacementEntrant(event);
+
+        assertNull(replacement);
+    }
+
+   // =========================================================
+   // US 02.06.05
+   // Export Final Enrolled List (CSV)
+   // =========================================================
+
+    @Test
+    public void testExportEnrolledListAsCsv_returnsCorrectFormat() {
+        ArrayList<User> enrolled = new ArrayList<>();
+        enrolled.add(user1);
+        event.setEnrolledEntrants(enrolled);
+
+        String csv = waitingListService.exportEnrolledListAsCsv(event);
+
+        assertTrue(csv.contains("name,email,phone"));
+        assertTrue(csv.contains("Alice"));
+        assertTrue(csv.contains("alice@example.com"));
+    }
+
+    @Test
+    public void testExportEnrolledListAsCsv_emptyList_returnsHeaderOnly() {
+        event.setEnrolledEntrants(new ArrayList<>());
+
+        String csv = waitingListService.exportEnrolledListAsCsv(event);
+
+        assertEquals("name,email,phone\n", csv);
     }
 
 }

@@ -1,5 +1,7 @@
 package com.example.cipher_events.database;
 
+import com.example.cipher_events.comment.EventComment;
+
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -24,10 +26,12 @@ public class Event {
     private ArrayList<User> cancelledEntrants;
     private ArrayList<User> enrolledEntrants;
 
+    private ArrayList<EventComment> comments;
+    private boolean publicEvent;
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
-    public Event(String name, String description, String time, String location, Organizer organizer, ArrayList<User> entrants, ArrayList<User> attendees, String posterPictureURL) {
+    public Event(String name, String description, String time, String location, Organizer organizer, ArrayList<User> entrants, ArrayList<User> attendees, String posterPictureURL, boolean publicEvent) {
         this.eventID = UUID.randomUUID().toString();
         this.name = name;
         this.description = description;
@@ -37,12 +41,16 @@ public class Event {
         this.entrants = entrants;
         this.attendees = attendees;
         this.posterPictureURL = posterPictureURL;
+        this.publicEvent = publicEvent;
         this.waitingListCapacity = null; // default unlimited
 
         this.invitedEntrants = new ArrayList<>();
         this.cancelledEntrants = new ArrayList<>();
         this.enrolledEntrants = new ArrayList<>();
+
+        this.comments = new ArrayList<>();
     }
+
 
     public Event() {}
 
@@ -164,5 +172,24 @@ public class Event {
 
     public void setEnrolledEntrants(ArrayList<User> enrolledEntrants) {
         this.enrolledEntrants = enrolledEntrants;
+    }
+
+    public ArrayList<EventComment> getComments() {
+        if (comments == null) {
+            comments = new ArrayList<>();
+        }
+        return comments;
+    }
+
+    public void setComments(ArrayList<EventComment> comments) {
+        this.comments = comments;
+    }
+
+    public boolean isPublicEvent() {
+        return publicEvent;
+    }
+
+    public void setPublicEvent(boolean publicEvent) {
+        this.publicEvent = publicEvent;
     }
 }

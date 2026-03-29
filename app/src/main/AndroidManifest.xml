@@ -7,6 +7,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -26,7 +27,21 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".pages.EventDetailsActivity" />
+<!--        <activity android:name=".pages.EventDetailsActivity" />-->
+
+        <service
+            android:name="com.example.cipher_events.notifications.Notifier"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_icon"
+            android:resource="@drawable/baseline_notifications_24"/>
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_color"
+            android:resource="@color/button_purple"/>
 
     </application>
 
