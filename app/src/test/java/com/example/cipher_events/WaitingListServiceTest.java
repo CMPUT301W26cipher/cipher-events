@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.FakeNotifier;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
@@ -19,6 +20,8 @@ public class WaitingListServiceTest {
     private WaitingListService waitingListService;
     private UserEventHistoryRepository historyRepository;
 
+    private FakeNotifier fakeNotifier;
+
     private Event event;
     private User user1;
     private User user2;
@@ -29,7 +32,8 @@ public class WaitingListServiceTest {
         // Mock repository to avoid Firebase / DB calls
         historyRepository = mock(UserEventHistoryRepository.class);
 
-        waitingListService = new WaitingListService(historyRepository);
+        fakeNotifier = new FakeNotifier();
+        waitingListService = new WaitingListService(historyRepository, fakeNotifier);
 
         event = new Event(
                 "Lucky Draw Event",
@@ -399,4 +403,43 @@ public class WaitingListServiceTest {
         assertEquals("name,email,phone\n", csv);
     }
 
+    @Test
+    public void testRedrawLottery_sendsNotifications() {
+
+        waitingListService.joinWaitingList(user1, event);
+        waitingListService.joinWaitingList(user2, event);
+
+        User winner = waitingListService.redrawLottery(event);
+
+        // Should have 2 notifications (winner + loser)
+        assertEquals(2, fakeNotifier.getRecords().size());
+
+        // Winner must be one of the users
+        assertTrue(
+                winner == user1 || winner == user2
+        );
+    }
+
+    @Test
+    public void testNotification_optOutUser_receivesNothing() {
+
+        user1.setNotificationsEnabled(false);
+
+        waitingListService.joinWaitingList(user1, event);
+
+        waitingListService.redrawLottery(event);
+
+        // Should send 0 notifications
+        assertEquals(0, fakeNotifier.getRecords().size());
+    }
+
+    @Test
+    public void testJoinWaitingList_privateEvent_returnsFalse() {
+
+        event.setPublicEvent(false);
+
+        boolean result = waitingListService.joinWaitingList(user1, event);
+
+        assertFalse(result);
+    }
 }

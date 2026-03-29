@@ -52,7 +52,13 @@ public class Event {
     }
 
 
-    public Event() {}
+    public Event(String name, String description, String time, String location,
+                 Organizer organizer, ArrayList<User> entrants,
+                 ArrayList<User> attendees, String posterPictureURL) {
+
+        this(name, description, time, location,
+                organizer, entrants, attendees, posterPictureURL, true);
+    }
 
     public String getEventID() {
         return eventID;

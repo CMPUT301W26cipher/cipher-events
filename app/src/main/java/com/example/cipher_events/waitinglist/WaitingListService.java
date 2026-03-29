@@ -6,6 +6,7 @@ import com.example.cipher_events.database.User;
 import com.example.cipher_events.user.Status;
 import com.example.cipher_events.user.UserEventHistoryRecord;
 import com.example.cipher_events.user.UserEventHistoryRepository;
+import com.example.cipher_events.notifications.NotificationService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -17,9 +18,15 @@ import java.util.List;
 public class WaitingListService {
 
     private final UserEventHistoryRepository historyRepository;
+    private final NotificationService notificationService;
 
-    public WaitingListService(UserEventHistoryRepository historyRepository) {
+    public WaitingListService(UserEventHistoryRepository historyRepository,
+                              NotificationService notificationService) {
         this.historyRepository = historyRepository;
+        this.notificationService = notificationService;
+    }
+    public WaitingListService(UserEventHistoryRepository historyRepository) {
+        this(historyRepository, null); // old structure, kept for compatibility
     }
 
     // =========================================================
@@ -28,12 +35,12 @@ public class WaitingListService {
     // =========================================================
     public boolean joinWaitingList(User user, Event event) {
 
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
+        if (!event.isPublicEvent()) {
+            return false;
         }
 
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
         }
 
         ArrayList<User> entrants = event.getEntrants();
@@ -299,7 +306,31 @@ public class WaitingListService {
         Random random = new Random();
         int index = random.nextInt(entrants.size());
 
-        return entrants.get(index);
+        User winner = entrants.get(index);
+
+        // ===== Notification Logic =====
+        if (notificationService != null) {
+
+            // Notify winner
+            notificationService.notifyUser(
+                    winner,
+                    "You were selected!",
+                    "You have been selected for the event: " + event.getName()
+            );
+
+            // Notify non-selected users
+            for (User user : entrants) {
+                if (!sameUser(user, winner)) {
+                    notificationService.notifyUser(
+                            user,
+                            "Not selected",
+                            "You were not selected for the event: " + event.getName()
+                    );
+                }
+            }
+        }
+
+        return winner;
     }
 
     // =========================================================
