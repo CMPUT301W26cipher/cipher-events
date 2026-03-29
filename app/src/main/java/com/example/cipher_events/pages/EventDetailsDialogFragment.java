@@ -1,21 +1,33 @@
 package com.example.cipher_events.pages;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.Message;
+import com.example.cipher_events.notifications.Notifier;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -33,6 +45,8 @@ public class EventDetailsDialogFragment extends DialogFragment {
 
     private boolean isOrganizerView = false;
     private String eventId;
+    DBProxy db = DBProxy.getInstance();
+    Notifier notifier = Notifier.getInstance();
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -90,6 +104,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
         TextView lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
+        Button notifyButton = view.findViewById(R.id.notify_button);
         Button actionButton = view.findViewById(R.id.scan_button);
 
         Bundle args = getArguments();
@@ -123,6 +138,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
 
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
+
             actionButton.setOnClickListener(v -> {
                 dismiss();
                 WaitingListFragment fragment = WaitingListFragment.newInstance(eventId);
@@ -132,6 +148,14 @@ public class EventDetailsDialogFragment extends DialogFragment {
                         .addToBackStack(null)
                         .commit();
             });
+
+            // SHOW notify button
+            notifyButton.setVisibility(View.VISIBLE);
+
+            notifyButton.setOnClickListener(v -> {
+                showNotificationInputDialog();
+            });
+
         } else {
             actionButton.setText("Scan to Join Waitlist");
         }
@@ -161,6 +185,117 @@ public class EventDetailsDialogFragment extends DialogFragment {
         if (getDialog() != null && getDialog().getWindow() != null) {
             int width = (int) (requireContext().getResources().getDisplayMetrics().widthPixels * 0.90);
             getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
+    }
+
+
+    private void showNotificationInputDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Send Notification");
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 30, 40, 10);
+
+        // Title input
+        final EditText titleInput = new EditText(requireContext());
+        titleInput.setHint("Notification Title");
+        layout.addView(titleInput);
+
+        // Body input
+        final EditText bodyInput = new EditText(requireContext());
+        bodyInput.setHint("Notification Message");
+        bodyInput.setMinLines(3);
+        bodyInput.setMaxLines(5);
+        bodyInput.setGravity(Gravity.TOP);
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 20, 0, 0);
+        bodyInput.setLayoutParams(params);
+
+        layout.addView(bodyInput);
+
+        // Group selector
+        final Spinner groupSpinner = new Spinner(requireContext());
+        String[] groups = {"Invited", "Cancelled", "Enrolled"};
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                groups
+        );
+        groupSpinner.setAdapter(adapter);
+        layout.addView(groupSpinner);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String title = titleInput.getText().toString().trim();
+            String body = bodyInput.getText().toString().trim();
+            String selectedGroup = groupSpinner.getSelectedItem().toString();
+
+            if (!title.isEmpty() && !body.isEmpty()) {
+                sendNotificationToGroup(title, body, selectedGroup);
+            } else {
+                Toast.makeText(getContext(),
+                        "Title and message cannot be empty",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+
+    private void sendNotificationToGroup(String title, String body, String group) {
+
+        switch (group) {
+            case "Invited":
+                notifyInvitedEntrants(title, body);
+                break;
+
+            case "Cancelled":
+                notifyCancelledEntrants(title, body);
+                break;
+
+            case "Enrolled":
+                notifyEnrolledEntrants(title, body);
+                break;
+        }
+    }
+
+    private void notifyInvitedEntrants(String title, String body) {
+        Event e = db.getEvent(eventId);
+        Message m = new Message(title, body, e.getOrganizer());
+
+        ArrayList<User> entrants = e.getInvitedEntrants();
+        for (User user : entrants) {
+            notifier.sendMessage(user.getDeviceID(), m);
+        }
+    }
+
+    private void notifyCancelledEntrants(String title, String body) {
+        Event e = db.getEvent(eventId);
+        Message m = new Message(title, body, e.getOrganizer());
+
+        ArrayList<User> entrants = e.getCancelledEntrants();
+        for (User user : entrants) {
+            notifier.sendMessage(user.getDeviceID(), m);
+        }
+    }
+
+    private void notifyEnrolledEntrants(String title, String body) {
+        Event e = db.getEvent(eventId);
+        Message m = new Message(title, body, e.getOrganizer());
+
+        ArrayList<User> entrants = e.getEnrolledEntrants();
+        for (User user : entrants) {
+            notifier.sendMessage(user.getDeviceID(), m);
         }
     }
 }
