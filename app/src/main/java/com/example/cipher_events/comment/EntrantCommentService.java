@@ -21,6 +21,9 @@ public class EntrantCommentService {
     public EntrantCommentService() {
         this.db = DBProxy.getInstance();
     }
+    public EntrantCommentService(DBProxy db) {
+        this.db = db;
+    }
 
     /**
      * US 01.08.01
@@ -57,6 +60,7 @@ public class EntrantCommentService {
         EventComment comment = new EventComment(
                 user.getDeviceID(),
                 user.getName(),
+                "entrant",
                 message,
                 timestamp
         );
