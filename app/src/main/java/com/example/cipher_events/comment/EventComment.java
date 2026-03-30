@@ -9,6 +9,7 @@ public class EventComment {
     private String commentID;
     private String authorDeviceID;
     private String authorName;
+    private String authorRole;
     private String message;
     private String createdAt; // keep String to match your current model style
 
@@ -16,10 +17,11 @@ public class EventComment {
         // Required empty constructor for Firestore
     }
 
-    public EventComment(String authorDeviceID, String authorName, String message, String createdAt) {
+    public EventComment(String authorDeviceID, String authorName, String authorRole, String message, String createdAt) {
         this.commentID = UUID.randomUUID().toString();
         this.authorDeviceID = authorDeviceID;
         this.authorName = authorName;
+        this.authorRole = authorRole;
         this.message = message;
         this.createdAt = createdAt;
     }
@@ -46,6 +48,14 @@ public class EventComment {
 
     public void setAuthorName(String authorName) {
         this.authorName = authorName;
+    }
+
+    public String getAuthorRole() {
+        return authorRole;
+    }
+
+    public void setAuthorRole(String authorRole) {
+        this.authorRole = authorRole;
     }
 
     public String getMessage() {
