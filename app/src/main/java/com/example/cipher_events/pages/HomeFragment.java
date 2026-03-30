@@ -70,27 +70,27 @@ public class HomeFragment extends Fragment {
 
     private void loadUpcomingEvents() {
         upcomingEvents.clear();
-        upcomingEvents.add(new Event(
-                "Tech Expo 2025",
-                "A huge tech showcase",
-                "2025-04-12 10:00 AM",
-                "Edmonton Convention Centre",
-                null,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                "https://pinkcaviar.com.au/wp-content/uploads/2022/09/Professional-and-Stress-Free-Event-Management-Banner-1.jpg"
-        ));
-
-        upcomingEvents.add(new Event(
-                "Music Festival",
-                "Outdoor festival with multiple stages",
-                "2025-05-01 6:00 PM",
-                "Calgary",
-                null,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                null
-        ));
+//        upcomingEvents.add(new Event(
+//                "Tech Expo 2025",
+//                "A huge tech showcase",
+//                "2025-04-12 10:00 AM",
+//                "Edmonton Convention Centre",
+//                null,
+//                new ArrayList<>(),
+//                new ArrayList<>(),
+//                "https://pinkcaviar.com.au/wp-content/uploads/2022/09/Professional-and-Stress-Free-Event-Management-Banner-1.jpg"
+//        ));
+//
+//        upcomingEvents.add(new Event(
+//                "Music Festival",
+//                "Outdoor festival with multiple stages",
+//                "2025-05-01 6:00 PM",
+//                "Calgary",
+//                null,
+//                new ArrayList<>(),
+//                new ArrayList<>(),
+//                null
+//        ));
 
         // Add events created during this session
         MainActivity activity = (MainActivity) getActivity();

@@ -13,6 +13,7 @@ import androidx.fragment.app.FragmentManager;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminHomeFragment;
@@ -125,7 +126,8 @@ public class MainActivity extends AppCompatActivity {
                     new Organizer("Temp Organizer", "org@example.com", "", "", null),
                     new ArrayList<>(),
                     new ArrayList<>(),
-                    null
+                    null,
+                    true
             );
 
             // Set the optional waiting list capacity
@@ -148,6 +150,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onRoleSelected(String role) {
+        Event e = DB.getEvent("7f91c8e9-74d5-4c93-bb0a-236940cbf255");
+        ArrayList<User> entrants = new ArrayList<>();
+        User u = new User("John", "Doe", "john.mckinley@examplepetstore.com", null, null);
+        entrants.add(u);
+        e.setEntrants(entrants);
+        e.setEnrolledEntrants(entrants);
+        DB.updateEvent(e);
+
         currentRole = role;
         isLoggedIn = false;
         bottomNavigationView.setVisibility(View.GONE);
