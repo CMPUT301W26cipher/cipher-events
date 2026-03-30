@@ -69,16 +69,16 @@ public class OrganizerHomeFragment extends Fragment {
     private void loadOrganizedEvents() {
         organizedEvents.clear();
         // Placeholder for organizer's events
-        organizedEvents.add(new Event(
-                "Event 1",
-                "Description ",
-                "2025-06-12 10:00 AM",
-                "Location",
-                null,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                null
-        ));
+//        organizedEvents.add(new Event(
+//                "Event 1",
+//                "Description ",
+//                "2025-06-12 10:00 AM",
+//                "Location",
+//                null,
+//                new ArrayList<>(),
+//                new ArrayList<>(),
+//                null
+//        ));
 
         // Add events created during this session
         MainActivity activity = (MainActivity) getActivity();
