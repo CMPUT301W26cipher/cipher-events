@@ -28,6 +28,9 @@ public class Event {
 
     private ArrayList<EventComment> comments;
     private boolean publicEvent;
+    private Long registrationOpenTime;
+    private Long registrationCloseTime;
+
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
@@ -128,6 +131,21 @@ public class Event {
         return posterPictureURL;
     }
 
+    public Long getRegistrationOpenTime() {
+        return registrationOpenTime;
+    }
+
+    public void setRegistrationOpenTime(Long registrationOpenTime) {
+        this.registrationOpenTime = registrationOpenTime;
+    }
+
+    public Long getRegistrationCloseTime() {
+        return registrationCloseTime;
+    }
+
+    public void setRegistrationCloseTime(Long registrationCloseTime) {
+        this.registrationCloseTime = registrationCloseTime;
+    }
     public void setPosterPictureURL(String posterPictureURL) {
         this.posterPictureURL = posterPictureURL;
     }

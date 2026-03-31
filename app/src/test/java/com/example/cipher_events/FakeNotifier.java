@@ -1,7 +1,9 @@
 package com.example.cipher_events;
 
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.NotificationService;
+import com.example.cipher_events.notifications.Notifier;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,7 +13,9 @@ import java.util.List;
  * Does not send real notifications — records them for assertions.
  * Only used for testing
  */
-public class FakeNotifier implements NotificationService {
+public class FakeNotifier extends Notifier {
+
+    private final List<Record> records = new ArrayList<>();
 
     public static class Record {
         public final String deviceId;
@@ -23,25 +27,9 @@ public class FakeNotifier implements NotificationService {
         }
     }
 
-    private final List<Record> records = new ArrayList<>();
-
     @Override
-    public void notifyUser(User user, String title, String message) {
-        if (user == null) return;
-
-        // respect opt-out
-        if (!user.isNotificationsEnabled()) return;
-
-        records.add(new Record(user.getDeviceID(), title));
-    }
-
-    @Override
-    public void notifyUsers(List<User> users, String title, String message) {
-        if (users == null) return;
-
-        for (User user : users) {
-            notifyUser(user, title, message);
-        }
+    public void sendMessage(String deviceID, Message message) {
+        records.add(new Record(deviceID, message.getTitle()));
     }
 
     public List<Record> getRecords() {

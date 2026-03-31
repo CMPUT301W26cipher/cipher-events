@@ -2,6 +2,7 @@ package com.example.cipher_events.notifications;
 
 import com.example.cipher_events.database.User;
 import java.util.List;
+import java.util.ArrayList;
 
 /**
  * Abstraction for sending notifications.
@@ -10,9 +11,43 @@ import java.util.List;
  * - NotifierAdapter (production)
  * - FakeNotifier (unit tests)
  */
-public interface NotificationService {
+public class NotificationService {
 
-    void notifyUser(User user, String title, String message);
+    private final Notifier notifier;
 
-    void notifyUsers(List<User> users, String title, String message);
+    private final List<NotificationLog> logs = new ArrayList<>();
+
+    public NotificationService(Notifier notifier) {
+        this.notifier = notifier;
+    }
+
+    public void notifyUser(User user, String title, String message) {
+
+        if (user == null || user.getDeviceID() == null) return;
+
+        // respect opt-out
+        if (!user.isNotificationsEnabled()) return;
+
+        Message msg = new Message(title, message, null);
+
+        notifier.sendMessage(user.getDeviceID(), msg);
+
+        logs.add(new NotificationLog(
+                user.getDeviceID(),
+                title,
+                message
+        ));
+    }
+
+    public void notifyUsers(List<User> users, String title, String message) {
+        if (users == null) return;
+
+        for (User user : users) {
+            notifyUser(user, title, message);
+        }
+    }
+
+    public List<NotificationLog> getLogs() {
+        return new ArrayList<>(logs);
+    }
 }

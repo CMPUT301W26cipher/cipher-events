@@ -47,6 +47,10 @@ public class WaitingListService {
             return false;
         }
 
+        if (!isWithinRegistrationPeriod(event)) {
+            return false;
+        }
+
         ArrayList<User> entrants = event.getEntrants();
 
         if (entrants == null) {
@@ -65,10 +69,6 @@ public class WaitingListService {
         }
 
         entrants.add(user);
-
-        historyRepository.getHistory(
-                user.getDeviceID()
-        );
 
         return true;
     }
@@ -100,10 +100,6 @@ public class WaitingListService {
             if (sameUser(current, user)) {
 
                 entrants.remove(i);
-
-                historyRepository.getHistory(
-                        user.getDeviceID()
-                );
 
                 return true;
             }
@@ -192,25 +188,29 @@ public class WaitingListService {
 
     // =========================================================
     // US 02.01.03
-    // Invite user to private event
+    // Invite user to event
     // =========================================================
     public boolean inviteUser(User user, Event event) {
 
-        if (user == null || event == null) {
-            throw new IllegalArgumentException("User/Event cannot be null.");
+        if (user == null) {
+            throw new IllegalArgumentException("User cannot be null.");
         }
 
-        if (event.isPublicEvent()) {
-            return false; // only private event supports invite
+        if (event == null) {
+            throw new IllegalArgumentException("Event cannot be null.");
+        }
+
+        if (isUserInWaitingList(user, event)) {
+            return false;
+        }
+
+        if (event.getInvitedEntrants() == null) {
+            event.setInvitedEntrants(new ArrayList<>());
         }
 
         ArrayList<User> invited = event.getInvitedEntrants();
 
-        if (invited == null) {
-            invited = new ArrayList<>();
-            event.setInvitedEntrants(invited);
-        }
-
+        // check duplicate
         for (User u : invited) {
             if (sameUser(u, user)) {
                 return false;
@@ -219,12 +219,31 @@ public class WaitingListService {
 
         invited.add(user);
 
+        //  send notification
         if (notificationService != null) {
             notificationService.notifyUser(
                     user,
-                    "Private Event Invitation",
-                    "You are invited to: " + event.getName()
+                    "Event Invitation",
+                    "You have been invited to: " + event.getName()
             );
+        }
+
+        return true;
+    }
+
+    private boolean isWithinRegistrationPeriod(Event event) {
+
+        Long open = event.getRegistrationOpenTime();
+        Long close = event.getRegistrationCloseTime();
+
+        long now = System.currentTimeMillis();
+
+        if (open != null && now < open) {
+            return false;
+        }
+
+        if (close != null && now > close) {
+            return false;
         }
 
         return true;
@@ -262,34 +281,31 @@ public class WaitingListService {
         return a.getDeviceID().equals(b.getDeviceID());
     }
     // =========================================================
-// US 01.05.02
-// Accept Invitation
-// =========================================================
+    // US 01.05.02
+    // Accept Invitation
+    // =========================================================
     public boolean acceptInvitation(User user, Event event) {
 
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
+        if (user == null || event == null) {
+            throw new IllegalArgumentException("User/Event cannot be null.");
         }
 
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-
-        ArrayList<User> entrants = event.getEntrants();
+        ArrayList<User> invited = event.getInvitedEntrants();
         ArrayList<User> attendees = event.getAttendees();
 
-        if (entrants == null || attendees == null) {
+        if (invited == null || attendees == null) {
             return false;
         }
 
-        for (int i = 0; i < entrants.size(); i++) {
-
-            User current = entrants.get(i);
+        for (int i = 0; i < invited.size(); i++) {
+            User current = invited.get(i);
 
             if (sameUser(current, user)) {
+                invited.remove(i);
 
-                entrants.remove(i);
-                attendees.add(user);
+                if (!containsUser(attendees, user)) {
+                    attendees.add(user);
+                }
 
                 return true;
             }
@@ -297,33 +313,37 @@ public class WaitingListService {
 
         return false;
     }
+
     // =========================================================
-// US 01.05.03
-// Decline Invitation
-// =========================================================
+    // US 01.05.03
+    // Decline Invitation
+    // =========================================================
     public boolean declineInvitation(User user, Event event) {
 
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
+        if (user == null || event == null) {
+            throw new IllegalArgumentException("User/Event cannot be null.");
         }
 
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
+        ArrayList<User> invited = event.getInvitedEntrants();
+        ArrayList<User> cancelled = event.getCancelledEntrants();
 
-        ArrayList<User> entrants = event.getEntrants();
-
-        if (entrants == null) {
+        if (invited == null) {
             return false;
         }
 
-        for (int i = 0; i < entrants.size(); i++) {
+        if (cancelled == null) {
+            event.setCancelledEntrants(new ArrayList<>());
+            cancelled = event.getCancelledEntrants();
+        }
 
-            User current = entrants.get(i);
+        for (int i = 0; i < invited.size(); i++) {
+
+            User current = invited.get(i);
 
             if (sameUser(current, user)) {
 
-                entrants.remove(i);
+                invited.remove(i);
+                cancelled.add(user);
 
                 return true;
             }
@@ -332,8 +352,8 @@ public class WaitingListService {
         return false;
     }
     // =========================================================
-// US 01.05.01
-// Re-draw Lottery
+    // US 01.05.01
+    // Re-draw Lottery
 // =========================================================
     public User redrawLottery(Event event) {
 
@@ -342,39 +362,37 @@ public class WaitingListService {
         }
 
         ArrayList<User> entrants = event.getEntrants();
+        ArrayList<User> invited = event.getInvitedEntrants();
 
         if (entrants == null || entrants.isEmpty()) {
             return null;
         }
 
+        if (invited == null) {
+            event.setInvitedEntrants(new ArrayList<>());
+            invited = event.getInvitedEntrants();
+        }
+
         Random random = new Random();
         int index = random.nextInt(entrants.size());
 
-        User winner = entrants.get(index);
+        // trigger redraw
+        User replacement = entrants.get(index);
 
-        // ===== Notification Logic =====
+        // move entrant → invited
+        invited.add(replacement);
+        entrants.remove(index);
+
+        // notify ONLY this user
         if (notificationService != null) {
-
-            // Notify winner
             notificationService.notifyUser(
-                    winner,
-                    "You were selected!",
-                    "You have been selected for the event: " + event.getName()
+                    replacement,
+                    "You're Selected!",
+                    "You have been selected for: " + event.getName()
             );
-
-            // Notify non-selected users
-            for (User user : entrants) {
-                if (!sameUser(user, winner)) {
-                    notificationService.notifyUser(
-                            user,
-                            "Not selected",
-                            "You were not selected for the event: " + event.getName()
-                    );
-                }
-            }
         }
 
-        return winner;
+        return replacement;
     }
 
     // =========================================================
@@ -441,9 +459,6 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
-                historyRepository.getHistory(
-                        user.getDeviceID()
-                );
                 return true;
             }
         }
@@ -488,6 +503,16 @@ public class WaitingListService {
 
         // Remove selected from entrants
         entrants.removeAll(selected);
+
+        if (notificationService != null) {
+            for (User user : selected) {
+                notificationService.notifyUser(
+                        user,
+                        "You're Selected!",
+                        "You have been selected for: " + event.getName()
+                );
+            }
+        }
 
         return selected;
     }

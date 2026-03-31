@@ -5,6 +5,7 @@ import static org.mockito.Mockito.*;
 
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.NotificationService;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 
@@ -32,7 +33,8 @@ public class WaitingListServiceTest {
         historyRepository = mock(UserEventHistoryRepository.class);
 
         fakeNotifier = new FakeNotifier();
-        waitingListService = new WaitingListService(historyRepository, fakeNotifier);
+        NotificationService notificationService = new NotificationService(fakeNotifier);
+        waitingListService = new WaitingListService(historyRepository, notificationService);
 
         event = new Event(
                 "Lucky Draw Event",
@@ -451,5 +453,69 @@ public class WaitingListServiceTest {
         waitingListService.notifyAllEntrants(event, "Test message");
 
         assertEquals(2, fakeNotifier.getRecords().size());
+    }
+
+    @Test
+    public void testInviteUser_publicEvent_success() {
+
+        event.setPublicEvent(true);
+
+        boolean result = waitingListService.inviteUser(user1, event);
+
+        assertTrue(result);
+        assertEquals(1, event.getInvitedEntrants().size());
+    }
+
+    @Test
+    public void testAcceptInvitation_publicEvent_movesToWaitingList() {
+
+        event.setPublicEvent(true);
+
+        waitingListService.inviteUser(user1, event);
+
+        boolean result = waitingListService.acceptInvitation(user1, event);
+
+        assertTrue(result);
+        assertEquals(1, event.getEntrants().size());
+    }
+
+    //register time test
+    @Test
+    public void testJoinWaitingList_withinRegistrationPeriod_success() {
+
+        long now = System.currentTimeMillis();
+
+        event.setRegistrationOpenTime(now - 1000);
+        event.setRegistrationCloseTime(now + 1000);
+
+        boolean result = waitingListService.joinWaitingList(user1, event);
+
+        assertTrue(result);
+    }
+
+    @Test
+    public void testJoinWaitingList_beforeOpen_returnsFalse() {
+
+        long now = System.currentTimeMillis();
+
+        event.setRegistrationOpenTime(now + 10000); // future
+        event.setRegistrationCloseTime(now + 20000);
+
+        boolean result = waitingListService.joinWaitingList(user1, event);
+
+        assertFalse(result);
+    }
+
+    @Test
+    public void testJoinWaitingList_afterClose_returnsFalse() {
+
+        long now = System.currentTimeMillis();
+
+        event.setRegistrationOpenTime(now - 20000);
+        event.setRegistrationCloseTime(now - 10000); // past
+
+        boolean result = waitingListService.joinWaitingList(user1, event);
+
+        assertFalse(result);
     }
 }
