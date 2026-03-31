@@ -6,6 +6,7 @@ import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.message.MessageThread;
 
 import java.util.ArrayList;
 import java.util.UUID;
