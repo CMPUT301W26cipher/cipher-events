@@ -11,6 +11,8 @@ import com.example.cipher_events.notifications.NotificationService;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.cipher_events.database.DBProxy;
+
 /**
  * Service handling waiting list operations.
  * Waiting list is represented by Event.entrants.
@@ -19,6 +21,8 @@ public class WaitingListService {
 
     private final UserEventHistoryRepository historyRepository;
     private final NotificationService notificationService;
+
+    private final DBProxy db = DBProxy.getInstance();
 
     public WaitingListService(UserEventHistoryRepository historyRepository,
                               NotificationService notificationService) {
@@ -74,7 +78,7 @@ public class WaitingListService {
         }
 
         entrants.add(user);
-
+        db.updateEvent(event);
         return true;
     }
 
@@ -105,7 +109,7 @@ public class WaitingListService {
             if (sameUser(current, user)) {
 
                 entrants.remove(i);
-
+                db.updateEvent(event);
                 return true;
             }
         }
@@ -162,6 +166,7 @@ public class WaitingListService {
         }
 
         event.setWaitingListCapacity(capacity);
+        db.updateEvent(event);
     }
 
     // =========================================================
@@ -223,6 +228,7 @@ public class WaitingListService {
         }
 
         invited.add(user);
+        db.updateEvent(event);
 
         //  send notification
         if (notificationService != null) {
@@ -316,7 +322,7 @@ public class WaitingListService {
                 if (!containsUser(event.getEntrants(), user)) {
                     event.getEntrants().add(user);
                 }
-
+                db.updateEvent(event);
                 return true;
             }
         }
@@ -354,7 +360,8 @@ public class WaitingListService {
 
                 invited.remove(i);
                 cancelled.add(user);
-
+                drawReplacementEntrant(event);
+                db.updateEvent(event);
                 return true;
             }
         }
@@ -392,6 +399,7 @@ public class WaitingListService {
         // move entrant → invited
         invited.add(replacement);
         entrants.remove(index);
+        db.updateEvent(event);
 
         // notify ONLY this user
         if (notificationService != null) {
@@ -469,6 +477,7 @@ public class WaitingListService {
             if (sameUser(current, user)) {
                 invited.remove(i);
                 event.getCancelledEntrants().add(user);
+                db.updateEvent(event);
                 return true;
             }
         }
@@ -527,7 +536,7 @@ public class WaitingListService {
                 );
             }
         }
-
+        db.updateEvent(event);
         return selected;
     }
 
@@ -570,6 +579,7 @@ public class WaitingListService {
         }
         event.getInvitedEntrants().add(replacement);
         entrants.remove(replacement);
+        db.updateEvent(event);
 
         if (notificationService != null) {
             notificationService.notifyUser(
