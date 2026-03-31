@@ -43,12 +43,17 @@ public class WaitingListService {
             throw new IllegalArgumentException("Event cannot be null.");
         }
 
-        if (!event.isPublicEvent()) {
+        if (!isWithinRegistrationPeriod(event)) {
             return false;
         }
 
-        if (!isWithinRegistrationPeriod(event)) {
-            return false;
+        if (!event.isPublicEvent()) { // for private event
+
+            // only allow if user was invited
+            if (event.getInvitedEntrants() == null ||
+                    !containsUser(event.getInvitedEntrants(), user)) {
+                return false;
+            }
         }
 
         ArrayList<User> entrants = event.getEntrants();
@@ -301,10 +306,15 @@ public class WaitingListService {
             User current = invited.get(i);
 
             if (sameUser(current, user)) {
+
                 invited.remove(i);
 
-                if (!containsUser(attendees, user)) {
-                    attendees.add(user);
+                if (event.getEntrants() == null) {
+                    event.setEntrants(new ArrayList<>());
+                }
+
+                if (!containsUser(event.getEntrants(), user)) {
+                    event.getEntrants().add(user);
                 }
 
                 return true;
@@ -482,34 +492,38 @@ public class WaitingListService {
             return new ArrayList<>();
         }
 
-        // Copy list so we don't modify original
-        ArrayList<User> pool = new ArrayList<>(entrants);
-        ArrayList<User> selected = new ArrayList<>();
-        Random random = new Random();
-
-        int selectCount = Math.min(n, pool.size());
-
-        for (int i = 0; i < selectCount; i++) {
-            int index = random.nextInt(pool.size());
-            selected.add(pool.get(index));
-            pool.remove(index);
-        }
-
-        // Move selected to invitedEntrants
         if (event.getInvitedEntrants() == null) {
             event.setInvitedEntrants(new ArrayList<>());
         }
-        event.getInvitedEntrants().addAll(selected);
 
-        // Remove selected from entrants
-        entrants.removeAll(selected);
+        ArrayList<User> invited = event.getInvitedEntrants();
+        ArrayList<User> selected = new ArrayList<>();
+        Random random = new Random();
 
-        if (notificationService != null) {
-            for (User user : selected) {
+        int selectCount = Math.min(n, entrants.size());
+
+        for (int i = 0; i < selectCount; i++) {
+            int index = random.nextInt(entrants.size());
+            User winner = entrants.remove(index);
+
+            invited.add(winner);
+            selected.add(winner);
+
+            if (notificationService != null) {
                 notificationService.notifyUser(
-                        user,
+                        winner,
                         "You're Selected!",
                         "You have been selected for: " + event.getName()
+                );
+            }
+        }
+
+        if (notificationService != null) {
+            for (User user : entrants) {
+                notificationService.notifyUser(
+                        user,
+                        "Not Selected",
+                        "You were not selected for: " + event.getName()
                 );
             }
         }
@@ -556,6 +570,14 @@ public class WaitingListService {
         }
         event.getInvitedEntrants().add(replacement);
         entrants.remove(replacement);
+
+        if (notificationService != null) {
+            notificationService.notifyUser(
+                    replacement,
+                    "You're Selected!",
+                    "You have been selected (replacement) for: " + event.getName()
+            );
+        }
 
         return replacement;
     }
