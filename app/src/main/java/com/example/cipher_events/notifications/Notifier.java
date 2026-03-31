@@ -270,6 +270,11 @@ public class Notifier extends FirebaseMessagingService {
                 credentials.refreshIfExpired();
                 String accessToken = credentials.getAccessToken().getTokenValue();
 
+                Map<String, Object> mapping = get(deviceID);
+                if (mapping == null || mapping.get("fcmToken") == null) {
+                    Log.e("FCM", "No token found for deviceID: " + deviceID);
+                    return;
+                }
                 String token = get(deviceID).get("fcmToken").toString();
 
                 String payload = """
