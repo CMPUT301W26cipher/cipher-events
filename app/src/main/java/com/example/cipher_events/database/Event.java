@@ -29,6 +29,9 @@ public class Event {
     private ArrayList<EventComment> comments;
     private ArrayList<String> coOrganizerIds;
     private boolean publicEvent;
+    private Long registrationOpenTime;
+    private Long registrationCloseTime;
+
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
@@ -54,7 +57,13 @@ public class Event {
     }
 
 
-    public Event() {}
+    public Event(String name, String description, String time, String location,
+                 Organizer organizer, ArrayList<User> entrants,
+                 ArrayList<User> attendees, String posterPictureURL) {
+
+        this(name, description, time, location,
+                organizer, entrants, attendees, posterPictureURL, true);
+    }
 
     public String getEventID() {
         return eventID;
@@ -124,6 +133,21 @@ public class Event {
         return posterPictureURL;
     }
 
+    public Long getRegistrationOpenTime() {
+        return registrationOpenTime;
+    }
+
+    public void setRegistrationOpenTime(Long registrationOpenTime) {
+        this.registrationOpenTime = registrationOpenTime;
+    }
+
+    public Long getRegistrationCloseTime() {
+        return registrationCloseTime;
+    }
+
+    public void setRegistrationCloseTime(Long registrationCloseTime) {
+        this.registrationCloseTime = registrationCloseTime;
+    }
     public void setPosterPictureURL(String posterPictureURL) {
         this.posterPictureURL = posterPictureURL;
     }
