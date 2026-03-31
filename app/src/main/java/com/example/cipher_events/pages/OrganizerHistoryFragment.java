@@ -37,7 +37,7 @@ public class OrganizerHistoryFragment extends Fragment {
 
         pastEvents = new ArrayList<>();
         // Add dummy data for now
-        pastEvents.add(new Event("Past Event 1", "Old description", "2024-01-01", "Old Venue", null, new ArrayList<>(), new ArrayList<>(), null));
+        pastEvents.add(new Event("Past Event 1", "Old description", "2024-01-01", "Old Venue", null, new ArrayList<>(), new ArrayList<>(), null, true));
 
         adapter = new EventAdapter(pastEvents, event -> {
             ArrayList<String> tags = new ArrayList<>();

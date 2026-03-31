@@ -27,6 +27,7 @@ public class Event {
     private ArrayList<User> enrolledEntrants;
 
     private ArrayList<EventComment> comments;
+    private ArrayList<String> coOrganizerIds;
     private boolean publicEvent;
     private Long registrationOpenTime;
     private Long registrationCloseTime;
@@ -52,6 +53,7 @@ public class Event {
         this.enrolledEntrants = new ArrayList<>();
 
         this.comments = new ArrayList<>();
+        this.coOrganizerIds = new ArrayList<>();
     }
 
 
@@ -215,5 +217,14 @@ public class Event {
 
     public void setPublicEvent(boolean publicEvent) {
         this.publicEvent = publicEvent;
+    }
+
+    public ArrayList<String> getCoOrganizerIds() {
+        if (coOrganizerIds == null) coOrganizerIds = new ArrayList<>();
+        return coOrganizerIds;
+    }
+
+    public void setCoOrganizerIds(ArrayList<String> coOrganizerIds) {
+        this.coOrganizerIds = coOrganizerIds;
     }
 }

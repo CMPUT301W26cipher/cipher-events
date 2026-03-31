@@ -44,7 +44,8 @@ public class WaitingListServiceTest {
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                null
+                null,
+                false
         );
 
         user1 = new User();
