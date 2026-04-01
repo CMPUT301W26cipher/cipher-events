@@ -35,6 +35,9 @@ public class Event {
 
     private ArrayList<MessageThread> messageThreads;
 
+    public Event() {
+    }
+
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
