@@ -1,6 +1,7 @@
 package com.example.cipher_events.database;
 
 import com.example.cipher_events.comment.EventComment;
+import com.example.cipher_events.message.MessageThread;
 
 import java.util.ArrayList;
 import java.util.UUID;
@@ -32,10 +33,24 @@ public class Event {
     private Long registrationOpenTime;
     private Long registrationCloseTime;
 
+    private ArrayList<MessageThread> messageThreads;
+
+    public Event() {
+    }
+
     // Constructor
     // pass empty lists for entrants and attendees if not provided
     // pass null for optional fields if not provided
-    public Event(String name, String description, String time, String location, Organizer organizer, ArrayList<User> entrants, ArrayList<User> attendees, String posterPictureURL, boolean publicEvent) {
+    public Event(String name,
+                 String description,
+                 String time,
+                 String location,
+                 Organizer organizer,
+                 ArrayList<User> entrants,
+                 ArrayList<User> attendees,
+                 String posterPictureURL,
+                 boolean publicEvent,
+                 ArrayList<MessageThread> messageThreads) {
         this.eventID = UUID.randomUUID().toString();
         this.name = name;
         this.description = description;
@@ -54,15 +69,16 @@ public class Event {
 
         this.comments = new ArrayList<>();
         this.coOrganizerIds = new ArrayList<>();
+        this.messageThreads = messageThreads;
     }
 
 
     public Event(String name, String description, String time, String location,
                  Organizer organizer, ArrayList<User> entrants,
-                 ArrayList<User> attendees, String posterPictureURL) {
+                 ArrayList<User> attendees, String posterPictureURL, boolean publicEvent) {
 
         this(name, description, time, location,
-                organizer, entrants, attendees, posterPictureURL, true);
+                organizer, entrants, attendees, posterPictureURL, publicEvent, new ArrayList<>());
     }
 
     public String getEventID() {
@@ -160,22 +176,6 @@ public class Event {
         this.waitingListCapacity = waitingListCapacity;
     }
 
-    // String representation for debugging purposes
-    @Override
-    public String toString() {
-        return "Event{" +
-                "name='" + name + '\'' +
-                ", description='" + description + '\'' +
-                ", time='" + time + '\'' +
-                ", location='" + location + '\'' +
-                ", organizer='" + organizer + '\'' +
-                ", entrants=" + entrants +
-                ", attendees=" + attendees +
-                ", posterPictureURL='" + posterPictureURL + '\'' +
-                '}';
-    }
-
-
     public ArrayList<User> getInvitedEntrants() {
         return invitedEntrants;
     }
@@ -226,5 +226,31 @@ public class Event {
 
     public void setCoOrganizerIds(ArrayList<String> coOrganizerIds) {
         this.coOrganizerIds = coOrganizerIds;
+    }
+
+    public ArrayList<MessageThread> getMessageThreads() {
+        if (messageThreads == null) {
+            messageThreads = new ArrayList<>();
+        }
+        return messageThreads;
+    }
+
+    public void setMessageThreads(ArrayList<MessageThread> messageThreads) {
+        this.messageThreads = messageThreads;
+    }
+
+    // String representation for debugging purposes
+    @Override
+    public String toString() {
+        return "Event{" +
+                "name='" + name + '\'' +
+                ", description='" + description + '\'' +
+                ", time='" + time + '\'' +
+                ", location='" + location + '\'' +
+                ", organizer='" + organizer + '\'' +
+                ", entrants=" + entrants +
+                ", attendees=" + attendees +
+                ", posterPictureURL='" + posterPictureURL + '\'' +
+                '}';
     }
 }
