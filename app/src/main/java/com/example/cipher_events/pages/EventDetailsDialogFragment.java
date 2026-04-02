@@ -49,6 +49,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView dateLocation;
     private ImageView banner;
     private Button actionButton;
+    private TextView lotteryHeader;
+    private TextView lotteryText;
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -104,9 +106,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         description = view.findViewById(R.id.detail_description);
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
+        lotteryHeader = view.findViewById(R.id.detail_lottery_header);
+        lotteryText = view.findViewById(R.id.detail_lottery_text);
+        actionButton = view.findViewById(R.id.scan_button);
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
-        TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
-        Button actionButton = view.findViewById(R.id.scan_button);
 
         // Comment components
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
@@ -123,8 +126,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         if (args != null) {
             eventId = args.getString("eventId");
             isOrganizerView = args.getBoolean("isOrganizerView", false);
-
-            loadComments();
 
             ArrayList<String> tags = args.getStringArrayList("tags");
             if (tags != null) {
@@ -144,10 +145,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             }
         }
 
-        refreshUI();
-
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
+            lotteryHeader.setVisibility(View.GONE);
+            lotteryText.setVisibility(View.GONE);
         } else {
             actionButton.setText("Scan Info");
             actionButton.setOnClickListener(v -> {
@@ -179,8 +180,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             );
         }
 
-        lotteryText.setText("⚠️ Disclaimer\nSome events use a lottery system when more people join than there are available spots...");
-
         btnPostComment.setOnClickListener(v -> {
             String commentText = etCommentInput.getText().toString().trim();
             if (commentText.isEmpty()) {
@@ -207,6 +206,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             public void afterTextChanged(Editable s) {}
         });
 
+        refreshUI();
+
         return view;
     }
 
@@ -228,8 +229,53 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         if (event != null) {
             event.getComments().add(newComment);
             db.updateEvent(event);
-            commentAdapter.setComments(event.getComments()); // Update UI immediately
+            // UI will refresh via onDataChanged
             Toast.makeText(getContext(), "Comment posted!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void refreshUI() {
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            title.setText(event.getName());
+            int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
+            attendees.setText(count + " people in waitlist");
+            
+            // For organizer, show description. For entrant, description is hidden until scan
+            if (isOrganizerView) {
+                description.setText(event.getDescription());
+            }
+            
+            dateLocation.setText(event.getTime() + ", " + event.getLocation());
+
+            if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
+                banner.setVisibility(View.VISIBLE);
+                Glide.with(this).load(event.getPosterPictureURL()).into(banner);
+            } else {
+                banner.setImageResource(R.drawable.gray_placeholder);
+            }
+            
+            loadComments();
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        db.addListener(this);
+        refreshUI();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(this::refreshUI);
         }
     }
 

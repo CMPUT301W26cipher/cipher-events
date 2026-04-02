@@ -176,10 +176,10 @@ public class MainActivity extends AppCompatActivity {
             tvCurrentRole.setVisibility(View.VISIBLE);
         }
 
-        isLoggedIn = false;
+//        isLoggedIn = false;
         bottomNavigationView.setVisibility(View.GONE);
         replaceFragment(new LoginFragment());
-        onLoginSuccess();
+//        onLoginSuccess();
     }
 
     private void replaceFragment(Fragment fragment) {
