@@ -27,7 +27,6 @@ import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 
 /**
@@ -41,12 +40,17 @@ import java.util.ArrayList;
  * - Lottery disclaimer
  */
 
-public class EventDetailsDialogFragment extends DialogFragment {
+public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
     private boolean isOrganizerView = false;
     private String eventId;
     DBProxy db = DBProxy.getInstance();
     Notifier notifier = Notifier.getInstance();
+
+    private TextView title;
+    private TextView attendees;
+    private TextView dateLocation;
+    private Button actionButton;
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -97,27 +101,23 @@ public class EventDetailsDialogFragment extends DialogFragment {
 
         View view = inflater.inflate(R.layout.dialog_event_details, container, false);
 
-        TextView title = view.findViewById(R.id.detail_title);
-        TextView attendees = view.findViewById(R.id.detail_attendees);
-        //TextView description = view.findViewById(R.id.detail_description);
-        TextView dateLocation = view.findViewById(R.id.detail_date_location);
+        title = view.findViewById(R.id.detail_title);
+        attendees = view.findViewById(R.id.detail_attendees);
+        dateLocation = view.findViewById(R.id.detail_date_location);
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
         TextView lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
         Button notifyButton = view.findViewById(R.id.notify_button);
-        Button actionButton = view.findViewById(R.id.scan_button);
+        actionButton = view.findViewById(R.id.scan_button);
 
         Bundle args = getArguments();
         if (args != null) {
             eventId = args.getString("eventId");
-            title.setText(args.getString("name"));
-            attendees.setText(args.getInt("waitlistCount") + " people in waitlist");
-            //description.setText(args.getString("description"));
-            dateLocation.setText(args.getString("location") + " • " + args.getString("time"));
             isOrganizerView = args.getBoolean("isOrganizerView", false);
-
+            
             ArrayList<String> tags = args.getStringArrayList("tags");
             if (tags != null) {
+                tagContainer.removeAllViews();
                 for (String tag : tags) {
                     TextView chip = new TextView(requireContext());
                     chip.setText(tag);
@@ -136,9 +136,10 @@ public class EventDetailsDialogFragment extends DialogFragment {
             }
         }
 
+        refreshUI();
+
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
-
             actionButton.setOnClickListener(v -> {
                 dismiss();
                 WaitingListFragment fragment = WaitingListFragment.newInstance(eventId);
@@ -149,18 +150,21 @@ public class EventDetailsDialogFragment extends DialogFragment {
                         .commit();
             });
 
-            // SHOW notify button
             notifyButton.setVisibility(View.VISIBLE);
-
-            notifyButton.setOnClickListener(v -> {
-                showNotificationInputDialog();
-            });
+            notifyButton.setOnClickListener(v -> showNotificationInputDialog());
 
         } else {
             actionButton.setText("Scan Info");
+            actionButton.setOnClickListener(v -> {
+                if (eventId != null) {
+                    QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
+                    qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
+                } else {
+                    Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
+                }
+            });
         }
 
-        // Lottery guidelines text
         lotteryText.setText(
                 "⚠️ Disclaimer\n" +
                         "Some events use a lottery system when more people join than there are available spots.\n\n" +
@@ -173,21 +177,47 @@ public class EventDetailsDialogFragment extends DialogFragment {
                         "This system helps keep things fair and avoids first‑come‑first‑served pressure."
         );
 
-
         return view;
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        db.addListener(this);
+        refreshUI();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(this::refreshUI);
+        }
+    }
+
+    private void refreshUI() {
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            title.setText(event.getName());
+            int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
+            attendees.setText(count + " people in waitlist");
+            dateLocation.setText(event.getLocation() + " • " + event.getTime());
+        }
     }
 
     @Override
     public void onStart() {
         super.onStart();
-
-        // Make dialog 90% of screen width
         if (getDialog() != null && getDialog().getWindow() != null) {
             int width = (int) (requireContext().getResources().getDisplayMetrics().widthPixels * 0.90);
             getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
-
 
     private void showNotificationInputDialog() {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
@@ -197,12 +227,10 @@ public class EventDetailsDialogFragment extends DialogFragment {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 30, 40, 10);
 
-        // Title input
         final EditText titleInput = new EditText(requireContext());
         titleInput.setHint("Notification Title");
         layout.addView(titleInput);
 
-        // Body input
         final EditText bodyInput = new EditText(requireContext());
         bodyInput.setHint("Notification Message");
         bodyInput.setMinLines(3);
@@ -218,7 +246,6 @@ public class EventDetailsDialogFragment extends DialogFragment {
 
         layout.addView(bodyInput);
 
-        // Group selector
         final Spinner groupSpinner = new Spinner(requireContext());
         String[] groups = {"Invited", "Cancelled", "Enrolled"};
 
@@ -233,12 +260,12 @@ public class EventDetailsDialogFragment extends DialogFragment {
         builder.setView(layout);
 
         builder.setPositiveButton("Send", (dialog, which) -> {
-            String title = titleInput.getText().toString().trim();
-            String body = bodyInput.getText().toString().trim();
+            String titleStr = titleInput.getText().toString().trim();
+            String bodyStr = bodyInput.getText().toString().trim();
             String selectedGroup = groupSpinner.getSelectedItem().toString();
 
-            if (!title.isEmpty() && !body.isEmpty()) {
-                sendNotificationToGroup(title, body, selectedGroup);
+            if (!titleStr.isEmpty() && !bodyStr.isEmpty()) {
+                sendNotificationToGroup(titleStr, bodyStr, selectedGroup);
             } else {
                 Toast.makeText(getContext(),
                         "Title and message cannot be empty",
@@ -251,51 +278,35 @@ public class EventDetailsDialogFragment extends DialogFragment {
         builder.show();
     }
 
-
-    private void sendNotificationToGroup(String title, String body, String group) {
-
+    private void sendNotificationToGroup(String titleStr, String bodyStr, String group) {
         switch (group) {
-            case "Invited":
-                notifyInvitedEntrants(title, body);
-                break;
-
-            case "Cancelled":
-                notifyCancelledEntrants(title, body);
-                break;
-
-            case "Enrolled":
-                notifyEnrolledEntrants(title, body);
-                break;
+            case "Invited": notifyInvitedEntrants(titleStr, bodyStr); break;
+            case "Cancelled": notifyCancelledEntrants(titleStr, bodyStr); break;
+            case "Enrolled": notifyEnrolledEntrants(titleStr, bodyStr); break;
         }
     }
 
-    private void notifyInvitedEntrants(String title, String body) {
+    private void notifyInvitedEntrants(String titleStr, String bodyStr) {
         Event e = db.getEvent(eventId);
-        Message m = new Message(title, body, e.getOrganizer());
-
+        if (e == null) return;
+        Message m = new Message(titleStr, bodyStr, e.getOrganizer());
         ArrayList<User> entrants = e.getInvitedEntrants();
-        for (User user : entrants) {
-            notifier.sendMessage(user.getDeviceID(), m);
-        }
+        for (User user : entrants) { notifier.sendMessage(user.getDeviceID(), m); }
     }
 
-    private void notifyCancelledEntrants(String title, String body) {
+    private void notifyCancelledEntrants(String titleStr, String bodyStr) {
         Event e = db.getEvent(eventId);
-        Message m = new Message(title, body, e.getOrganizer());
-
+        if (e == null) return;
+        Message m = new Message(titleStr, bodyStr, e.getOrganizer());
         ArrayList<User> entrants = e.getCancelledEntrants();
-        for (User user : entrants) {
-            notifier.sendMessage(user.getDeviceID(), m);
-        }
+        for (User user : entrants) { notifier.sendMessage(user.getDeviceID(), m); }
     }
 
-    private void notifyEnrolledEntrants(String title, String body) {
+    private void notifyEnrolledEntrants(String titleStr, String bodyStr) {
         Event e = db.getEvent(eventId);
-        Message m = new Message(title, body, e.getOrganizer());
-
+        if (e == null) return;
+        Message m = new Message(titleStr, bodyStr, e.getOrganizer());
         ArrayList<User> entrants = e.getEnrolledEntrants();
-        for (User user : entrants) {
-            notifier.sendMessage(user.getDeviceID(), m);
-        }
+        for (User user : entrants) { notifier.sendMessage(user.getDeviceID(), m); }
     }
 }

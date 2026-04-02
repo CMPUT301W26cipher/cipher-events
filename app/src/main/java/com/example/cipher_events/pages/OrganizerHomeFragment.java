@@ -77,7 +77,8 @@ public class OrganizerHomeFragment extends Fragment {
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                null
+                null,
+                true
         ));
 
         // Add events created during this session
