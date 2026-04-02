@@ -226,7 +226,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         if (event != null) {
             title.setText(event.getName());
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
-            attendees.setText(count + " people in waitlist");
+            attendees.setText(count + " in waitlist");
             description.setText(event.getDescription());
             dateLocation.setText(event.getLocation() + " • " + event.getTime());
 
