@@ -28,6 +28,8 @@ import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
+import com.example.cipher_events.message.MessageThread;
+import com.example.cipher_events.message.MessagingService;
 
 import java.util.ArrayList;
 
@@ -46,8 +48,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
     private boolean isOrganizerView = false;
     private String eventId;
+    private String currentDeviceID;
     DBProxy db = DBProxy.getInstance();
     Notifier notifier = Notifier.getInstance();
+    MessagingService messagingService = new MessagingService();
 
     private TextView title;
     private TextView attendees;
@@ -66,7 +70,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             int waitlistCount,
             ArrayList<String> tags
     ) {
-        return newInstance(eventId, name, description, time, location, waitlistCount, tags, false);
+        return newInstance(eventId, name, description, time, location, waitlistCount, tags, false, null);
     }
 
     public static EventDetailsDialogFragment newInstance(
@@ -77,7 +81,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             String location,
             int waitlistCount,
             ArrayList<String> tags,
-            boolean isOrganizerView
+            boolean isOrganizerView,
+            String currentDeviceID
     ) {
         EventDetailsDialogFragment fragment = new EventDetailsDialogFragment();
         Bundle args = new Bundle();
@@ -89,6 +94,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         args.putInt("waitlistCount", waitlistCount);
         args.putStringArrayList("tags", tags);
         args.putBoolean("isOrganizerView", isOrganizerView);
+        args.putString("currentDeviceID", currentDeviceID);
         fragment.setArguments(args);
         return fragment;
     }
@@ -116,13 +122,15 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         TextView lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
         Button notifyButton = view.findViewById(R.id.notify_button);
+        Button messageButton = view.findViewById(R.id.message_button);
         actionButton = view.findViewById(R.id.scan_button);
 
         Bundle args = getArguments();
         if (args != null) {
             eventId = args.getString("eventId");
             isOrganizerView = args.getBoolean("isOrganizerView", false);
-            
+            currentDeviceID = args.getString("currentDeviceID");
+
             ArrayList<String> tags = args.getStringArrayList("tags");
             if (tags != null) {
                 tagContainer.removeAllViews();
@@ -161,6 +169,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             notifyButton.setVisibility(View.VISIBLE);
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
 
+            messageButton.setText("Messages");
+            messageButton.setOnClickListener(v -> openOrganizerMessages();
+
             // Organizer sees description and no lottery info
             descriptionLabel.setVisibility(View.VISIBLE);
             description.setVisibility(View.VISIBLE);
@@ -177,6 +188,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                     Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
                 }
             });
+
+            messageButton.setText("Message Organizer");
+            messageButton.setOnClickListener(v -> openEntrantDirectChat());
 
             // Entrant does NOT see description until scan (which opens a new dialog)
             descriptionLabel.setVisibility(View.GONE);
@@ -227,44 +241,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             title.setText(event.getName());
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " in waitlist");
-            description.setText(event.getDescription());
-            dateLocation.setText(event.getLocation() + " • " + event.getTime());
-
-            if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
-                banner.setVisibility(View.VISIBLE);
-                Glide.with(this).load(event.getPosterPictureURL()).into(banner);
-            } else {
-                banner.setVisibility(View.GONE);
-            }
-        }
-    }
-
-    @Override
-    public void onResume() {
-        super.onResume();
-        db.addListener(this);
-        refreshUI();
-    }
-
-    @Override
-    public void onPause() {
-        super.onPause();
-        db.removeListener(this);
-    }
-
-    @Override
-    public void onDataChanged() {
-        if (getActivity() != null) {
-            getActivity().runOnUiThread(this::refreshUI);
-        }
-    }
-
-    private void refreshUI() {
-        Event event = db.getEvent(eventId);
-        if (event != null) {
-            title.setText(event.getName());
-            int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
-            attendees.setText(count + " people in waitlist");
             description.setText(event.getDescription());
             dateLocation.setText(event.getLocation() + " • " + event.getTime());
 
@@ -375,5 +351,62 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         Message m = new Message(titleStr, bodyStr, e.getOrganizer());
         ArrayList<User> entrants = e.getEnrolledEntrants();
         for (User user : entrants) { notifier.sendMessage(user.getDeviceID(), m); }
+    }
+
+    private void openOrganizerMessages() {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (currentDeviceID == null || currentDeviceID.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing organizer ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        dismiss();
+
+        MessageThreadsFragment fragment =
+                MessageThreadsFragment.newInstance(eventId, currentDeviceID);
+
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void openEntrantDirectChat() {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (currentDeviceID == null || currentDeviceID.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing user ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            MessageThread thread = messagingService.openThread(eventId, currentDeviceID);
+
+            dismiss();
+
+            DirectChatFragment fragment = DirectChatFragment.newInstance(
+                    eventId,
+                    thread.getThreadID(),
+                    currentDeviceID,
+                    false
+            );
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+        }
     }
 }
