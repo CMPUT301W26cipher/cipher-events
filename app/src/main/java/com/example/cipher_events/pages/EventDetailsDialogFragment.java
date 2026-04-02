@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 import android.widget.TextView;
@@ -20,6 +21,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
@@ -49,7 +51,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
     private TextView title;
     private TextView attendees;
+    private TextView description;
     private TextView dateLocation;
+    private ImageView banner;
     private Button actionButton;
 
     public static EventDetailsDialogFragment newInstance(
@@ -103,7 +107,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
         title = view.findViewById(R.id.detail_title);
         attendees = view.findViewById(R.id.detail_attendees);
+        description = view.findViewById(R.id.detail_description);
         dateLocation = view.findViewById(R.id.detail_date_location);
+        banner = view.findViewById(R.id.detail_banner);
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
         TextView lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
@@ -206,7 +212,15 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             title.setText(event.getName());
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " people in waitlist");
+            description.setText(event.getDescription());
             dateLocation.setText(event.getLocation() + " • " + event.getTime());
+
+            if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
+                banner.setVisibility(View.VISIBLE);
+                Glide.with(this).load(event.getPosterPictureURL()).into(banner);
+            } else {
+                banner.setVisibility(View.GONE);
+            }
         }
     }
 

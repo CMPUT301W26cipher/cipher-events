@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    android:background="#FFE0E0">
+    android:background="@color/white">
 
     <TextView
         android:layout_width="wrap_content"
@@ -12,7 +12,7 @@
         android:text="Admin Dashboard"
         android:textSize="24sp"
         android:textStyle="bold"
-        android:textColor="#B71C1C"
+        android:textColor="@color/black"
         android:layout_marginBottom="24dp"/>
 
     <Button

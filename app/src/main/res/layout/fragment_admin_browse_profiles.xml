@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFE0E0">
+    android:background="@color/white">
 
     <TextView
         android:id="@+id/tv_title"
@@ -13,7 +13,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginStart="16dp"
         android:text="Browse Profiles"
-        android:textColor="#B71C1C"
+        android:textColor="@color/black"
         android:textSize="24sp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
