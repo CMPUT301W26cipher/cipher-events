@@ -7,6 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
+import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -14,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
@@ -21,7 +23,7 @@ import com.example.cipher_events.database.Organizer;
 public class OrganizerProfileFragment extends Fragment {
 
     private TextView nameText, emailText, phoneText;
-    private EditText nameEdit, emailEdit, phoneEdit;
+    private EditText nameEdit, emailEdit, locationEdit;
     private DBProxy dbProxy;
     private String deviceId;
     private Organizer currentOrganizer;
@@ -50,7 +52,11 @@ public class OrganizerProfileFragment extends Fragment {
 
         nameEdit = view.findViewById(R.id.organizer_profile_name_edit);
         emailEdit = view.findViewById(R.id.organizer_profile_email_edit);
-        phoneEdit = view.findViewById(R.id.organizer_profile_phone_edit);
+        locationEdit = view.findViewById(R.id.organizer_profile_phone_edit);
+
+        Button myEventsBtn = view.findViewById(R.id.my_events_btn);
+        Button createEventBtn = view.findViewById(R.id.create_event_btn);
+        Button signoutBtn = view.findViewById(R.id.organizer_signout_btn);
 
         // Load real organizer data from database
         currentOrganizer = dbProxy.getOrganizer(deviceId);
@@ -63,12 +69,39 @@ public class OrganizerProfileFragment extends Fragment {
         // Setup editable fields
         setupEditableField(nameText, nameEdit, "name");
         setupEditableField(emailText, emailEdit, "email");
-        setupEditableField(phoneText, phoneEdit, "phone");
+        setupEditableField(phoneText, locationEdit, "phone");
+
+        if (myEventsBtn != null) {
+            myEventsBtn.setOnClickListener(v -> {
+                getParentFragmentManager().beginTransaction()
+                        .replace(R.id.fragment_container, new OrganizerHomeFragment())
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
+
+        if (createEventBtn != null) {
+            createEventBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).showCreateEventDialog();
+                }
+            });
+        }
+
+        if (signoutBtn != null) {
+            signoutBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).onRoleSelected(""); // Back to role selection
+                }
+            });
+        }
 
         return view;
     }
 
     private void setupEditableField(TextView textView, EditText editText, String fieldType) {
+        if (textView == null || editText == null) return;
+
         textView.setOnClickListener(v -> {
             editText.setText(textView.getText());
             textView.setVisibility(View.GONE);

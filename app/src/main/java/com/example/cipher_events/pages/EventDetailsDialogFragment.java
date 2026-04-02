@@ -36,7 +36,7 @@ import java.util.ArrayList;
  * pop up displays full event details:
  * - Event Title
  * - Number of people in waitlist
- * - Event Description
+ * - Event Description (Hidden for entrants until scan)
  * - Date and Location
  * - Tags
  * - Lottery disclaimer
@@ -52,6 +52,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView title;
     private TextView attendees;
     private TextView description;
+    private TextView descriptionLabel;
     private TextView dateLocation;
     private ImageView banner;
     private Button actionButton;
@@ -107,6 +108,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
         title = view.findViewById(R.id.detail_title);
         attendees = view.findViewById(R.id.detail_attendees);
+        descriptionLabel = view.findViewById(R.id.description_label);
         description = view.findViewById(R.id.detail_description);
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
@@ -159,6 +161,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             notifyButton.setVisibility(View.VISIBLE);
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
 
+            // Organizer sees description and no lottery info
+            descriptionLabel.setVisibility(View.VISIBLE);
+            description.setVisibility(View.VISIBLE);
+            lotteryHeader.setVisibility(View.GONE);
+            lotteryText.setVisibility(View.GONE);
+
         } else {
             actionButton.setText("Scan Info");
             actionButton.setOnClickListener(v -> {
@@ -169,19 +177,26 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                     Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
                 }
             });
-        }
 
-        lotteryText.setText(
-                "⚠️ Disclaimer\n" +
-                        "Some events use a lottery system when more people join than there are available spots.\n\n" +
-                        "What this means for you:\n" +
-                        "• When you join, you're entered into the lottery.\n" +
-                        "• Everyone who joins before the deadline has the same chance.\n" +
-                        "• Joining earlier does not increase your odds.\n" +
-                        "• If you're selected, you'll receive a confirmation.\n" +
-                        "• If you're not selected, you may be placed on a waitlist.\n\n" +
-                        "This system helps keep things fair and avoids first‑come‑first‑served pressure."
-        );
+            // Entrant does NOT see description until scan (which opens a new dialog)
+            descriptionLabel.setVisibility(View.GONE);
+            description.setVisibility(View.GONE);
+            
+            // Entrant sees lottery guidelines
+            lotteryHeader.setVisibility(View.VISIBLE);
+            lotteryText.setVisibility(View.VISIBLE);
+            lotteryText.setText(
+                    "⚠️ Disclaimer\n" +
+                            "Some events use a lottery system when more people join than there are available spots.\n\n" +
+                            "What this means for you:\n" +
+                            "• When you join, you're entered into the lottery.\n" +
+                            "• Everyone who joins before the deadline has the same chance.\n" +
+                            "• Joining earlier does not increase your odds.\n" +
+                            "• If you're selected, you'll receive a confirmation.\n" +
+                            "• If you're not selected, you may be placed on a waitlist.\n\n" +
+                            "This system helps keep things fair and avoids first‑come‑first‑served pressure."
+            );
+        }
 
         return view;
     }

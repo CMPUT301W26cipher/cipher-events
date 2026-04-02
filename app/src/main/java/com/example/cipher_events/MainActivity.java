@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showCreateEventDialog() {
+    public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
         dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl) -> {
             // Get current organizer from DB
