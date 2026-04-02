@@ -150,7 +150,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             actionButton.setText("View Waitlist");
             actionButton.setOnClickListener(v -> {
                 dismiss();
-                WaitingListFragment fragment = WaitingListFragment.newInstance(eventId);
+                String role = isOrganizerView ? "organizer" : "attendee";
+
+                WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, role);
                 getParentFragmentManager()
                         .beginTransaction()
                         .replace(R.id.fragment_container, fragment)

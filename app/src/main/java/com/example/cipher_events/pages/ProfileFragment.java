@@ -70,7 +70,9 @@ public class ProfileFragment extends Fragment {
         // Waitlist button
         Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
         waitlistBtn.setOnClickListener(v -> {
-            WaitingListFragment fragment = WaitingListFragment.newInstance(null);
+            User user = DBProxy.getInstance().getCurrentUser();
+            String role = (user instanceof Organizer) ? "organizer" : "attendee";
+            WaitingListFragment fragment = WaitingListFragment.newInstance(null, role);
             getParentFragmentManager()
                     .beginTransaction()
                     .replace(R.id.fragment_container, fragment)

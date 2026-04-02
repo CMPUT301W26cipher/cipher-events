@@ -3,14 +3,18 @@ package com.example.cipher_events.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 
 import java.util.List;
@@ -58,6 +62,19 @@ public class AdminEventAdapter extends RecyclerView.Adapter<AdminEventAdapter.Ad
             if (listener != null) {
                 listener.onEventClick(event);
             }
+        });
+
+        Button deleteBtn = holder.itemView.findViewById(R.id.btn_delete_event);
+        deleteBtn.setOnClickListener(v -> {
+            new AlertDialog.Builder(holder.itemView.getContext())
+                    .setTitle("Delete Event")
+                    .setMessage("Are you sure you want to delete \"" + event.getName() + "\"?")
+                    .setPositiveButton("Delete", (dialog, which) -> {
+                        DBProxy.getInstance().deleteEvent(event.getEventID());
+                        Toast.makeText(holder.itemView.getContext(), "Event deleted", Toast.LENGTH_SHORT).show();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
     }
 
