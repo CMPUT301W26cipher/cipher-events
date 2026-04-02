@@ -3,6 +3,7 @@ package com.example.cipher_events;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -45,6 +46,7 @@ public class MainActivity extends AppCompatActivity {
     Notifier notifier;
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
+    TextView tvCurrentRole;
 
     private String currentRole = "";
 
@@ -81,6 +83,8 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNavigationView = findViewById(R.id.bottom_nav);
         bottomNavigationView.setVisibility(View.GONE); // Hide by default
+        
+        tvCurrentRole = findViewById(R.id.tv_current_role);
 
         // Show role selection first
         replaceFragment(new RoleSelectionFragment());
@@ -164,22 +168,18 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onRoleSelected(String role) {
-        this.currentRole = role;
-        bottomNavigationView.setVisibility(View.VISIBLE);
-
-        if ("ORGANIZER".equals(role)) {
-            bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
-            replaceFragment(new OrganizerHomeFragment());
-        } else if ("ADMIN".equals(role)) {
-            bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_admin_nav);
-            replaceFragment(new AdminBrowseEventsFragment());
-        } else {
-            bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
-            replaceFragment(new HomeFragment());
+        currentRole = role;
+        
+        // Update Role UI
+        if (tvCurrentRole != null) {
+            tvCurrentRole.setText("Role: " + role);
+            tvCurrentRole.setVisibility(View.VISIBLE);
         }
+
+//        isLoggedIn = false;
+        bottomNavigationView.setVisibility(View.GONE);
+        replaceFragment(new LoginFragment());
+//        onLoginSuccess();
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -187,6 +187,12 @@ public class MainActivity extends AppCompatActivity {
             fragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, fragment)
                     .commit();
+
+            // Hide role banner if we go back to role selection
+            if (fragment instanceof RoleSelectionFragment) {
+                if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
+                currentRole = "";
+            }
         }
     }
 
