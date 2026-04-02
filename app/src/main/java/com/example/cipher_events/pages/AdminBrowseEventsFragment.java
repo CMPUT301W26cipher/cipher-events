@@ -48,7 +48,9 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(eventList, event -> {
-            // Read-only click handler
+            // Show admin-exclusive event details dialog
+            AdminEventDetailsDialogFragment dialog = AdminEventDetailsDialogFragment.newInstance(event.getEventID());
+            dialog.show(getParentFragmentManager(), "AdminEventDetailsDialog");
         });
         recyclerView.setAdapter(adapter);
 
