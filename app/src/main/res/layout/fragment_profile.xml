@@ -156,4 +156,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/edit_profile_btn" />
 
+    <Button
+        android:id="@+id/admin_btn"
+        android:layout_width="242dp"
+        android:layout_height="55dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="12dp"
+        android:text="Admin Dashboard"
+        android:visibility="gone"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/signout_btn" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
