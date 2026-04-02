@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -64,13 +65,13 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                refreshUI();
+                refreshUI(getView());
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        refreshUI();
+        refreshUI(view);
 
         return view;
     }
@@ -79,7 +80,7 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
     public void onResume() {
         super.onResume();
         db.addListener(this);
-        refreshUI();
+        refreshUI(getView());
     }
 
     @Override
@@ -91,11 +92,21 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
     @Override
     public void onDataChanged() {
         if (getActivity() != null) {
-            getActivity().runOnUiThread(this::refreshUI);
+            getActivity().runOnUiThread(() -> refreshUI(getView()));
         }
     }
 
-    private void refreshUI() {
+    private void refreshUI(View rootView) {
+        if (rootView == null) return;
+
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            TextView titleView = rootView.findViewById(R.id.title_events);
+            if (titleView != null) {
+                titleView.setText(event.getName() + " Waitlist");
+            }
+        }
+
         int selectedTab = tabLayout.getSelectedTabPosition();
         EntrantAdapter.ListType listType;
         switch (selectedTab) {
