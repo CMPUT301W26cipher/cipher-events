@@ -45,6 +45,8 @@ import java.util.ArrayList;
 public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
     private boolean isOrganizerView = false;
+
+    private Button viewCommentsButton;
     private String eventId;
     DBProxy db = DBProxy.getInstance();
     Notifier notifier = Notifier.getInstance();
@@ -117,6 +119,19 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
         Button notifyButton = view.findViewById(R.id.notify_button);
         actionButton = view.findViewById(R.id.scan_button);
+        viewCommentsButton = view.findViewById(R.id.btn_view_comments);
+
+        viewCommentsButton.setOnClickListener(v -> {
+            dismiss();
+
+            CommentsFragment fragment = CommentsFragment.newInstance(eventId);
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         Bundle args = getArguments();
         if (args != null) {
