@@ -1,6 +1,7 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,17 +15,25 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
 
 public class OrganizerProfileFragment extends Fragment {
 
     private TextView nameText, emailText, phoneText;
     private EditText nameEdit, emailEdit, phoneEdit;
-
-    // TEMP organizer — replace with real Firebase or DB organizer later
+    private DBProxy dbProxy;
+    private String deviceId;
     private Organizer currentOrganizer;
 
     public OrganizerProfileFragment() {}
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        dbProxy = DBProxy.getInstance();
+        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
 
     @Nullable
     @Override
@@ -33,15 +42,6 @@ public class OrganizerProfileFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_organizer_profile, container, false);
-
-        // Load an organizer (replace with real organizer later)
-        currentOrganizer = new Organizer(
-                "Organizer Name",
-                "organizer@example.com",
-                "pass123",
-                "987-654-3210",
-                null
-        );
 
         // Bind views
         nameText = view.findViewById(R.id.organizer_profile_name);
@@ -52,10 +52,13 @@ public class OrganizerProfileFragment extends Fragment {
         emailEdit = view.findViewById(R.id.organizer_profile_email_edit);
         phoneEdit = view.findViewById(R.id.organizer_profile_phone_edit);
 
-        // Load data into UI
-        nameText.setText(currentOrganizer.getName());
-        emailText.setText(currentOrganizer.getEmail());
-        phoneText.setText(currentOrganizer.getPhoneNumber());
+        // Load real organizer data from database
+        currentOrganizer = dbProxy.getOrganizer(deviceId);
+        if (currentOrganizer != null) {
+            nameText.setText(currentOrganizer.getName());
+            emailText.setText(currentOrganizer.getEmail());
+            phoneText.setText(currentOrganizer.getPhoneNumber());
+        }
 
         // Setup editable fields
         setupEditableField(nameText, nameEdit, "name");
@@ -80,17 +83,13 @@ public class OrganizerProfileFragment extends Fragment {
                 String newValue = editText.getText().toString();
                 textView.setText(newValue);
 
-                // Update the Organizer object
-                switch (fieldType) {
-                    case "name":
-                        currentOrganizer.setName(newValue);
-                        break;
-                    case "email":
-                        currentOrganizer.setEmail(newValue);
-                        break;
-                    case "phone":
-                        currentOrganizer.setPhoneNumber(newValue);
-                        break;
+                if (currentOrganizer != null) {
+                    switch (fieldType) {
+                        case "name": currentOrganizer.setName(newValue); break;
+                        case "email": currentOrganizer.setEmail(newValue); break;
+                        case "phone": currentOrganizer.setPhoneNumber(newValue); break;
+                    }
+                    dbProxy.updateOrganizer(currentOrganizer);
                 }
 
                 editText.setVisibility(View.GONE);

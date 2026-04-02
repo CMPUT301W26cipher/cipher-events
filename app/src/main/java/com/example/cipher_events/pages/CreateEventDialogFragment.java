@@ -1,5 +1,6 @@
 package com.example.cipher_events.pages;
 
+import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
@@ -10,6 +11,8 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -23,10 +26,11 @@ import java.util.Locale;
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
-        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity);
+        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl);
     }
 
     private CreateEventListener listener;
+    private String bannerUrl = null;
 
     public void setCreateEventListener(CreateEventListener listener) {
         this.listener = listener;
@@ -43,11 +47,14 @@ public class CreateEventDialogFragment extends DialogFragment {
         EditText etLocation = view.findViewById(R.id.et_event_location);
         EditText etDescription = view.findViewById(R.id.et_event_description);
         EditText etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
+        View btnAddBanner = view.findViewById(R.id.btn_add_banner);
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
 
         // Set up click listeners for date and time fields to show pickers
         etDate.setOnClickListener(v -> showDatePicker(etDate));
         etTime.setOnClickListener(v -> showTimePicker(etTime));
+
+        btnAddBanner.setOnClickListener(v -> showAddBannerDialog());
 
         btnAddEvent.setOnClickListener(v -> {
             String title = etTitle.getText().toString();
@@ -64,12 +71,35 @@ public class CreateEventDialogFragment extends DialogFragment {
             }
 
             if (listener != null) {
-                listener.onEventCreated(title, date, time, location, description, capacity);
+                listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl);
             }
             dismiss();
         });
 
         return view;
+    }
+
+    private void showAddBannerDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Add Banner URL");
+
+        final EditText input = new EditText(requireContext());
+        input.setHint("Paste image address here");
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.MATCH_PARENT);
+        input.setLayoutParams(lp);
+        builder.setView(input);
+
+        builder.setPositiveButton("Add", (dialog, which) -> {
+            bannerUrl = input.getText().toString().trim();
+            if (!bannerUrl.isEmpty()) {
+                Toast.makeText(getContext(), "Banner URL added", Toast.LENGTH_SHORT).show();
+            }
+        });
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.cancel());
+
+        builder.show();
     }
 
     private void showDatePicker(EditText etDate) {

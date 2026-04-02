@@ -28,19 +28,9 @@ public class RoleSelectionFragment extends Fragment {
         Button btnOrganizer = view.findViewById(R.id.btn_organizer);
         Button btnAdmin = view.findViewById(R.id.btn_admin);
 
-        btnEntrant.setOnClickListener(v -> {
-            // Navigate to LoginFragment when Attendee is clicked
-            getParentFragmentManager().beginTransaction()
-                    .replace(R.id.fragment_container, new LoginFragment())
-                    .addToBackStack(null)
-                    .commit();
-        });
+        btnEntrant.setOnClickListener(v -> navigateToLogin("ENTRANT"));
 
-        btnOrganizer.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).onRoleSelected("ORGANIZER");
-            }
-        });
+        btnOrganizer.setOnClickListener(v -> navigateToLogin("ORGANIZER"));
 
         btnAdmin.setOnClickListener(v -> {
             if (getActivity() instanceof MainActivity) {
@@ -49,5 +39,13 @@ public class RoleSelectionFragment extends Fragment {
         });
 
         return view;
+    }
+
+    private void navigateToLogin(String role) {
+        LoginFragment fragment = LoginFragment.newInstance(role);
+        getParentFragmentManager().beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 }

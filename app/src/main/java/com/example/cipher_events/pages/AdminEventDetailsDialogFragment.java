@@ -7,8 +7,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -30,6 +32,7 @@ public class AdminEventDetailsDialogFragment extends DialogFragment implements D
     private TextView descriptionText;
     private ImageView bannerImage;
     private ImageView deleteBannerIcon;
+    private Button removeEventButton;
 
     public static AdminEventDetailsDialogFragment newInstance(String eventId) {
         AdminEventDetailsDialogFragment fragment = new AdminEventDetailsDialogFragment();
@@ -54,18 +57,20 @@ public class AdminEventDetailsDialogFragment extends DialogFragment implements D
         descriptionText = view.findViewById(R.id.admin_detail_description);
         bannerImage = view.findViewById(R.id.admin_detail_banner);
         deleteBannerIcon = view.findViewById(R.id.admin_delete_banner_icon);
+        removeEventButton = view.findViewById(R.id.admin_btn_remove_event);
 
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
             refreshUI();
         }
 
-        deleteBannerIcon.setOnClickListener(v -> showDeleteConfirmation());
+        deleteBannerIcon.setOnClickListener(v -> showDeleteBannerConfirmation());
+        removeEventButton.setOnClickListener(v -> showRemoveEventConfirmation());
 
         return view;
     }
 
-    private void showDeleteConfirmation() {
+    private void showDeleteBannerConfirmation() {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete Banner")
                 .setMessage("Are you sure you want to delete this banner?")
@@ -79,8 +84,24 @@ public class AdminEventDetailsDialogFragment extends DialogFragment implements D
         if (event != null) {
             event.setPosterPictureURL("");
             db.updateEvent(event);
+            Toast.makeText(getContext(), "Banner removed", Toast.LENGTH_SHORT).show();
             refreshUI();
         }
+    }
+
+    private void showRemoveEventConfirmation() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Remove Event")
+                .setMessage("Are you sure you want to permanently remove this event from the database?")
+                .setPositiveButton("Remove", (dialog, which) -> removeEvent())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void removeEvent() {
+        db.deleteEvent(eventId);
+        Toast.makeText(getContext(), "Event removed from system", Toast.LENGTH_SHORT).show();
+        dismiss();
     }
 
 
@@ -115,8 +136,10 @@ public class AdminEventDetailsDialogFragment extends DialogFragment implements D
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
                 Glide.with(this).load(event.getPosterPictureURL()).into(bannerImage);
+                deleteBannerIcon.setVisibility(View.VISIBLE);
             } else {
                 bannerImage.setImageResource(R.drawable.gray_placeholder);
+                deleteBannerIcon.setVisibility(View.GONE);
             }
         }
     }
