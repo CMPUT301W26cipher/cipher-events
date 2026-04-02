@@ -2,6 +2,7 @@ package com.example.cipher_events;
 
 import android.os.Bundle;
 import android.view.View;
+import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -41,6 +42,7 @@ public class MainActivity extends AppCompatActivity {
     Notifier notifier;
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
+    TextView tvCurrentRole;
 
     private String currentRole = "";
     private boolean isLoggedIn = false;
@@ -56,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        Notifier notifier = Notifier.getInstance();
+        notifier = Notifier.getInstance();
         fragmentManager = getSupportFragmentManager();
 
         // User-related services
@@ -77,6 +79,8 @@ public class MainActivity extends AppCompatActivity {
 
         bottomNavigationView = findViewById(R.id.bottom_nav);
         bottomNavigationView.setVisibility(View.GONE); // Hide by default
+        
+        tvCurrentRole = findViewById(R.id.tv_current_role);
 
         // Show role selection first
         replaceFragment(new RoleSelectionFragment());
@@ -150,15 +154,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onRoleSelected(String role) {
-        Event e = DB.getEvent("7f91c8e9-74d5-4c93-bb0a-236940cbf255");
-        ArrayList<User> entrants = new ArrayList<>();
-        User u = new User("John", "Doe", "john.mckinley@examplepetstore.com", null, null);
-        entrants.add(u);
-        e.setEntrants(entrants);
-        e.setEnrolledEntrants(entrants);
-        DB.updateEvent(e);
-
         currentRole = role;
+        
+        // Update Role UI
+        if (tvCurrentRole != null) {
+            tvCurrentRole.setText("Role: " + role);
+            tvCurrentRole.setVisibility(View.VISIBLE);
+        }
+
         isLoggedIn = false;
         bottomNavigationView.setVisibility(View.GONE);
         replaceFragment(new LoginFragment());
@@ -170,13 +173,19 @@ public class MainActivity extends AppCompatActivity {
             fragmentManager.beginTransaction()
                     .replace(R.id.fragment_container, fragment)
                     .commit();
+
+            // Hide role banner if we go back to role selection
+            if (fragment instanceof RoleSelectionFragment) {
+                if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
+                currentRole = "";
+            }
         }
     }
 
     @Override
     protected void onDestroy () {
         DB.shutdown();
-        notifier.stopListener();
+        if (notifier != null) notifier.stopListener();
         super.onDestroy();
     }
 
