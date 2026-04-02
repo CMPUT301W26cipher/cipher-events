@@ -85,5 +85,15 @@
             android:textSize="16sp"
             android:text="Event description goes here..." />
 
+        <Button
+            android:id="@+id/admin_btn_remove_event"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:backgroundTint="#FF5252"
+            android:text="Remove Event"
+            android:textColor="@android:color/white"
+            android:textStyle="bold" />
+
     </LinearLayout>
 </ScrollView>

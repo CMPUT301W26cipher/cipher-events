@@ -1,6 +1,7 @@
 package com.example.cipher_events;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
@@ -128,19 +129,27 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private void showCreateEventDialog() {
+    public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity) -> {
-            // Updated constructor to include all required parameters
+        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl) -> {
+            // Get current organizer from DB
+            String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            Organizer currentOrganizer = DB.getOrganizer(deviceId);
+            
+            if (currentOrganizer == null) {
+                currentOrganizer = new Organizer("Unknown Organizer", "", "", "", null);
+                currentOrganizer.setDeviceID(deviceId);
+            }
+
             Event newEvent = new Event(
                     title,
                     description,
                     date + " " + time,
                     location,
-                    new Organizer("Temp Organizer", "org@example.com", "", "", null),
+                    currentOrganizer,
                     new ArrayList<>(), // entrants
                     new ArrayList<>(), // attendees
-                    null,              // posterPictureURL
+                    bannerUrl,         // posterPictureURL from dialog
                     true               // publicEvent
             );
 

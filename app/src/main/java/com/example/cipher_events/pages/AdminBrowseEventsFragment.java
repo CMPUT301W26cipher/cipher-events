@@ -14,7 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cipher_events.R;
-import com.example.cipher_events.adapters.EventAdapter;
+import com.example.cipher_events.adapters.AdminEventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 
@@ -24,7 +24,7 @@ import java.util.List;
 public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private RecyclerView recyclerView;
-    private EventAdapter adapter;
+    private AdminEventAdapter adapter;
     private List<Event> eventList = new ArrayList<>();
     private ProgressBar progressBar;
     private TextView emptyStateText;
@@ -47,11 +47,13 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
         dbProxy.addListener(this);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new EventAdapter(eventList, event -> {
-            // Show admin-exclusive event details dialog
+        
+        // Fix: Pass the listener to the constructor to handle event clicks
+        adapter = new AdminEventAdapter(eventList, event -> {
             AdminEventDetailsDialogFragment dialog = AdminEventDetailsDialogFragment.newInstance(event.getEventID());
             dialog.show(getParentFragmentManager(), "AdminEventDetailsDialog");
         });
+        
         recyclerView.setAdapter(adapter);
 
         updateUI();

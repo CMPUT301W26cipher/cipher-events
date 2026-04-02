@@ -46,6 +46,9 @@ public class AdminBrowseProfilesFragment extends Fragment implements DBProxy.OnD
         dbProxy.addListener(this);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setNestedScrollingEnabled(true);
+        recyclerView.setHasFixedSize(true);
+
         adapter = new ProfileAdapter(profileList);
         recyclerView.setAdapter(adapter);
 
