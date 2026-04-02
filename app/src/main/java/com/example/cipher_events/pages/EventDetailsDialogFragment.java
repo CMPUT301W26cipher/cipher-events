@@ -240,6 +240,44 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     }
 
     @Override
+    public void onResume() {
+        super.onResume();
+        db.addListener(this);
+        refreshUI();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(this::refreshUI);
+        }
+    }
+
+    private void refreshUI() {
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            title.setText(event.getName());
+            int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
+            attendees.setText(count + " people in waitlist");
+            description.setText(event.getDescription());
+            dateLocation.setText(event.getLocation() + " • " + event.getTime());
+
+            if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
+                banner.setVisibility(View.VISIBLE);
+                Glide.with(this).load(event.getPosterPictureURL()).into(banner);
+            } else {
+                banner.setVisibility(View.GONE);
+            }
+        }
+    }
+
+    @Override
     public void onStart() {
         super.onStart();
         if (getDialog() != null && getDialog().getWindow() != null) {
