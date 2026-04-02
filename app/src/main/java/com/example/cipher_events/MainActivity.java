@@ -111,10 +111,10 @@ public class MainActivity extends AppCompatActivity {
                     if (id == R.id.menu_home) {
                         selectedFragment = new OrganizerHomeFragment();
                     } else if (id == R.id.menu_create) {
-                        selectedFragment = new OrganizerAddEventFragment(); // Replace with Create Fragment if available
+                        selectedFragment = new OrganizerAddEventFragment();
                         Toast.makeText(MainActivity.this, "Create Event", Toast.LENGTH_SHORT).show();
                     } else if (id == R.id.menu_history) {
-                        selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
+                        selectedFragment = new OrganizerHistoryFragment();
                         Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
                     } else if (id == R.id.menu_profile) {
                         selectedFragment = new OrganizerProfileFragment();
