@@ -13,10 +13,13 @@ import androidx.fragment.app.FragmentManager;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
-import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.organizer.OrganizerEventService;
+import com.example.cipher_events.pages.AdminBrowseEventsFragment;
+import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
+import com.example.cipher_events.pages.AdminNotificationsFragment;
+import com.example.cipher_events.pages.AdminProfileFragment;
 import com.example.cipher_events.pages.CreateEventDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
 import com.example.cipher_events.pages.HomeFragment;
@@ -43,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
     BottomNavigationView bottomNavigationView;
 
     private String currentRole = "";
-    private boolean isLoggedIn = false;
+
     // Firestore-backed services
     private UserProfileService userProfileService;
     private OrganizerEventService organizerEventService;
@@ -56,7 +59,7 @@ public class MainActivity extends AppCompatActivity {
         EdgeToEdge.enable(this);
         setContentView(R.layout.activity_main);
 
-        Notifier notifier = Notifier.getInstance();
+        notifier = Notifier.getInstance();
         fragmentManager = getSupportFragmentManager();
 
         // User-related services
@@ -100,12 +103,21 @@ public class MainActivity extends AppCompatActivity {
                     selectedFragment = new OrganizerHomeFragment();
                 } else if (id == R.id.menu_create) {
                     showCreateEventDialog();
-                    return false; // Show as a popup instead of switching fragments
+                    return false;
                 } else if (id == R.id.menu_history) {
-                    selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
-                    Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
+                    selectedFragment = new OrganizerHistoryFragment();
                 } else if (id == R.id.menu_profile) {
                     selectedFragment = new OrganizerProfileFragment();
+                }
+            } else if ("ADMIN".equals(currentRole)) {
+                if (id == R.id.menu_admin_events) {
+                    selectedFragment = new AdminBrowseEventsFragment();
+                } else if (id == R.id.menu_admin_profiles) {
+                    selectedFragment = new AdminBrowseProfilesFragment();
+                } else if (id == R.id.menu_admin_notifications) {
+                    selectedFragment = new AdminNotificationsFragment();
+                } else if (id == R.id.menu_admin_profile) {
+                    selectedFragment = new AdminProfileFragment();
                 }
             }
 
@@ -117,52 +129,48 @@ public class MainActivity extends AppCompatActivity {
     private void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
         dialog.setCreateEventListener((title, date, time, location, description, capacity) -> {
-            // Create a new event object
+            // Updated constructor to include all required parameters
             Event newEvent = new Event(
                     title,
                     description,
                     date + " " + time,
                     location,
                     new Organizer("Temp Organizer", "org@example.com", "", "", null),
-                    new ArrayList<>(),
-                    new ArrayList<>(),
-                    null,
-                    true
+                    new ArrayList<>(), // entrants
+                    new ArrayList<>(), // attendees
+                    null,              // posterPictureURL
+                    true               // publicEvent
             );
-
-            // Set the optional waiting list capacity
-            newEvent.setWaitingListCapacity(capacity);
-
-            // Add to system and database
-            DB.addEvent(newEvent);
-
-            // Notify the current fragment if it's a home fragment
-            Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
-            if (currentFragment instanceof HomeFragment) {
-                ((HomeFragment) currentFragment).addEvent(newEvent);
-            } else if (currentFragment instanceof OrganizerHomeFragment) {
-                ((OrganizerHomeFragment) currentFragment).addEvent(newEvent);
+            
+            if (capacity != null) {
+                newEvent.setWaitingListCapacity(capacity);
             }
-
-            Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
+            
+            // Explicitly add to DB
+            DB.addEvent(newEvent);
+            
+            Toast.makeText(this, "Event Created and Added to DB", Toast.LENGTH_SHORT).show();
         });
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
 
     public void onRoleSelected(String role) {
-        Event e = DB.getEvent("7f91c8e9-74d5-4c93-bb0a-236940cbf255");
-        ArrayList<User> entrants = new ArrayList<>();
-        User u = new User("John", "Doe", "john.mckinley@examplepetstore.com", null, null);
-        entrants.add(u);
-        e.setEntrants(entrants);
-        e.setEnrolledEntrants(entrants);
-        DB.updateEvent(e);
+        this.currentRole = role;
+        bottomNavigationView.setVisibility(View.VISIBLE);
 
-        currentRole = role;
-        isLoggedIn = false;
-        bottomNavigationView.setVisibility(View.GONE);
-        replaceFragment(new LoginFragment());
-        onLoginSuccess();
+        if ("ORGANIZER".equals(role)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
+            replaceFragment(new OrganizerHomeFragment());
+        } else if ("ADMIN".equals(role)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_admin_nav);
+            replaceFragment(new AdminBrowseEventsFragment());
+        } else {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new HomeFragment());
+        }
     }
 
     private void replaceFragment(Fragment fragment) {
@@ -176,27 +184,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onDestroy () {
         DB.shutdown();
-        notifier.stopListener();
+        if (notifier != null) notifier.stopListener();
         super.onDestroy();
-    }
-
-    // Call this after successful login to open the correct first home page for the selected role.
-    public void onLoginSuccess() {
-        isLoggedIn = true;
-        bottomNavigationView.setVisibility(View.VISIBLE);
-
-        if ("ORGANIZER".equals(currentRole)) {
-            bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
-            replaceFragment(new OrganizerHomeFragment());
-        } else if ("ADMIN".equals(currentRole)) {
-            bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
-            replaceFragment(new AdminHomeFragment());
-        } else {
-            bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
-            replaceFragment(new HomeFragment());
-        }
     }
 }

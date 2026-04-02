@@ -1,6 +1,8 @@
 package com.example.cipher_events.pages;
 
+import android.app.DatePickerDialog;
 import android.app.Dialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +17,13 @@ import androidx.fragment.app.DialogFragment;
 
 import com.example.cipher_events.R;
 
+import java.util.Calendar;
+import java.util.Locale;
+
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
         void onEventCreated(String title, String date, String time, String location, String description, Integer capacity);
-
     }
 
     private CreateEventListener listener;
@@ -41,6 +45,10 @@ public class CreateEventDialogFragment extends DialogFragment {
         EditText etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
 
+        // Set up click listeners for date and time fields to show pickers
+        etDate.setOnClickListener(v -> showDatePicker(etDate));
+        etTime.setOnClickListener(v -> showTimePicker(etTime));
+
         btnAddEvent.setOnClickListener(v -> {
             String title = etTitle.getText().toString();
             String date = etDate.getText().toString();
@@ -49,7 +57,7 @@ public class CreateEventDialogFragment extends DialogFragment {
             String description = etDescription.getText().toString();
             String capacityStr = etCapacity != null ? etCapacity.getText().toString() : "";
             Integer capacity = null;
-            if(capacityStr.isEmpty()) {
+            if (!capacityStr.isEmpty()) {
                 try {
                     capacity = Integer.parseInt(capacityStr);
                 } catch (NumberFormatException ignored) {}
@@ -62,6 +70,31 @@ public class CreateEventDialogFragment extends DialogFragment {
         });
 
         return view;
+    }
+
+    private void showDatePicker(EditText etDate) {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(), (view, year1, month1, dayOfMonth) -> {
+            String date = String.format(Locale.getDefault(), "%04d-%02d-%02d", year1, month1 + 1, dayOfMonth);
+            etDate.setText(date);
+        }, year, month, day);
+        datePickerDialog.show();
+    }
+
+    private void showTimePicker(EditText etTime) {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(requireContext(), (view, hourOfDay, minute1) -> {
+            String time = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute1);
+            etTime.setText(time);
+        }, hour, minute, false);
+        timePickerDialog.show();
     }
 
     @Override

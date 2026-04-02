@@ -1,11 +1,9 @@
 package com.example.cipher_events.pages;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -22,18 +20,16 @@ import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.tabs.TabLayout;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class WaitingListFragment extends Fragment {
+public class WaitingListFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
-    private Event event;
+    private String eventId;
     private WaitingListService waitingListService;
     private RecyclerView recyclerView;
     private EntrantAdapter adapter;
     private TabLayout tabLayout;
-    DBProxy db = DBProxy.getInstance();
-
+    private DBProxy db = DBProxy.getInstance();
 
     public WaitingListFragment() {}
 
@@ -52,11 +48,9 @@ public class WaitingListFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.waitinglist, container, false);
 
-        String eventId = getArguments().getString("eventId");
-        Event event = db.getEvent(eventId);
-        event.setInvitedEntrants(new ArrayList<>());
-        event.setCancelledEntrants(new ArrayList<>());
-        event.setEnrolledEntrants(event.getEnrolledEntrants());
+        if (getArguments() != null) {
+            eventId = getArguments().getString("eventId");
+        }
 
         // Set up service
         waitingListService = new WaitingListService(new UserEventHistoryRepository());
@@ -66,44 +60,64 @@ public class WaitingListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         tabLayout = view.findViewById(R.id.tab_layout);
 
-        // Default: show invited list
-        showList(EntrantAdapter.ListType.INVITED, event);
-
         // Tab switching
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
-                    case 0: showList(EntrantAdapter.ListType.INVITED, event); break;
-                    case 1: showList(EntrantAdapter.ListType.CANCELLED, event); break;
-                    case 2: showList(EntrantAdapter.ListType.ENROLLED, event); break;
-                }
+                refreshUI();
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
+        refreshUI();
+
         return view;
     }
 
-    private void showList(EntrantAdapter.ListType listType, Event event) {
+    @Override
+    public void onResume() {
+        super.onResume();
+        db.addListener(this);
+        refreshUI();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(this::refreshUI);
+        }
+    }
+
+    private void refreshUI() {
+        int selectedTab = tabLayout.getSelectedTabPosition();
+        EntrantAdapter.ListType listType;
+        switch (selectedTab) {
+            case 1: listType = EntrantAdapter.ListType.CANCELLED; break;
+            case 2: listType = EntrantAdapter.ListType.ENROLLED; break;
+            default: listType = EntrantAdapter.ListType.INVITED; break;
+        }
+        showList(listType);
+    }
+
+    private void showList(EntrantAdapter.ListType listType) {
+        Event event = db.getEvent(eventId);
         if (event == null) return;
 
         List<User> users;
         switch (listType) {
             case CANCELLED: users = waitingListService.getCancelledEntrants(event); break;
             case ENROLLED:  users = waitingListService.getEnrolledEntrants(event); break;
-            default:        users = waitingListService.getInvitedEntrants(event); break;
+            default:        users = waitingListService.getWaitingList(event); break;
         }
 
-        adapter = new EntrantAdapter(users, listType, user -> {
-            boolean success = waitingListService.markAsNoShow(user, event);
-            if (success) {
-                Toast.makeText(getContext(), user.getName() + " marked as no-show", Toast.LENGTH_SHORT).show();
-                showList(EntrantAdapter.ListType.INVITED, event);
-            }
-        });
-
+        adapter = new EntrantAdapter(users, listType);
         recyclerView.setAdapter(adapter);
     }
 }
