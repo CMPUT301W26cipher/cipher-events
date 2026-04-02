@@ -4,7 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Toast;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -14,22 +14,23 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EntrantAdapter;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.waitinglist.WaitingListService;
 import com.google.android.material.tabs.TabLayout;
 
-import java.util.ArrayList;
 import java.util.List;
 
-public class WaitingListFragment extends Fragment {
+public class WaitingListFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
-    private Event event;
+    private String eventId;
     private WaitingListService waitingListService;
     private RecyclerView recyclerView;
     private EntrantAdapter adapter;
     private TabLayout tabLayout;
+    private DBProxy db = DBProxy.getInstance();
 
     public WaitingListFragment() {}
 
@@ -48,14 +49,8 @@ public class WaitingListFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.waitinglist, container, false);
 
-        // Get event ID and create dummy event for now
         if (getArguments() != null) {
-            String eventId = getArguments().getString("eventId");
-            // TODO: replace with real Firestore fetch using eventId
-            event = new Event("Test Event", "", "", "", null, new ArrayList<>(), new ArrayList<>(), null);
-            event.setInvitedEntrants(new ArrayList<>());
-            event.setCancelledEntrants(new ArrayList<>());
-            event.setEnrolledEntrants(new ArrayList<>());
+            eventId = getArguments().getString("eventId");
         }
 
         // Set up service
@@ -66,44 +61,74 @@ public class WaitingListFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         tabLayout = view.findViewById(R.id.tab_layout);
 
-        // Default: show invited list
-        showList(EntrantAdapter.ListType.INVITED);
-
         // Tab switching
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
-                switch (tab.getPosition()) {
-                    case 0: showList(EntrantAdapter.ListType.INVITED); break;
-                    case 1: showList(EntrantAdapter.ListType.CANCELLED); break;
-                    case 2: showList(EntrantAdapter.ListType.ENROLLED); break;
-                }
+                refreshUI(getView());
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
+        refreshUI(view);
+
         return view;
     }
 
+    @Override
+    public void onResume() {
+        super.onResume();
+        db.addListener(this);
+        refreshUI(getView());
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> refreshUI(getView()));
+        }
+    }
+
+    private void refreshUI(View rootView) {
+        if (rootView == null) return;
+
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            TextView titleView = rootView.findViewById(R.id.title_events);
+            if (titleView != null) {
+                titleView.setText(event.getName() + " Waitlist");
+            }
+        }
+
+        int selectedTab = tabLayout.getSelectedTabPosition();
+        EntrantAdapter.ListType listType;
+        switch (selectedTab) {
+            case 1: listType = EntrantAdapter.ListType.CANCELLED; break;
+            case 2: listType = EntrantAdapter.ListType.ENROLLED; break;
+            default: listType = EntrantAdapter.ListType.INVITED; break;
+        }
+        showList(listType);
+    }
+
     private void showList(EntrantAdapter.ListType listType) {
+        Event event = db.getEvent(eventId);
         if (event == null) return;
 
         List<User> users;
         switch (listType) {
             case CANCELLED: users = waitingListService.getCancelledEntrants(event); break;
             case ENROLLED:  users = waitingListService.getEnrolledEntrants(event); break;
-            default:        users = waitingListService.getInvitedEntrants(event); break;
+            default:        users = waitingListService.getWaitingList(event); break;
         }
 
-        adapter = new EntrantAdapter(users, listType, user -> {
-            boolean success = waitingListService.markAsNoShow(user, event);
-            if (success) {
-                Toast.makeText(getContext(), user.getName() + " marked as no-show", Toast.LENGTH_SHORT).show();
-                showList(EntrantAdapter.ListType.INVITED);
-            }
-        });
-
+        adapter = new EntrantAdapter(users, listType);
         recyclerView.setAdapter(adapter);
     }
 }

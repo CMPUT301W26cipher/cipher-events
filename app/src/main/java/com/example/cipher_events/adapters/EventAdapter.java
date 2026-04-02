@@ -56,6 +56,13 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         holder.date.setText(event.getTime());
         holder.location.setText(event.getLocation());
 
+        if (event.getOrganizer() != null && event.getOrganizer().getName() != null) {
+            holder.organizer.setText("Organizer: " + event.getOrganizer().getName());
+            holder.organizer.setVisibility(View.VISIBLE);
+        } else {
+            holder.organizer.setVisibility(View.GONE);
+        }
+
         String url = event.getPosterPictureURL();
 
         if (url != null && !url.isEmpty()) {
@@ -90,7 +97,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     }
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
-        TextView title, date, location;
+        TextView title, date, location, organizer;
         ImageView image;
 
         public EventViewHolder(@NonNull View itemView) {
@@ -99,6 +106,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             title = itemView.findViewById(R.id.event_title);
             date = itemView.findViewById(R.id.event_date);
             location = itemView.findViewById(R.id.event_location);
+            organizer = itemView.findViewById(R.id.event_organizer);
         }
     }
 }

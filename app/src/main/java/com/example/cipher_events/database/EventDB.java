@@ -43,13 +43,15 @@ public class EventDB {
                     Log.w(TAG, "Listen failed.", error);
                     return;
                 }
-                if (value != null && !value.isEmpty()) {
+                if (value != null) {
                     events.clear();
                     for (DocumentSnapshot doc : value) {
                         Event event = doc.toObject(Event.class);
-                        events.add(event);
-                        Log.d(TAG, doc.getId() + " => " + doc.getData());
+                        if (event != null) {
+                            events.add(event);
+                        }
                     }
+                    DBProxy.getInstance().notifyListeners();
                 }
             }
         });
@@ -66,7 +68,6 @@ public class EventDB {
         eventsRef
                 .document(event.getEventID())
                 .set(event);
-        events.add(event);
     }
 
     protected Event get(String eventID) {
@@ -85,25 +86,13 @@ public class EventDB {
     protected void update(Event event) {
         String eventID = event.getEventID();
         eventsRef.document(eventID).set(event);
-        for (int i = 0; i < events.size(); i++) {
-            if (events.get(i).getEventID().equals(eventID)) {
-                events.set(i, event);
-            }
-        }
     }
 
     protected void delete(Event event) {
         eventsRef.document(event.getEventID()).delete();
-        events.remove(event);
     }
 
     protected void delete(String eventID) {
         eventsRef.document(eventID).delete();
-        for (int i = 0; i < events.size(); i++) {
-            if (events.get(i).getEventID().equals(eventID)) {
-                events.remove(i);
-                return;
-            }
-        }
     }
 }
