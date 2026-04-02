@@ -170,7 +170,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
 
             messageButton.setText("Messages");
-            messageButton.setOnClickListener(v -> openOrganizerMessages();
+            messageButton.setOnClickListener(v -> openOrganizerMessages());
 
             // Organizer sees description and no lottery info
             descriptionLabel.setVisibility(View.VISIBLE);
