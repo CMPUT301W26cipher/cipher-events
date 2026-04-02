@@ -2,8 +2,12 @@ package com.example.cipher_events.organizer;
 
 import android.graphics.Bitmap;
 
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.database.User;
+import com.example.cipher_events.message.MessageThread;
+
 import java.util.ArrayList;
 import java.util.UUID;
 
@@ -11,26 +15,30 @@ import java.util.UUID;
  * US 02.01.01
  * Organizer creates a new event and generates a unique promotional QR code
  * that links to the event inside the app.
+ *
+ * Updated behavior:
+ *  * - Public event  -> QR payload generated
+ *  * - Private event -> no promotional QR payload
  */
 public class OrganizerEventService {
-    private final EventRepository eventRepository;
+
+    private final DBProxy db;
 
     public OrganizerEventService() {
-        this.eventRepository = EventRepository.getInstance();
+        this.db = DBProxy.getInstance();
     }
 
-    public OrganizerEventService(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
+    public OrganizerEventService(DBProxy db) {
+        this.db = db;
     }
 
-    public OrganizerEventCreationResult createEventAndGenerateQr(String name,
-                                                                 String description,
-                                                                 String time,
-                                                                 String location,
-                                                                 Organizer organizer,
-                                                                 String posterPictureURL,
-                                                                 int qrWidth,
-                                                                 int qrHeight) {
+    public OrganizerEventCreationResult createEvent(String name,
+                                                    String description,
+                                                    String time,
+                                                    String location,
+                                                    Organizer organizer,
+                                                    String posterPictureURL,
+                                                    boolean publicEvent) {
         validateRequiredEventFields(name, description, time, location, organizer);
 
         Event event = new Event(
@@ -39,32 +47,90 @@ public class OrganizerEventService {
                 time.trim(),
                 location.trim(),
                 organizer,
-                new ArrayList<>(),
-                new ArrayList<>(),
-                normalizeOptional(posterPictureURL)
+                new ArrayList<User>(),
+                new ArrayList<User>(),
+                normalizeOptional(posterPictureURL),
+                publicEvent
         );
 
-        String eventId = UUID.randomUUID().toString();
-        String qrPayload = EventQrCodeGenerator.buildPayload(eventId);
+        db.addEvent(event);
 
-        EventRecord record = new EventRecord(
-                eventId,
+        String qrPayload = null;
+        if (publicEvent) {
+            qrPayload = EventQrCodeGenerator.buildPayload(event.getEventID());
+        }
+
+        return new OrganizerEventCreationResult(
+                event.getEventID(),
                 event,
-                qrPayload,
-                System.currentTimeMillis()
+                qrPayload
         );
-
-        eventRepository.save(record);
-
-        return new OrganizerEventCreationResult(eventId, event, qrPayload);
     }
 
-    public EventRecord getEventRecord(String eventId) {
-        return eventRepository.findRecordById(eventId);
+    /**
+     * Optional convenience wrapper for explicitly public events.
+     */
+    public OrganizerEventCreationResult createPublicEventAndGenerateQr(String name,
+                                                                       String description,
+                                                                       String time,
+                                                                       String location,
+                                                                       Organizer organizer,
+                                                                       String posterPictureURL) {
+        return createEvent(
+                name,
+                description,
+                time,
+                location,
+                organizer,
+                posterPictureURL,
+                true
+        );
+    }
+
+    /**
+     * Optional convenience wrapper for explicitly private events.
+     */
+    public OrganizerEventCreationResult createPrivateEvent(String name,
+                                                           String description,
+                                                           String time,
+                                                           String location,
+                                                           Organizer organizer,
+                                                           String posterPictureURL) {
+        return createEvent(
+                name,
+                description,
+                time,
+                location,
+                organizer,
+                posterPictureURL,
+                false
+        );
     }
 
     public Event getEvent(String eventId) {
-        return eventRepository.findEventById(eventId);
+        if (eventId == null || eventId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Event ID is required.");
+        }
+
+        Event event = db.getEvent(eventId.trim());
+        if (event == null) {
+            throw new IllegalArgumentException("Event not found.");
+        }
+
+        return event;
+    }
+
+    /**
+     * Only public events should expose a promotional QR payload.
+     */
+    public String getPromotionalQrPayload(String eventId) {
+        Event event = getEvent(eventId);
+
+        if (!event.isPublicEvent()) {
+            throw new IllegalArgumentException("Private events do not have a public promotional QR code.");
+        }
+
+        return EventQrCodeGenerator.buildPayload(event.getEventID());
     }
 
     private void validateRequiredEventFields(String name,

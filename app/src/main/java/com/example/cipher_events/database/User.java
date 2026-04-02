@@ -1,6 +1,8 @@
 package com.example.cipher_events.database;
 
-import java.util.UUID;
+import android.provider.Settings;
+import com.example.cipher_events.App;
+
 
 /*
  * Represents a user.
@@ -15,9 +17,14 @@ public class User {
     private String phoneNumber; // optional phone number
     private String profilePictureURL; // optional profile picture
 
+    private boolean notificationsEnabled = true;
+
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
-        this.deviceID = UUID.randomUUID().toString();
+        this.deviceID = Settings.Secure.getString(
+                App.getContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
         this.name = name;
         this.email = email;
         this.password = password;
@@ -73,6 +80,14 @@ public class User {
 
     public void setProfilePictureURL(String profilePictureURL) {
         this.profilePictureURL = profilePictureURL;
+    }
+
+    public boolean isNotificationsEnabled() {
+        return notificationsEnabled;
+    }
+
+    public void setNotificationsEnabled(boolean enabled) {
+        this.notificationsEnabled = enabled;
     }
 
     // String representation for debugging purposes

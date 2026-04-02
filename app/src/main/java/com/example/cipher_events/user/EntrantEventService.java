@@ -1,10 +1,9 @@
 package com.example.cipher_events.user;
 
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.organizer.EventQrCodeGenerator;
-import com.example.cipher_events.organizer.EventRecord;
-import com.example.cipher_events.organizer.EventRepository;
 
 import java.util.ArrayList;
 
@@ -16,19 +15,19 @@ import java.util.ArrayList;
  * Sign up for an event from the event details.
  */
 public class EntrantEventService {
-    private final EventRepository eventRepository;
+
+    private final DBProxy db;
 
     public EntrantEventService() {
-        this.eventRepository = EventRepository.getInstance();
+        this.db = DBProxy.getInstance();
     }
 
-    public EntrantEventService(EventRepository eventRepository) {
-        this.eventRepository = eventRepository;
+    public EntrantEventService(DBProxy db) {
+        this.db = db;
     }
 
     /**
-     * Takes the decoded text from a QR scanner and returns the linked event.
-     * Your scanner UI can call this after scanning.
+     * Resolve a scanned QR payload to a PUBLIC event.
      */
     public EntrantQrScanResult getEventDetailsFromScannedQr(String scannedQrText) {
         if (scannedQrText == null || scannedQrText.trim().isEmpty()) {
@@ -36,18 +35,23 @@ public class EntrantEventService {
         }
 
         String eventId = EventQrCodeGenerator.extractEventId(scannedQrText);
-        EventRecord record = eventRepository.findRecordById(eventId);
+        Event event = db.getEvent(eventId);
 
-        if (record == null || record.getEvent() == null) {
+        if (event == null) {
             throw new IllegalArgumentException("No event found for this QR code.");
         }
 
-        return new EntrantQrScanResult(eventId, record.getEvent());
+        // Updated US 02.01.01 logic:
+        // promotional QR codes are for PUBLIC events only.
+        if (!event.isPublicEvent()) {
+            throw new IllegalArgumentException("This QR code does not link to a public event.");
+        }
+
+        return new EntrantQrScanResult(eventId, event);
     }
 
     /**
-     * Allows the entrant to sign up / join the waiting list from event details.
-     * With your current Event model, this stores the entrant in event.getEntrants().
+     * Join the waiting list from the event details page.
      */
     public void signUpForEventFromDetails(String eventId, User entrant) {
         if (eventId == null || eventId.trim().isEmpty()) {
@@ -58,31 +62,31 @@ public class EntrantEventService {
             throw new IllegalArgumentException("Entrant is required.");
         }
 
-        Event event = eventRepository.findEventById(eventId);
+        Event event = db.getEvent(eventId.trim());
         if (event == null) {
             throw new IllegalArgumentException("Event not found.");
         }
 
-        ArrayList<User> entrants = event.getEntrants();
-        if (entrants == null) {
-            entrants = new ArrayList<>();
-            event.setEntrants(entrants);
-        }
+        ensureLists(event);
 
-        if (containsUser(entrants, entrant)) {
+        if (containsUser(event.getEntrants(), entrant.getDeviceID())) {
             throw new IllegalArgumentException("Entrant is already on the waiting list.");
         }
 
-        ArrayList<User> attendees = event.getAttendees();
-        if (attendees != null && containsUser(attendees, entrant)) {
+        if (containsUser(event.getAttendees(), entrant.getDeviceID())) {
             throw new IllegalArgumentException("Entrant is already registered as an attendee.");
         }
 
-        entrants.add(entrant);
+        if (containsUser(event.getInvitedEntrants(), entrant.getDeviceID())) {
+            throw new IllegalArgumentException("Entrant has already been invited/selected.");
+        }
+
+        event.getEntrants().add(entrant);
+        db.updateEvent(event);
     }
 
     /**
-     * Convenience method: scan and sign up in one step.
+     * Scan and sign up in one step.
      */
     public void signUpForEventFromQr(String scannedQrText, User entrant) {
         EntrantQrScanResult result = getEventDetailsFromScannedQr(scannedQrText);
@@ -94,7 +98,7 @@ public class EntrantEventService {
             throw new IllegalArgumentException("Event ID is required.");
         }
 
-        Event event = eventRepository.findEventById(eventId);
+        Event event = db.getEvent(eventId.trim());
         if (event == null) {
             throw new IllegalArgumentException("Event not found.");
         }
@@ -102,28 +106,30 @@ public class EntrantEventService {
         return event;
     }
 
-    private boolean containsUser(ArrayList<User> users, User target) {
-        if (users == null || target == null) {
+    private void ensureLists(Event event) {
+        if (event.getEntrants() == null) {
+            event.setEntrants(new ArrayList<>());
+        }
+        if (event.getAttendees() == null) {
+            event.setAttendees(new ArrayList<>());
+        }
+        if (event.getInvitedEntrants() == null) {
+            event.setInvitedEntrants(new ArrayList<>());
+        }
+    }
+
+    private boolean containsUser(ArrayList<User> users, String deviceId) {
+        if (users == null || deviceId == null) {
             return false;
         }
 
         for (User user : users) {
-            if (sameUser(user, target)) {
+            if (user != null
+                    && user.getDeviceID() != null
+                    && user.getDeviceID().equals(deviceId)) {
                 return true;
             }
         }
         return false;
-    }
-
-    private boolean sameUser(User a, User b) {
-        if (a == null || b == null) {
-            return false;
-        }
-
-        if (a.getDeviceID() == null || b.getDeviceID() == null) {
-            return false;
-        }
-
-        return a.getDeviceID().equals(b.getDeviceID());
     }
 }

@@ -29,9 +29,11 @@ public class RoleSelectionFragment extends Fragment {
         Button btnAdmin = view.findViewById(R.id.btn_admin);
 
         btnEntrant.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).onRoleSelected("ENTRANT");
-            }
+            // Navigate to LoginFragment when Attendee is clicked
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, new LoginFragment())
+                    .addToBackStack(null)
+                    .commit();
         });
 
         btnOrganizer.setOnClickListener(v -> {

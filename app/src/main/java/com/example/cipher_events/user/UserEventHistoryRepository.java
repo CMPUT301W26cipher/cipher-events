@@ -48,8 +48,16 @@ public class UserEventHistoryRepository {
             return Status.REGISTERED;
         }
 
+        if (containsUser(event.getInvitedEntrants(), deviceId)) {
+            return Status.INVITED;
+        }
+
         if (containsUser(event.getEntrants(), deviceId)) {
             return Status.WAITLISTED;
+        }
+
+        if (containsUser(event.getCancelledEntrants(), deviceId)) {
+            return Status.CANCELLED;
         }
 
         return null;
