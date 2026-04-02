@@ -194,7 +194,8 @@ public class UserProfileServiceTest {
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                null
+                null,
+                true
         );
 
         List<UserEventHistoryRecord> expectedHistory = new ArrayList<>();
@@ -231,7 +232,8 @@ public class UserProfileServiceTest {
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                null
+                null,
+                true
         );
 
         when(dbProxy.getUser(user.getDeviceID())).thenReturn(user);
@@ -266,7 +268,8 @@ public class UserProfileServiceTest {
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                null
+                null,
+                false
         );
 
         when(dbProxy.getUser(user.getDeviceID())).thenReturn(user);
@@ -312,7 +315,8 @@ public class UserProfileServiceTest {
                 null,
                 new ArrayList<>(),
                 new ArrayList<>(),
-                null
+                null,
+                true
         );
 
         event.getEntrants().add(user);

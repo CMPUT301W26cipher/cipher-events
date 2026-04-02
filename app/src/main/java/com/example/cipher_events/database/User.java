@@ -17,6 +17,8 @@ public class User {
     private String phoneNumber; // optional phone number
     private String profilePictureURL; // optional profile picture
 
+    private boolean notificationsEnabled = true;
+
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
         this.deviceID = Settings.Secure.getString(
@@ -78,6 +80,14 @@ public class User {
 
     public void setProfilePictureURL(String profilePictureURL) {
         this.profilePictureURL = profilePictureURL;
+    }
+
+    public boolean isNotificationsEnabled() {
+        return notificationsEnabled;
+    }
+
+    public void setNotificationsEnabled(boolean enabled) {
+        this.notificationsEnabled = enabled;
     }
 
     // String representation for debugging purposes

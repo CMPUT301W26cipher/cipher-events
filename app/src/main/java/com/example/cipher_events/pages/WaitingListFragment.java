@@ -1,5 +1,6 @@
 package com.example.cipher_events.pages;
 
+import android.app.Activity;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,6 +15,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EntrantAdapter;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.user.UserEventHistoryRepository;
@@ -30,6 +32,8 @@ public class WaitingListFragment extends Fragment {
     private RecyclerView recyclerView;
     private EntrantAdapter adapter;
     private TabLayout tabLayout;
+    DBProxy db = DBProxy.getInstance();
+
 
     public WaitingListFragment() {}
 
@@ -48,15 +52,11 @@ public class WaitingListFragment extends Fragment {
                              @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.waitinglist, container, false);
 
-        // Get event ID and create dummy event for now
-        if (getArguments() != null) {
-            String eventId = getArguments().getString("eventId");
-            // TODO: replace with real Firestore fetch using eventId
-            event = new Event("Test Event", "", "", "", null, new ArrayList<>(), new ArrayList<>(), null);
-            event.setInvitedEntrants(new ArrayList<>());
-            event.setCancelledEntrants(new ArrayList<>());
-            event.setEnrolledEntrants(new ArrayList<>());
-        }
+        String eventId = getArguments().getString("eventId");
+        Event event = db.getEvent(eventId);
+        event.setInvitedEntrants(new ArrayList<>());
+        event.setCancelledEntrants(new ArrayList<>());
+        event.setEnrolledEntrants(event.getEnrolledEntrants());
 
         // Set up service
         waitingListService = new WaitingListService(new UserEventHistoryRepository());
@@ -67,16 +67,16 @@ public class WaitingListFragment extends Fragment {
         tabLayout = view.findViewById(R.id.tab_layout);
 
         // Default: show invited list
-        showList(EntrantAdapter.ListType.INVITED);
+        showList(EntrantAdapter.ListType.INVITED, event);
 
         // Tab switching
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
             @Override
             public void onTabSelected(TabLayout.Tab tab) {
                 switch (tab.getPosition()) {
-                    case 0: showList(EntrantAdapter.ListType.INVITED); break;
-                    case 1: showList(EntrantAdapter.ListType.CANCELLED); break;
-                    case 2: showList(EntrantAdapter.ListType.ENROLLED); break;
+                    case 0: showList(EntrantAdapter.ListType.INVITED, event); break;
+                    case 1: showList(EntrantAdapter.ListType.CANCELLED, event); break;
+                    case 2: showList(EntrantAdapter.ListType.ENROLLED, event); break;
                 }
             }
             @Override public void onTabUnselected(TabLayout.Tab tab) {}
@@ -86,7 +86,7 @@ public class WaitingListFragment extends Fragment {
         return view;
     }
 
-    private void showList(EntrantAdapter.ListType listType) {
+    private void showList(EntrantAdapter.ListType listType, Event event) {
         if (event == null) return;
 
         List<User> users;
@@ -100,7 +100,7 @@ public class WaitingListFragment extends Fragment {
             boolean success = waitingListService.markAsNoShow(user, event);
             if (success) {
                 Toast.makeText(getContext(), user.getName() + " marked as no-show", Toast.LENGTH_SHORT).show();
-                showList(EntrantAdapter.ListType.INVITED);
+                showList(EntrantAdapter.ListType.INVITED, event);
             }
         });
 
