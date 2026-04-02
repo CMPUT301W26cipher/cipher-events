@@ -11,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -21,6 +22,7 @@ import androidx.fragment.app.DialogFragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventCommentAdapter;
 import com.example.cipher_events.comment.EventComment;
@@ -33,12 +35,20 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Locale;
 
-public class EventDetailsDialogFragment extends DialogFragment {
+public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
     private boolean isOrganizerView = false;
     private String eventId;
     private DBProxy db = DBProxy.getInstance();
     private EventCommentAdapter commentAdapter;
+
+    private TextView title;
+    private TextView attendees;
+    private TextView description;
+    private TextView descriptionLabel;
+    private TextView dateLocation;
+    private ImageView banner;
+    private Button actionButton;
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -46,10 +56,10 @@ public class EventDetailsDialogFragment extends DialogFragment {
             String description,
             String time,
             String location,
-            int attendeeCount,
+            int waitlistCount,
             ArrayList<String> tags
     ) {
-        return newInstance(eventId, name, description, time, location, attendeeCount, tags, false);
+        return newInstance(eventId, name, description, time, location, waitlistCount, tags, false);
     }
 
     public static EventDetailsDialogFragment newInstance(
@@ -58,7 +68,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
             String description,
             String time,
             String location,
-            int attendeeCount,
+            int waitlistCount,
             ArrayList<String> tags,
             boolean isOrganizerView
     ) {
@@ -69,7 +79,7 @@ public class EventDetailsDialogFragment extends DialogFragment {
         args.putString("description", description);
         args.putString("time", time);
         args.putString("location", location);
-        args.putInt("attendeeCount", attendeeCount);
+        args.putInt("waitlistCount", waitlistCount);
         args.putStringArrayList("tags", tags);
         args.putBoolean("isOrganizerView", isOrganizerView);
         fragment.setArguments(args);
@@ -88,10 +98,12 @@ public class EventDetailsDialogFragment extends DialogFragment {
 
         View view = inflater.inflate(R.layout.dialog_event_details, container, false);
 
-        TextView title = view.findViewById(R.id.detail_title);
-        TextView attendees = view.findViewById(R.id.detail_attendees);
-        TextView description = view.findViewById(R.id.detail_description);
-        TextView dateLocation = view.findViewById(R.id.detail_date_location);
+        title = view.findViewById(R.id.detail_title);
+        attendees = view.findViewById(R.id.detail_attendees);
+        descriptionLabel = view.findViewById(R.id.description_label);
+        description = view.findViewById(R.id.detail_description);
+        dateLocation = view.findViewById(R.id.detail_date_location);
+        banner = view.findViewById(R.id.detail_banner);
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
         TextView lotteryText = view.findViewById(R.id.detail_lottery_text);
         Button actionButton = view.findViewById(R.id.scan_button);
@@ -110,16 +122,13 @@ public class EventDetailsDialogFragment extends DialogFragment {
         Bundle args = getArguments();
         if (args != null) {
             eventId = args.getString("eventId");
-            title.setText(args.getString("name"));
-            attendees.setText(args.getInt("attendeeCount") + " people attending");
-            description.setText(args.getString("description"));
-            dateLocation.setText(args.getString("location") + " • " + args.getString("time"));
             isOrganizerView = args.getBoolean("isOrganizerView", false);
 
             loadComments();
 
             ArrayList<String> tags = args.getStringArrayList("tags");
             if (tags != null) {
+                tagContainer.removeAllViews();
                 for (String tag : tags) {
                     TextView chip = new TextView(requireContext());
                     chip.setText(tag);
@@ -135,10 +144,39 @@ public class EventDetailsDialogFragment extends DialogFragment {
             }
         }
 
+        refreshUI();
+
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
         } else {
-            actionButton.setText("Scan to Join Waitlist");
+            actionButton.setText("Scan Info");
+            actionButton.setOnClickListener(v -> {
+                if (eventId != null) {
+                    QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
+                    qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
+                } else {
+                    Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            // Entrant does NOT see description until scan (which opens a new dialog)
+            descriptionLabel.setVisibility(View.GONE);
+            description.setVisibility(View.GONE);
+            
+            // Entrant sees lottery guidelines
+            lotteryHeader.setVisibility(View.VISIBLE);
+            lotteryText.setVisibility(View.VISIBLE);
+            lotteryText.setText(
+                    "⚠️ Disclaimer\n" +
+                            "Some events use a lottery system when more people join than there are available spots.\n\n" +
+                            "What this means for you:\n" +
+                            "• When you join, you're entered into the lottery.\n" +
+                            "• Everyone who joins before the deadline has the same chance.\n" +
+                            "• Joining earlier does not increase your odds.\n" +
+                            "• If you're selected, you'll receive a confirmation.\n" +
+                            "• If you're not selected, you may be placed on a waitlist.\n\n" +
+                            "This system helps keep things fair and avoids first‑come‑first‑served pressure."
+            );
         }
 
         lotteryText.setText("⚠️ Disclaimer\nSome events use a lottery system when more people join than there are available spots...");

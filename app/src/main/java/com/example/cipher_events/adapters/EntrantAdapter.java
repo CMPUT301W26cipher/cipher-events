@@ -3,7 +3,6 @@ package com.example.cipher_events.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -20,16 +19,10 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
 
     private List<User> users;
     private ListType listType;
-    private OnNoShowClickListener listener;
 
-    public interface OnNoShowClickListener {
-        void onNoShowClick(User user);
-    }
-
-    public EntrantAdapter(List<User> users, ListType listType, OnNoShowClickListener listener) {
+    public EntrantAdapter(List<User> users, ListType listType) {
         this.users = users;
         this.listType = listType;
-        this.listener = listener;
     }
 
     @NonNull
@@ -49,18 +42,12 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
         switch (listType) {
             case INVITED:
                 holder.status.setText("Invited");
-                holder.btnNoShow.setVisibility(View.VISIBLE);
-                holder.btnNoShow.setOnClickListener(v -> {
-                    if (listener != null) listener.onNoShowClick(user);
-                });
                 break;
             case CANCELLED:
                 holder.status.setText("Cancelled");
-                holder.btnNoShow.setVisibility(View.GONE);
                 break;
             case ENROLLED:
                 holder.status.setText("Enrolled");
-                holder.btnNoShow.setVisibility(View.GONE);
                 break;
         }
     }
@@ -77,13 +64,11 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
 
     static class EntrantViewHolder extends RecyclerView.ViewHolder {
         TextView name, status;
-        Button btnNoShow;
 
         public EntrantViewHolder(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.entrant_name);
             status = itemView.findViewById(R.id.entrant_status);
-            btnNoShow = itemView.findViewById(R.id.btn_no_show);
         }
     }
 }
