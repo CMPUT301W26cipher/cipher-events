@@ -199,4 +199,30 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new HomeFragment());
         }
     }
+
+    public void openMessageThreadsPage(String eventID, String organizerDeviceID) {
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container,
+                        com.example.cipher_events.pages.MessageThreadsFragment
+                                .newInstance(eventID, organizerDeviceID))
+                .addToBackStack(null)
+                .commit();
+    }
+
+    public void openEntrantDirectChat(String eventID, String entrantDeviceID) {
+        com.example.cipher_events.message.MessagingService messagingService =
+                new com.example.cipher_events.message.MessagingService();
+
+        com.example.cipher_events.message.MessageThread thread =
+                messagingService.openThread(eventID, entrantDeviceID);
+
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container,
+                        com.example.cipher_events.pages.DirectChatFragment
+                                .newInstance(eventID, thread.getThreadID(), entrantDeviceID, false))
+                .addToBackStack(null)
+                .commit();
+    }
 }

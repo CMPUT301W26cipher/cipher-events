@@ -85,7 +85,7 @@ public class MessagingServiceTest {
         assertEquals("user-1", thread.getEntrantDeviceID());
         assertEquals(1, event.getMessageThreads().size());
 
-        
+
         verify(db).updateEvent(event);
     }
 

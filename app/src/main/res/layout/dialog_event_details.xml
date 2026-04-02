@@ -102,6 +102,13 @@
         android:layout_marginTop="10dp"/>
 
     <Button
+        android:id="@+id/message_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Message Organizer"
+        android:layout_marginTop="10dp" />
+
+    <Button
         android:id="@+id/scan_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
