@@ -13,7 +13,6 @@ import androidx.fragment.app.FragmentManager;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
-import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminHomeFragment;
@@ -103,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
                     return false; // Show as a popup instead of switching fragments
                 } else if (id == R.id.menu_history) {
                     selectedFragment = new OrganizerHistoryFragment(); // Replace with History Fragment if available
-                    Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
+                    //Toast.makeText(MainActivity.this, "Event History", Toast.LENGTH_SHORT).show();
                 } else if (id == R.id.menu_profile) {
                     selectedFragment = new OrganizerProfileFragment();
                 }
@@ -126,8 +125,7 @@ public class MainActivity extends AppCompatActivity {
                     new Organizer("Temp Organizer", "org@example.com", "", "", null),
                     new ArrayList<>(),
                     new ArrayList<>(),
-                    null,
-                    true
+                    null
             );
 
             // Set the optional waiting list capacity
@@ -144,20 +142,12 @@ public class MainActivity extends AppCompatActivity {
                 ((OrganizerHomeFragment) currentFragment).addEvent(newEvent);
             }
 
-            Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
+            //Toast.makeText(this, "Event Created: " + title, Toast.LENGTH_SHORT).show();
         });
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
 
     public void onRoleSelected(String role) {
-        Event e = DB.getEvent("7f91c8e9-74d5-4c93-bb0a-236940cbf255");
-        ArrayList<User> entrants = new ArrayList<>();
-        User u = new User("John", "Doe", "john.mckinley@examplepetstore.com", null, null);
-        entrants.add(u);
-        e.setEntrants(entrants);
-        e.setEnrolledEntrants(entrants);
-        DB.updateEvent(e);
-
         currentRole = role;
         isLoggedIn = false;
         bottomNavigationView.setVisibility(View.GONE);
