@@ -10,9 +10,18 @@ public class DBProxy {
     private EventDB eventDB;
     private OrganizerDB organizerDB;
     private AdminDB adminDB;
+    private User currentUser;
 
     public interface OnDataChangedListener {
         void onDataChanged();
+    }
+
+    public void setCurrentUser(User user) {
+        this.currentUser = user;
+    }
+
+    public User getCurrentUser() {
+        return currentUser;
     }
 
     private final List<OnDataChangedListener> listeners = new ArrayList<>();

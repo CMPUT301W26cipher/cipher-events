@@ -10,7 +10,7 @@ import com.example.cipher_events.App;
  * Each organizer has a name, email, password, phone number, and profile picture URL.
  */
 
-public class Organizer {
+public class Organizer extends User{
     private String deviceID;
     private String name;
     private String email;

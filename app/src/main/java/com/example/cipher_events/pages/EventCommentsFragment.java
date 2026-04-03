@@ -98,7 +98,12 @@ public class EventCommentsFragment extends Fragment {
         String message = etCommentInput.getText().toString();
 
         if (TextUtils.isEmpty(message.trim())) {
-            etCommentInput.setError("Enter a comment");
+            etCommentInput.setError("Comment cannot be empty");
+            return;
+        }
+
+        if (message.trim().length() > 500) {
+            etCommentInput.setError("Comment is too long (max 500 characters)");
             return;
         }
 

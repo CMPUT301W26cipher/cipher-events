@@ -13,6 +13,9 @@ import androidx.fragment.app.Fragment;
 
 import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.database.User;
 
 public class LoginFragment extends Fragment {
 
@@ -48,6 +51,33 @@ public class LoginFragment extends Fragment {
         TextView tvGoToSignup = view.findViewById(R.id.tv_go_to_signup);
 
         btnLogin.setOnClickListener(v -> {
+
+            DBProxy db = DBProxy.getInstance();
+
+            User user;
+
+            //Create user based on role
+            if ("ORGANIZER".equals(role)) {
+                    user = new Organizer(
+                            "Organizer User",          // name
+                            "org@email.com",           // email
+                            "password123",             // password
+                            "1234567890",              // phone
+                            null                       // profilePictureURL (optional)
+                );
+            } else {
+                user = new User(
+                        "user_id",
+                        "Attendee User",
+                        "user@email.com",
+                        "1234567890",
+                        "extra_field_if_needed"
+                );
+            }
+
+            //STORE CURRENT USER (THIS IS THE KEY LINE)
+            db.setCurrentUser(user);
+
             if (getActivity() instanceof MainActivity) {
                 ((MainActivity) getActivity()).onRoleSelected(role);
             }

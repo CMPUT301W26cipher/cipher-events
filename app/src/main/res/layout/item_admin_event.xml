@@ -49,5 +49,14 @@
             android:textColor="#555555"
             android:text="Date, Location" />
 
+        <Button
+            android:id="@+id/btn_delete_event"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="Delete Event"
+            android:backgroundTint="#F44336"
+            android:textColor="#FFFFFF" />
+
     </LinearLayout>
 </androidx.cardview.widget.CardView>
