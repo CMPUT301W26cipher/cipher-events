@@ -1,18 +1,22 @@
 package com.example.cipher_events.pages;
 
+import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -29,6 +33,8 @@ import com.example.cipher_events.comment.EventComment;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.Message;
+import com.example.cipher_events.notifications.Notifier;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -40,6 +46,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private boolean isOrganizerView = false;
     private String eventId;
     private DBProxy db = DBProxy.getInstance();
+    private Notifier notifier = Notifier.getInstance();
     private EventCommentAdapter commentAdapter;
 
     private TextView title;
@@ -49,6 +56,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView dateLocation;
     private ImageView banner;
     private Button actionButton;
+    private Button notifyButton;
     private TextView lotteryHeader;
     private TextView lotteryText;
 
@@ -109,6 +117,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
+        notifyButton = view.findViewById(R.id.notify_button);
         LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
 
         // Comment components
@@ -147,8 +156,21 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
+            actionButton.setOnClickListener(v -> {
+                dismiss();
+                WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, "organizer");
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+
             lotteryHeader.setVisibility(View.GONE);
             lotteryText.setVisibility(View.GONE);
+            
+            notifyButton.setVisibility(View.VISIBLE);
+            notifyButton.setOnClickListener(v -> showNotificationInputDialog());
         } else {
             actionButton.setText("Scan Info");
             actionButton.setOnClickListener(v -> {
@@ -178,6 +200,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                             "• If you're not selected, you may be placed on a waitlist.\n\n" +
                             "This system helps keep things fair and avoids first‑come‑first‑served pressure."
             );
+            
+            notifyButton.setVisibility(View.GONE);
         }
 
         btnPostComment.setOnClickListener(v -> {
@@ -231,6 +255,118 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             db.updateEvent(event);
             // UI will refresh via onDataChanged
             Toast.makeText(getContext(), "Comment posted!", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void showNotificationInputDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Send Notification");
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(40, 30, 40, 10);
+
+        // Title input
+        final EditText titleInput = new EditText(requireContext());
+        titleInput.setHint("Notification Title");
+        layout.addView(titleInput);
+
+        // Body input
+        final EditText bodyInput = new EditText(requireContext());
+        bodyInput.setHint("Notification Message");
+        bodyInput.setMinLines(3);
+        bodyInput.setMaxLines(5);
+        bodyInput.setGravity(Gravity.TOP);
+
+        LinearLayout.LayoutParams params =
+                new LinearLayout.LayoutParams(
+                        ViewGroup.LayoutParams.MATCH_PARENT,
+                        ViewGroup.LayoutParams.WRAP_CONTENT);
+        params.setMargins(0, 20, 0, 0);
+        bodyInput.setLayoutParams(params);
+
+        layout.addView(bodyInput);
+
+        // Group selector
+        final Spinner groupSpinner = new Spinner(requireContext());
+        String[] groups = {"Invited", "Cancelled", "Enrolled"};
+
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(
+                requireContext(),
+                android.R.layout.simple_spinner_dropdown_item,
+                groups
+        );
+        groupSpinner.setAdapter(adapter);
+        layout.addView(groupSpinner);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Send", (dialog, which) -> {
+            String titleStr = titleInput.getText().toString().trim();
+            String bodyStr = bodyInput.getText().toString().trim();
+            String selectedGroup = groupSpinner.getSelectedItem().toString();
+
+            if (!titleStr.isEmpty() && !bodyStr.isEmpty()) {
+                sendNotificationToGroup(titleStr, bodyStr, selectedGroup);
+            } else {
+                Toast.makeText(getContext(),
+                        "Title and message cannot be empty",
+                        Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
+
+        builder.show();
+    }
+
+    private void sendNotificationToGroup(String title, String body, String group) {
+        switch (group) {
+            case "Invited":
+                notifyInvitedEntrants(title, body);
+                break;
+            case "Cancelled":
+                notifyCancelledEntrants(title, body);
+                break;
+            case "Enrolled":
+                notifyEnrolledEntrants(title, body);
+                break;
+        }
+    }
+
+    private void notifyInvitedEntrants(String title, String body) {
+        Event e = db.getEvent(eventId);
+        if (e == null) return;
+        Message m = new Message(title, body, e.getOrganizer());
+        ArrayList<User> entrants = e.getInvitedEntrants();
+        if (entrants != null) {
+            for (User user : entrants) {
+                notifier.sendMessage(user.getDeviceID(), m);
+            }
+        }
+    }
+
+    private void notifyCancelledEntrants(String title, String body) {
+        Event e = db.getEvent(eventId);
+        if (e == null) return;
+        Message m = new Message(title, body, e.getOrganizer());
+        ArrayList<User> entrants = e.getCancelledEntrants();
+        if (entrants != null) {
+            for (User user : entrants) {
+                notifier.sendMessage(user.getDeviceID(), m);
+            }
+        }
+    }
+
+    private void notifyEnrolledEntrants(String title, String body) {
+        Event e = db.getEvent(eventId);
+        if (e == null) return;
+        Message m = new Message(title, body, e.getOrganizer());
+        ArrayList<User> entrants = e.getEnrolledEntrants();
+        if (entrants != null) {
+            for (User user : entrants) {
+                notifier.sendMessage(user.getDeviceID(), m);
+            }
         }
     }
 
