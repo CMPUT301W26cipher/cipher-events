@@ -3,6 +3,7 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="dialog_background">#26233F</color>
+    <color name="nav_bar_background">#12111F</color>
     <color name="input_background">#454261</color>
     <color name="button_purple">#5B5891</color>
     <color name="text_hint">#A09EBC</color>
