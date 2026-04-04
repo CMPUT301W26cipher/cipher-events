@@ -67,6 +67,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private Button notifyButton;
     private Button messageButton;
     private View lotteryContainer;
+    private TextView lotteryHeader;
     private TextView lotteryText;
     private ChipGroup tagContainer;
 
@@ -140,6 +141,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
         lotteryContainer = view.findViewById(R.id.lottery_container);
+        lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
@@ -183,27 +185,24 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         });
 
         etCommentInput.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tvCommentError.setVisibility(View.GONE);
             }
-            @Override public void afterTextChanged(Editable s) {}
+            @Override
+            public void afterTextChanged(Editable s) {}
         });
 
         refreshUI();
+
         return view;
     }
 
     private void displayTags(ArrayList<String> tags) {
         if (tagContainer == null) return;
-
         tagContainer.removeAllViews();
-        View root = getView();
-        View tagsLabel = null;
-        if (root != null) {
-            tagsLabel = root.findViewById(R.id.detail_tags_label);
-        }
-
         if (tags != null && !tags.isEmpty()) {
             for (String tag : tags) {
                 Chip chip = new Chip(requireContext());
@@ -214,16 +213,17 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 tagContainer.addView(chip);
             }
             tagContainer.setVisibility(View.VISIBLE);
-            if (tagsLabel != null) tagsLabel.setVisibility(View.VISIBLE);
+            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.VISIBLE);
         } else {
             tagContainer.setVisibility(View.GONE);
-            if (tagsLabel != null) tagsLabel.setVisibility(View.GONE);
+            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.GONE);
         }
     }
 
     private void setupViewMode() {
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
+            actionButton.setBackgroundTintList(requireContext().getColorStateList(R.color.button_purple));
             actionButton.setOnClickListener(v -> {
                 dismiss();
                 WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, "organizer");
@@ -234,14 +234,13 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                         .commit();
             });
 
+            lotteryContainer.setVisibility(View.GONE);
             notifyButton.setVisibility(View.VISIBLE);
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
 
             messageButton.setText("Messages");
             messageButton.setVisibility(View.VISIBLE);
             messageButton.setOnClickListener(v -> openOrganizerMessages());
-
-            lotteryContainer.setVisibility(View.GONE);
         } else {
             actionButton.setText("Join Waitlist");
             actionButton.setOnClickListener(v -> {
@@ -253,14 +252,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 }
             });
 
-            messageButton.setText("Message Organizer");
-            messageButton.setVisibility(View.VISIBLE);
-            messageButton.setOnClickListener(v -> openEntrantDirectChat());
-
             descriptionLabel.setVisibility(View.GONE);
             description.setVisibility(View.GONE);
-            notifyButton.setVisibility(View.GONE);
-
+            
             lotteryContainer.setVisibility(View.VISIBLE);
             lotteryText.setText(
                     "⚠️ Disclaimer\n" +
@@ -277,58 +271,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     }
 
     private void openOrganizerMessages() {
-        if (eventId == null || eventId.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "Missing event ID.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (currentDeviceID == null || currentDeviceID.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "Missing organizer ID.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
+        if (eventId == null || currentDeviceID == null) return;
         dismiss();
-
         MessageThreadsFragment fragment = MessageThreadsFragment.newInstance(eventId, currentDeviceID);
         getParentFragmentManager()
                 .beginTransaction()
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
-    }
-
-    private void openEntrantDirectChat() {
-        if (eventId == null || eventId.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "Missing event ID.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        if (currentDeviceID == null || currentDeviceID.trim().isEmpty()) {
-            Toast.makeText(requireContext(), "Missing user ID.", Toast.LENGTH_LONG).show();
-            return;
-        }
-
-        try {
-            MessageThread thread = messagingService.openThread(eventId, currentDeviceID);
-
-            dismiss();
-
-            DirectChatFragment fragment = DirectChatFragment.newInstance(
-                    eventId,
-                    thread.getThreadID(),
-                    currentDeviceID,
-                    false
-            );
-
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-
-        } catch (IllegalArgumentException e) {
-            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
-        }
     }
 
     private void loadComments() {
@@ -473,20 +423,17 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             title.setText(event.getName());
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " people in waitlist");
-
+            
             if (isOrganizerView) {
                 description.setText(event.getDescription());
                 descriptionLabel.setVisibility(View.VISIBLE);
                 description.setVisibility(View.VISIBLE);
             }
-
+            
             dateLocation.setText(event.getTime() + " • " + event.getLocation());
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
-                Glide.with(this)
-                        .load(event.getPosterPictureURL())
-                        .placeholder(R.drawable.gray_placeholder)
-                        .into(banner);
+                Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
             } else {
                 banner.setImageResource(R.drawable.gray_placeholder);
             }

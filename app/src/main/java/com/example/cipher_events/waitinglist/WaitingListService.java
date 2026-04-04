@@ -494,8 +494,8 @@ public class WaitingListService {
         List<User> enrolled = getEnrolledEntrants(event);
         for (User u : enrolled) {
             csv.append(u.getName() != null ? u.getName() : "").append(",")
-               .append(u.getEmail() != null ? u.getEmail() : "").append(",")
-               .append(u.getPhoneNumber() != null ? u.getPhoneNumber() : "").append("\n");
+                    .append(u.getEmail() != null ? u.getEmail() : "").append(",")
+                    .append(u.getPhoneNumber() != null ? u.getPhoneNumber() : "").append("\n");
         }
         return csv.toString();
     }
@@ -510,18 +510,6 @@ public class WaitingListService {
         }
 
         return event.getCoOrganizerIds().contains(user.getDeviceID());
-    }
-
-    private boolean isCoOrganizer(Event event, User user) {
-        if (event == null || user == null) {
-            return false;
-        }
-
-        if (event.getCoOrganizerIds() == null || user.getDeviceID() == null) {
-            return false;
-        }
-
-        return event.getCoOrganizerIds().contain(user.getDeviceID());
     }
 
     private boolean containsUser(ArrayList<User> users, User target) {
