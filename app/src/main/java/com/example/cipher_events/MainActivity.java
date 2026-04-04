@@ -16,6 +16,7 @@ import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.notifications.Notifier;
+import com.example.cipher_events.notifications.NotificationService;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminBrowseEventsFragment;
 import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
@@ -73,7 +74,8 @@ public class MainActivity extends AppCompatActivity {
         organizerEventService = new OrganizerEventService();
         entrantEventService = new EntrantEventService();
 
-        waitingListService = new WaitingListService(historyRepository);
+        NotificationService notificationService = new NotificationService(notifier);
+        waitingListService = new WaitingListService(historyRepository, notificationService);
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());

@@ -38,7 +38,9 @@ public class OrganizerEventService {
                                                     String location,
                                                     Organizer organizer,
                                                     String posterPictureURL,
-                                                    boolean publicEvent) {
+                                                    boolean publicEvent,
+                                                    Long registrationOpenTime,
+                                                    Long registrationCloseTime) {
         validateRequiredEventFields(name, description, time, location, organizer);
 
         Event event = new Event(
@@ -53,6 +55,8 @@ public class OrganizerEventService {
                 publicEvent
         );
 
+        event.setRegistrationOpenTime(registrationOpenTime);
+        event.setRegistrationCloseTime(registrationCloseTime);
         db.addEvent(event);
 
         String qrPayload = null;
@@ -83,7 +87,9 @@ public class OrganizerEventService {
                 location,
                 organizer,
                 posterPictureURL,
-                true
+                true,
+                null,
+                null
         );
     }
 
@@ -103,7 +109,9 @@ public class OrganizerEventService {
                 location,
                 organizer,
                 posterPictureURL,
-                false
+                false,
+                null,
+                null
         );
     }
 
