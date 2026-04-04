@@ -65,6 +65,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private ImageView banner;
     private Button actionButton;
     private Button notifyButton;
+    private Button messageButton;
     private View lotteryContainer;
     private TextView lotteryHeader;
     private TextView lotteryText;
@@ -144,6 +145,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
+        messageButton = view.findViewById(R.id.message_button);
         tagContainer = view.findViewById(R.id.detail_tags_container);
 
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
@@ -161,9 +163,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             eventId = args.getString("eventId");
             isOrganizerView = args.getBoolean("isOrganizerView", false);
             currentDeviceID = args.getString("currentDeviceID");
-            tagsFromArgs = args.getStringArrayList("tags");
-        }
-
             tagsFromArgs = args.getStringArrayList("tags");
         }
 
@@ -242,8 +241,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             messageButton.setText("Messages");
             messageButton.setVisibility(View.VISIBLE);
             messageButton.setOnClickListener(v -> openOrganizerMessages());
-
-            lotteryContainer.setVisibility(View.GONE);
         } else {
             actionButton.setText("Join Waitlist");
             actionButton.setOnClickListener(v -> {
@@ -271,6 +268,17 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                             "This system helps keep things fair and avoids first-come-first-served pressure."
             );
         }
+    }
+
+    private void openOrganizerMessages() {
+        if (eventId == null || currentDeviceID == null) return;
+        dismiss();
+        MessageThreadsFragment fragment = MessageThreadsFragment.newInstance(eventId, currentDeviceID);
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void loadComments() {
