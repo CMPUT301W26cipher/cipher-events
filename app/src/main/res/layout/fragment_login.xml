@@ -10,7 +10,7 @@
         android:id="@+id/login_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Attendee Login"
+        android:text="Login"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginBottom="32dp"/>
@@ -44,6 +44,7 @@
         android:layout_height="wrap_content"
         android:text="Don't have an account? Sign Up"
         android:textColor="@color/black"
+        android:padding="8dp"
         android:clickable="true"
         android:focusable="true"/>
 

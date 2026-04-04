@@ -10,10 +10,17 @@
         android:id="@+id/signup_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Attendee Sign Up"
+        android:text="Sign Up"
         android:textSize="24sp"
         android:textStyle="bold"
         android:layout_marginBottom="32dp"/>
+
+    <Spinner
+        android:id="@+id/signup_role_spinner"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        android:minHeight="48dp" />
 
     <EditText
         android:id="@+id/signup_name"
@@ -52,6 +59,7 @@
         android:layout_height="wrap_content"
         android:text="Already have an account? Log In"
         android:textColor="@color/black"
+        android:padding="8dp"
         android:clickable="true"
         android:focusable="true"/>
 

@@ -12,9 +12,12 @@ import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+
+import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.notifications.NotificationService;
 import com.example.cipher_events.organizer.OrganizerEventService;
@@ -33,6 +36,7 @@ import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
 import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
+import com.example.cipher_events.pages.SignupFragment;
 import com.example.cipher_events.user.EntrantEventService;
 import com.example.cipher_events.user.UserEventHistoryRepository;
 import com.example.cipher_events.user.UserProfileService;
@@ -88,12 +92,14 @@ public class MainActivity extends AppCompatActivity {
         
         tvCurrentRole = findViewById(R.id.tv_current_role);
 
-        // Show role selection first
-        replaceFragment(new RoleSelectionFragment());
+        // Start with Login instead of Role Selection
+        replaceFragment(LoginFragment.newInstance());
 
         bottomNavigationView.setOnItemSelectedListener(menuItem -> {
             Fragment selectedFragment = null;
             int id = menuItem.getItemId();
+            Admin a = new Admin("Henry", "admin@gmail.com", "adminpass", "123", null);
+            DB.addAdmin(a);
 
             if ("ENTRANT".equals(currentRole)) {
                 if (id == R.id.menu_home) {
@@ -178,7 +184,6 @@ public class MainActivity extends AppCompatActivity {
             tvCurrentRole.setVisibility(View.VISIBLE);
         }
 
-        bottomNavigationView.setVisibility(View.GONE);
         bottomNavigationView.setVisibility(View.VISIBLE);
 
         if ("ORGANIZER".equals(currentRole)) {
@@ -187,7 +192,7 @@ public class MainActivity extends AppCompatActivity {
             replaceFragment(new OrganizerHomeFragment());
         } else if ("ADMIN".equals(currentRole)) {
             bottomNavigationView.getMenu().clear();
-            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            bottomNavigationView.inflateMenu(R.menu.menu_admin_nav);
             replaceFragment(new AdminHomeFragment());
         } else {
             bottomNavigationView.getMenu().clear();
@@ -202,9 +207,10 @@ public class MainActivity extends AppCompatActivity {
                     .replace(R.id.fragment_container, fragment)
                     .commit();
 
-            // Hide role banner if we go back to role selection
-            if (fragment instanceof RoleSelectionFragment) {
+            // Hide UI elements if we go back to login/signup
+            if (fragment instanceof LoginFragment || fragment instanceof SignupFragment) {
                 if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
+                bottomNavigationView.setVisibility(View.GONE);
                 currentRole = "";
             }
         }
