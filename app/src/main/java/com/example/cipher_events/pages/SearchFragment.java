@@ -1,66 +1,140 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
-
-import androidx.fragment.app.Fragment;
-
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.CheckBox;
+import android.widget.EditText;
+import android.widget.TextView;
+
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.fragment.app.Fragment;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.adapters.EventAdapter;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link SearchFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
-public class SearchFragment extends Fragment {
+import java.util.ArrayList;
+import java.util.List;
 
-    // TODO: Rename parameter arguments, choose names that match
-    // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-    private static final String ARG_PARAM1 = "param1";
-    private static final String ARG_PARAM2 = "param2";
+public class SearchFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
-    // TODO: Rename and change types of parameters
-    private String mParam1;
-    private String mParam2;
+    private EditText etSearchBar;
+    private CheckBox cbFilterPublic;
+    private RecyclerView rvSearchResults;
+    private TextView tvNoResults;
+    
+    private EventAdapter adapter;
+    private List<Event> filteredEvents = new ArrayList<>();
+    private DBProxy db = DBProxy.getInstance();
 
     public SearchFragment() {
         // Required empty public constructor
     }
 
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param param1 Parameter 1.
-     * @param param2 Parameter 2.
-     * @return A new instance of fragment SearchFragment.
-     */
-    // TODO: Rename and change types and number of parameters
-    public static SearchFragment newInstance(String param1, String param2) {
-        SearchFragment fragment = new SearchFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_PARAM1, param1);
-        args.putString(ARG_PARAM2, param2);
-        fragment.setArguments(args);
-        return fragment;
+    public static SearchFragment newInstance() {
+        return new SearchFragment();
     }
 
+    @Nullable
     @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        if (getArguments() != null) {
-            mParam1 = getArguments().getString(ARG_PARAM1);
-            mParam2 = getArguments().getString(ARG_PARAM2);
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+        View view = inflater.inflate(R.layout.fragment_search, container, false);
+
+        etSearchBar = view.findViewById(R.id.et_search_bar);
+        cbFilterPublic = view.findViewById(R.id.cb_filter_public);
+        rvSearchResults = view.findViewById(R.id.rv_search_results);
+        tvNoResults = view.findViewById(R.id.tv_no_results);
+
+        rvSearchResults.setLayoutManager(new LinearLayoutManager(getContext()));
+        adapter = new EventAdapter(filteredEvents, event -> {
+            EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
+                    event.getEventID(),
+                    event.getName(),
+                    event.getDescription(),
+                    event.getTime(),
+                    event.getLocation(),
+                    (event.getEntrants() != null ? event.getEntrants().size() : 0),
+                    new ArrayList<>() // Tags placeholder
+            );
+            dialog.show(getParentFragmentManager(), "EventDetailsDialog");
+        });
+        rvSearchResults.setAdapter(adapter);
+
+        etSearchBar.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                performSearch();
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
+        cbFilterPublic.setOnCheckedChangeListener((buttonView, isChecked) -> performSearch());
+
+        performSearch();
+
+        return view;
+    }
+
+    private void performSearch() {
+        String keyword = etSearchBar.getText().toString().toLowerCase().trim();
+        boolean publicOnly = cbFilterPublic.isChecked();
+        
+        List<Event> allEvents = db.getAllEvents();
+        filteredEvents.clear();
+
+        for (Event event : allEvents) {
+            boolean matchesKeyword = keyword.isEmpty() || 
+                    (event.getName() != null && event.getName().toLowerCase().contains(keyword)) || 
+                    (event.getDescription() != null && event.getDescription().toLowerCase().contains(keyword));
+            
+            boolean matchesPublicFilter = !publicOnly || event.isPublicEvent();
+
+            if (matchesKeyword && matchesPublicFilter) {
+                filteredEvents.add(event);
+            }
+        }
+
+        adapter.notifyDataSetChanged();
+
+        if (filteredEvents.isEmpty()) {
+            tvNoResults.setVisibility(View.VISIBLE);
+            rvSearchResults.setVisibility(View.GONE);
+        } else {
+            tvNoResults.setVisibility(View.GONE);
+            rvSearchResults.setVisibility(View.VISIBLE);
         }
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-        // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_search, container, false);
+    public void onResume() {
+        super.onResume();
+        db.addListener(this);
+        performSearch(); // Refresh list in case data changed while away
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(this::performSearch);
+        }
     }
 }
