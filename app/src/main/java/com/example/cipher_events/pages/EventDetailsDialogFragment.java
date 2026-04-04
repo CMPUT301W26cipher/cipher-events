@@ -35,6 +35,8 @@ import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -57,8 +59,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private ImageView banner;
     private Button actionButton;
     private Button notifyButton;
+    private View lotteryContainer;
     private TextView lotteryHeader;
     private TextView lotteryText;
+    private ChipGroup tagContainer;
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -114,11 +118,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         description = view.findViewById(R.id.detail_description);
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
+        lotteryContainer = view.findViewById(R.id.lottery_container);
         lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
-        LinearLayout tagContainer = view.findViewById(R.id.detail_tags_container);
+        tagContainer = view.findViewById(R.id.detail_tags_container);
 
         // Comment components
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
@@ -132,77 +137,16 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         rvComments.setAdapter(commentAdapter);
 
         Bundle args = getArguments();
+        ArrayList<String> tagsFromArgs = null;
         if (args != null) {
             eventId = args.getString("eventId");
             isOrganizerView = args.getBoolean("isOrganizerView", false);
 
-            ArrayList<String> tags = args.getStringArrayList("tags");
-            if (tags != null) {
-                tagContainer.removeAllViews();
-                for (String tag : tags) {
-                    TextView chip = new TextView(requireContext());
-                    chip.setText(tag);
-                    chip.setPadding(20, 10, 20, 10);
-                    chip.setBackgroundResource(R.drawable.tag_chip_bg);
-                    chip.setTextSize(14);
-                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                    params.setMargins(10, 10, 10, 10);
-                    chip.setLayoutParams(params);
-                    tagContainer.addView(chip);
-                }
-            }
+            tagsFromArgs = args.getStringArrayList("tags");
         }
 
-        if (isOrganizerView) {
-            actionButton.setText("View Waitlist");
-            actionButton.setOnClickListener(v -> {
-                dismiss();
-                WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, "organizer");
-                getParentFragmentManager()
-                        .beginTransaction()
-                        .replace(R.id.fragment_container, fragment)
-                        .addToBackStack(null)
-                        .commit();
-            });
-
-            lotteryHeader.setVisibility(View.GONE);
-            lotteryText.setVisibility(View.GONE);
-            
-            notifyButton.setVisibility(View.VISIBLE);
-            notifyButton.setOnClickListener(v -> showNotificationInputDialog());
-        } else {
-            actionButton.setText("Scan Info");
-            actionButton.setOnClickListener(v -> {
-                if (eventId != null) {
-                    QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
-                    qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
-                } else {
-                    Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            // Entrant does NOT see description until scan (which opens a new dialog)
-            descriptionLabel.setVisibility(View.GONE);
-            description.setVisibility(View.GONE);
-            
-            // Entrant sees lottery guidelines
-            lotteryHeader.setVisibility(View.VISIBLE);
-            lotteryText.setVisibility(View.VISIBLE);
-            lotteryText.setText(
-                    "⚠️ Disclaimer\n" +
-                            "Some events use a lottery system when more people join than there are available spots.\n\n" +
-                            "What this means for you:\n" +
-                            "• When you join, you're entered into the lottery.\n" +
-                            "• Everyone who joins before the deadline has the same chance.\n" +
-                            "• Joining earlier does not increase your odds.\n" +
-                            "• If you're selected, you'll receive a confirmation.\n" +
-                            "• If you're not selected, you may be placed on a waitlist.\n\n" +
-                            "This system helps keep things fair and avoids first‑come‑first‑served pressure."
-            );
-            
-            notifyButton.setVisibility(View.GONE);
-        }
+        setupViewMode();
+        displayTags(tagsFromArgs);
 
         btnPostComment.setOnClickListener(v -> {
             String commentText = etCommentInput.getText().toString().trim();
@@ -235,6 +179,74 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         return view;
     }
 
+    private void displayTags(ArrayList<String> tags) {
+        if (tagContainer == null) return;
+        tagContainer.removeAllViews();
+        if (tags != null && !tags.isEmpty()) {
+            for (String tag : tags) {
+                Chip chip = new Chip(requireContext());
+                chip.setText(tag);
+                chip.setChipBackgroundColorResource(R.color.input_background);
+                chip.setTextColor(Color.WHITE);
+                chip.setChipStrokeWidth(0);
+                tagContainer.addView(chip);
+            }
+            tagContainer.setVisibility(View.VISIBLE);
+            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.VISIBLE);
+        } else {
+            tagContainer.setVisibility(View.GONE);
+            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.GONE);
+        }
+    }
+
+    private void setupViewMode() {
+        if (isOrganizerView) {
+            actionButton.setText("View Waitlist");
+            actionButton.setBackgroundTintList(requireContext().getColorStateList(R.color.button_purple));
+            actionButton.setOnClickListener(v -> {
+                dismiss();
+                WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, "organizer");
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+
+            lotteryContainer.setVisibility(View.GONE);
+            notifyButton.setVisibility(View.VISIBLE);
+            notifyButton.setOnClickListener(v -> showNotificationInputDialog());
+        } else {
+            actionButton.setText("Join Waitlist");
+            actionButton.setOnClickListener(v -> {
+                if (eventId != null) {
+                    QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
+                    qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
+                } else {
+                    Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
+                }
+            });
+
+            descriptionLabel.setVisibility(View.GONE);
+            description.setVisibility(View.GONE);
+            
+            lotteryContainer.setVisibility(View.VISIBLE);
+            lotteryText.setText(
+                    "⚠️ Disclaimer\n" +
+                            "Some events use a lottery system when more people join than there are available spots.\n\n" +
+                            "What this means for you:\n" +
+                            "• When you join, you're entered into the lottery.\n" +
+                            "• Everyone who joins before the deadline has the same chance.\n" +
+                            "• Joining earlier does not increase your odds.\n" +
+                            "• If you're selected, you'll receive a confirmation.\n" +
+                            "• If you're not selected, you may be placed on a waitlist.\n\n" +
+                            "This system helps keep things fair and avoids first‑come‑first‑served pressure."
+            );
+            
+            notifyButton.setVisibility(View.GONE);
+        }
+    }
+
     private void loadComments() {
         Event event = db.getEvent(eventId);
         if (event != null && event.getComments() != null) {
@@ -253,7 +265,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         if (event != null) {
             event.getComments().add(newComment);
             db.updateEvent(event);
-            // UI will refresh via onDataChanged
             Toast.makeText(getContext(), "Comment posted!", Toast.LENGTH_SHORT).show();
         }
     }
@@ -266,12 +277,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(40, 30, 40, 10);
 
-        // Title input
         final EditText titleInput = new EditText(requireContext());
         titleInput.setHint("Notification Title");
         layout.addView(titleInput);
 
-        // Body input
         final EditText bodyInput = new EditText(requireContext());
         bodyInput.setHint("Notification Message");
         bodyInput.setMinLines(3);
@@ -287,7 +296,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
         layout.addView(bodyInput);
 
-        // Group selector
         final Spinner groupSpinner = new Spinner(requireContext());
         String[] groups = {"Invited", "Cancelled", "Enrolled"};
 
@@ -377,16 +385,16 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " people in waitlist");
             
-            // For organizer, show description. For entrant, description is hidden until scan
             if (isOrganizerView) {
                 description.setText(event.getDescription());
+                descriptionLabel.setVisibility(View.VISIBLE);
+                description.setVisibility(View.VISIBLE);
             }
             
-            dateLocation.setText(event.getTime() + ", " + event.getLocation());
+            dateLocation.setText(event.getTime() + " • " + event.getLocation());
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
-                banner.setVisibility(View.VISIBLE);
-                Glide.with(this).load(event.getPosterPictureURL()).into(banner);
+                Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
             } else {
                 banner.setImageResource(R.drawable.gray_placeholder);
             }
@@ -419,7 +427,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     public void onStart() {
         super.onStart();
         if (getDialog() != null && getDialog().getWindow() != null) {
-            int width = (int) (requireContext().getResources().getDisplayMetrics().widthPixels * 0.90);
+            int width = (int) (requireContext().getResources().getDisplayMetrics().widthPixels * 0.95);
             getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }

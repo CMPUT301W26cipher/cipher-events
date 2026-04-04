@@ -47,7 +47,6 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 import java.util.ArrayList;
 
 public class MainActivity extends AppCompatActivity {
-    //
     DBProxy DB = DBProxy.getInstance();
     Notifier notifier;
     FragmentManager fragmentManager = getSupportFragmentManager();
@@ -88,7 +87,7 @@ public class MainActivity extends AppCompatActivity {
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, 0);
             return insets;
         });
 
@@ -98,61 +97,54 @@ public class MainActivity extends AppCompatActivity {
         tvCurrentRole = findViewById(R.id.tv_current_role);
 
         // Check for persistent login
-        if (checkLoginSession()) {
-            onRoleSelected(currentRole);
-        } else {
-            replaceFragment(LoginFragment.newInstance());
-        }
+        checkPersistentLogin();
 
-        bottomNavigationView.setOnItemSelectedListener(menuItem -> {
-            Fragment selectedFragment = null;
-            int id = menuItem.getItemId();
-
-            if ("ENTRANT".equals(currentRole)) {
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if (currentRole.equals("ORGANIZER")) {
                 if (id == R.id.menu_home) {
-                    selectedFragment = new HomeFragment();
-                } else if (id == R.id.menu_search) {
-                    selectedFragment = new SearchFragment();
-                } else if (id == R.id.menu_favourites) {
-                    selectedFragment = new FavouritesFragment();
-                } else if (id == R.id.menu_profile) {
-                    selectedFragment = new ProfileFragment();
-                }
-            } else if ("ORGANIZER".equals(currentRole)) {
-                if (id == R.id.menu_home) {
-                    selectedFragment = new OrganizerHomeFragment();
+                    replaceFragment(new OrganizerHomeFragment());
                 } else if (id == R.id.menu_create) {
                     showCreateEventDialog();
-                    return false;
                 } else if (id == R.id.menu_history) {
-                    selectedFragment = new OrganizerHistoryFragment();
+                    replaceFragment(new OrganizerHistoryFragment());
                 } else if (id == R.id.menu_profile) {
-                    selectedFragment = new OrganizerProfileFragment();
+                    replaceFragment(new OrganizerProfileFragment());
                 }
-            } else if ("ADMIN".equals(currentRole)) {
+            } else if (currentRole.equals("ADMIN")) {
                 if (id == R.id.menu_admin_events) {
-                    selectedFragment = new AdminBrowseEventsFragment();
+                    replaceFragment(new AdminBrowseEventsFragment());
                 } else if (id == R.id.menu_admin_profiles) {
-                    selectedFragment = new AdminBrowseProfilesFragment();
+                    replaceFragment(new AdminBrowseProfilesFragment());
                 } else if (id == R.id.menu_admin_notifications) {
-                    selectedFragment = new AdminNotificationsFragment();
+                    replaceFragment(new AdminNotificationsFragment());
                 } else if (id == R.id.menu_admin_profile) {
-                    selectedFragment = new AdminProfileFragment();
+                    replaceFragment(new AdminProfileFragment());
+                }
+            } else {
+                if (id == R.id.menu_home) {
+                    replaceFragment(new HomeFragment());
+                } else if (id == R.id.menu_search) {
+                    replaceFragment(new SearchFragment());
+                } else if (id == R.id.menu_favourites) {
+                    replaceFragment(new FavouritesFragment());
+                } else if (id == R.id.menu_profile) {
+                    replaceFragment(new ProfileFragment());
                 }
             }
-
-            replaceFragment(selectedFragment);
             return true;
         });
     }
 
-    private boolean checkLoginSession() {
+    private void checkPersistentLogin() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+
         if (isLoggedIn) {
             currentRole = prefs.getString(KEY_ROLE, "");
             String deviceID = prefs.getString(KEY_DEVICE_ID, "");
             
+            // Re-sync with DB
             if ("ADMIN".equals(currentRole)) {
                 DB.setCurrentUser(DB.getAdmin(deviceID));
             } else if ("ORGANIZER".equals(currentRole)) {
@@ -160,9 +152,11 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 DB.setCurrentUser(DB.getUser(deviceID));
             }
-            return true;
+            
+            updateNavigationMenu();
+        } else {
+            replaceFragment(LoginFragment.newInstance());
         }
-        return false;
     }
 
     public void saveLoginSession(String role, String deviceID) {
@@ -174,6 +168,17 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
+    public void loginSuccess(String role) {
+        onRoleSelected(role);
+    }
+
+    public void onRoleSelected(String role) {
+        currentRole = role;
+        String deviceID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        saveLoginSession(role, deviceID);
+        updateNavigationMenu();
+    }
+
     public void logout() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
@@ -182,51 +187,30 @@ public class MainActivity extends AppCompatActivity {
         
         currentRole = "";
         DB.setCurrentUser(null);
+        bottomNavigationView.setVisibility(View.GONE);
+        if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
         replaceFragment(LoginFragment.newInstance());
     }
 
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl) -> {
-            String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-            Organizer currentOrganizer = DB.getOrganizer(deviceId);
-            
-            if (currentOrganizer == null) {
-                currentOrganizer = new Organizer("Unknown Organizer", "", "", "", null);
-                currentOrganizer.setDeviceID(deviceId);
-            }
-
-            Event newEvent = new Event(
-                    title,
-                    description,
-                    date + " " + time,
-                    location,
-                    currentOrganizer,
-                    new ArrayList<>(), 
-                    new ArrayList<>(),
-                    bannerUrl,         
-                    true               
-            );
-            
-            if (capacity != null) {
-                newEvent.setWaitingListCapacity(capacity);
-            }
-            
-            DB.addEvent(newEvent);
-            Toast.makeText(this, "Event Created", Toast.LENGTH_SHORT).show();
-        });
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
 
-    public void onRoleSelected(String role) {
-        currentRole = role;
-        
-        if (tvCurrentRole != null) {
-            tvCurrentRole.setText("Role: " + role);
-            tvCurrentRole.setVisibility(View.VISIBLE);
-        }
+    private void updateNavigationMenu() {
+        if (bottomNavigationView == null) return;
 
         bottomNavigationView.setVisibility(View.VISIBLE);
+        if (tvCurrentRole != null) {
+            tvCurrentRole.setVisibility(View.VISIBLE);
+            tvCurrentRole.setText("Role: " + currentRole);
+            
+            // Optional: Color role tag based on role
+            int roleColorRes = R.color.role_attendee;
+            if ("ORGANIZER".equals(currentRole)) roleColorRes = R.color.role_organizer;
+            else if ("ADMIN".equals(currentRole)) roleColorRes = R.color.role_admin;
+            tvCurrentRole.setBackgroundColor(getResources().getColor(roleColorRes, getTheme()));
+        }
 
         if ("ORGANIZER".equals(currentRole)) {
             bottomNavigationView.getMenu().clear();
@@ -258,9 +242,17 @@ public class MainActivity extends AppCompatActivity {
     }
 
     @Override
-    protected void onDestroy () {
-        DB.shutdown();
-        if (notifier != null) notifier.stopListener();
-        super.onDestroy();
+    public void onBackPressed() {
+        Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
+        if (currentFragment instanceof SignupFragment) {
+            replaceFragment(LoginFragment.newInstance());
+        } else if (currentFragment instanceof HomeFragment || 
+                   currentFragment instanceof OrganizerHomeFragment || 
+                   currentFragment instanceof AdminHomeFragment ||
+                   currentFragment instanceof LoginFragment) {
+            super.onBackPressed();
+        } else {
+            updateNavigationMenu(); // Return to home based on role
+        }
     }
 }

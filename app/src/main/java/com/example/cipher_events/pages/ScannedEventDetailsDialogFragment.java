@@ -15,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
@@ -33,6 +34,7 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
     private TextView titleText;
     private TextView waitlistCountText;
     private TextView descriptionText;
+    private TextView dateLocationText;
     private Button joinButton;
     private String deviceId;
 
@@ -63,6 +65,7 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
         titleText = view.findViewById(R.id.scanned_event_title);
         waitlistCountText = view.findViewById(R.id.scanned_event_waitlist_count);
         descriptionText = view.findViewById(R.id.scanned_event_description);
+        dateLocationText = view.findViewById(R.id.scanned_event_date_location);
         joinButton = view.findViewById(R.id.btn_join_waitlist);
 
         if (getArguments() != null) {
@@ -100,10 +103,18 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             waitlistCountText.setText(count + " people in waitlist");
             descriptionText.setText(event.getDescription());
+            
+            if (dateLocationText != null) {
+                dateLocationText.setText(event.getTime() + " • " + event.getLocation());
+            }
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
-                bannerImage.setVisibility(View.VISIBLE);
-                Glide.with(this).load(event.getPosterPictureURL()).into(bannerImage);
+                Glide.with(this)
+                        .load(event.getPosterPictureURL())
+                        .placeholder(R.drawable.gray_placeholder)
+                        .into(bannerImage);
+            } else {
+                bannerImage.setImageResource(R.drawable.gray_placeholder);
             }
 
             // Get real user from DB
@@ -164,22 +175,22 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
     }
 
     private void setButtonToJoined(Button button) {
-        button.setText("Joined");
-        button.setTextColor(Color.parseColor("#FF4081")); // Pink text
-        button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#E0E0E0"))); // Light Gray background
+        button.setText("Joined Waitlist");
+        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.black));
+        button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.role_organizer)));
     }
 
     private void setButtonToJoinWaitlist(Button button) {
         button.setText("Join Waitlist");
-        button.setTextColor(Color.WHITE); // White text
-        button.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#5B5891"))); // Purple background
+        button.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+        button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.button_purple)));
     }
 
     @Override
     public void onStart() {
         super.onStart();
         if (getDialog() != null && getDialog().getWindow() != null) {
-            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.90);
+            int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.95);
             getDialog().getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
     }
