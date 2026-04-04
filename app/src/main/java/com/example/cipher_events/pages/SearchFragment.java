@@ -6,7 +6,6 @@ import android.text.TextWatcher;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CheckBox;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -20,20 +19,24 @@ import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * SearchFragment allows users to search for events by keyword and filter by public status.
+ */
 public class SearchFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private EditText etSearchBar;
-    private CheckBox cbFilterPublic;
+    private Chip chipPublicOnly;
     private RecyclerView rvSearchResults;
-    private TextView tvNoResults;
+    private View emptyStateContainer;
     
     private EventAdapter adapter;
-    private List<Event> filteredEvents = new ArrayList<>();
-    private DBProxy db = DBProxy.getInstance();
+    private final List<Event> filteredEvents = new ArrayList<>();
+    private final DBProxy db = DBProxy.getInstance();
 
     public SearchFragment() {
         // Required empty public constructor
@@ -48,11 +51,23 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_search, container, false);
 
-        etSearchBar = view.findViewById(R.id.et_search_bar);
-        cbFilterPublic = view.findViewById(R.id.cb_filter_public);
-        rvSearchResults = view.findViewById(R.id.rv_search_results);
-        tvNoResults = view.findViewById(R.id.tv_no_results);
+        initializeViews(view);
+        setupRecyclerView();
+        setupListeners();
 
+        performSearch();
+
+        return view;
+    }
+
+    private void initializeViews(View view) {
+        etSearchBar = view.findViewById(R.id.et_search_bar);
+        chipPublicOnly = view.findViewById(R.id.chip_public_only);
+        rvSearchResults = view.findViewById(R.id.rv_search_results);
+        emptyStateContainer = view.findViewById(R.id.empty_state_container);
+    }
+
+    private void setupRecyclerView() {
         rvSearchResults.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(filteredEvents, event -> {
             EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
@@ -67,7 +82,9 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
             dialog.show(getParentFragmentManager(), "EventDetailsDialog");
         });
         rvSearchResults.setAdapter(adapter);
+    }
 
+    private void setupListeners() {
         etSearchBar.addTextChangedListener(new TextWatcher() {
             @Override
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
@@ -81,16 +98,12 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
             public void afterTextChanged(Editable s) {}
         });
 
-        cbFilterPublic.setOnCheckedChangeListener((buttonView, isChecked) -> performSearch());
-
-        performSearch();
-
-        return view;
+        chipPublicOnly.setOnCheckedChangeListener((buttonView, isChecked) -> performSearch());
     }
 
     private void performSearch() {
         String keyword = etSearchBar.getText().toString().toLowerCase().trim();
-        boolean publicOnly = cbFilterPublic.isChecked();
+        boolean publicOnly = chipPublicOnly.isChecked();
         
         List<Event> allEvents = db.getAllEvents();
         filteredEvents.clear();
@@ -110,10 +123,10 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
         adapter.notifyDataSetChanged();
 
         if (filteredEvents.isEmpty()) {
-            tvNoResults.setVisibility(View.VISIBLE);
+            emptyStateContainer.setVisibility(View.VISIBLE);
             rvSearchResults.setVisibility(View.GONE);
         } else {
-            tvNoResults.setVisibility(View.GONE);
+            emptyStateContainer.setVisibility(View.GONE);
             rvSearchResults.setVisibility(View.VISIBLE);
         }
     }
@@ -122,7 +135,7 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
     public void onResume() {
         super.onResume();
         db.addListener(this);
-        performSearch(); // Refresh list in case data changed while away
+        performSearch();
     }
 
     @Override
