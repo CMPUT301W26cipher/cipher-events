@@ -241,6 +241,13 @@ public class WaitingListService {
 
         return true;
     }
+    // =========================================================
+    // US 02.01.03
+    // Search users to invite to a private event by keyword
+    // =========================================================
+    public List<User> searchUsersToInvite(String keyword) {
+        return db.searchUsers(keyword);
+    }
 
     private boolean isWithinRegistrationPeriod(Event event) {
 
@@ -302,10 +309,13 @@ public class WaitingListService {
         }
 
         ArrayList<User> invited = event.getInvitedEntrants();
-        ArrayList<User> attendees = event.getAttendees();
 
-        if (invited == null || attendees == null) {
+        if (invited == null) {
             return false;
+        }
+
+        if (event.getAttendees() == null) {
+            event.setAttendees(new ArrayList<>());
         }
 
         for (int i = 0; i < invited.size(); i++) {

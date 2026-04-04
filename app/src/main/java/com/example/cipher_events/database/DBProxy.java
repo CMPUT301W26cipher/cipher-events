@@ -83,6 +83,7 @@ public class DBProxy {
     public void addUser(User user) { userDB.add(user); }
     public User getUser(String deviceID) { return userDB.get(deviceID); }
     public ArrayList<User> getAllUsers() { return userDB.getAll(); }
+    public List<User> searchUsers(String keyword) { return userDB.search(keyword); }
     public void updateUser(User user) { userDB.update(user); }
     public void deleteUser(User user) { userDB.delete(user); }
     public void deleteUser(String deviceID) { userDB.delete(deviceID); }
