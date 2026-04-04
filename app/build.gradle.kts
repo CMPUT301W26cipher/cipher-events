@@ -55,6 +55,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation(libs.firebase.functions)
+    implementation(libs.swiperefreshlayout)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation(libs.junit)
     testImplementation("org.mockito:mockito-core:5.12.0")
