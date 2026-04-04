@@ -38,9 +38,7 @@ public class AdminHomeFragment extends Fragment {
         }
 
         if (btnBrowseImages != null) {
-            btnBrowseImages.setOnClickListener(v -> {
-                // Placeholder for browse images if implemented later
-            });
+            btnBrowseImages.setOnClickListener(v -> replaceFragment(new AdminBrowseImagesFragment()));
         }
 
         if (btnNotificationLogs != null) {
