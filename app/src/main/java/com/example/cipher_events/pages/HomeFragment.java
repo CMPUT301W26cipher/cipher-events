@@ -66,16 +66,8 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(displayedEvents, event -> {
-            EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
-                    event.getEventID(),
-                    event.getName(),
-                    event.getDescription(),
-                    event.getTime(),
-                    event.getLocation(),
-                    event.getEntrants() != null ? event.getEntrants().size() : 0,
-                    new ArrayList<>() // Placeholder for tags
-            );
-            dialog.show(getParentFragmentManager(), "EventDetailsDialog");
+            ScannedEventDetailsDialogFragment dialog = ScannedEventDetailsDialogFragment.newInstance(event.getEventID());
+            dialog.show(getParentFragmentManager(), "ScannedEventDetailsDialog");
         });
         recyclerView.setAdapter(adapter);
     }

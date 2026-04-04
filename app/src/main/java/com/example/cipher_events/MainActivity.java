@@ -194,6 +194,41 @@ public class MainActivity extends AppCompatActivity {
 
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
+        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl) -> {
+            // Get current organizer
+            String deviceId = android.provider.Settings.Secure.getString(
+                    getContentResolver(),
+                    android.provider.Settings.Secure.ANDROID_ID
+            );
+            com.example.cipher_events.database.Organizer organizer = DBProxy.getInstance().getOrganizer(deviceId);
+
+            // Build time string
+            String timeStr = date + " " + time;
+
+            // Create event
+            com.example.cipher_events.database.Event event = new com.example.cipher_events.database.Event(
+                    title,
+                    description,
+                    timeStr,
+                    location,
+                    organizer,
+                    new java.util.ArrayList<>(),
+                    new java.util.ArrayList<>(),
+                    bannerUrl,
+                    true  // publicEvent
+            );
+
+            if (capacity != null) {
+                event.setWaitingListCapacity(capacity);
+            }
+
+            event.setInvitedEntrants(new java.util.ArrayList<>());
+            event.setCancelledEntrants(new java.util.ArrayList<>());
+            event.setEnrolledEntrants(new java.util.ArrayList<>());
+
+            DBProxy.getInstance().addEvent(event);
+            android.widget.Toast.makeText(this, "Event created!", android.widget.Toast.LENGTH_SHORT).show();
+        });
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
 

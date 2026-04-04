@@ -70,16 +70,8 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
     private void setupRecyclerView() {
         rvSearchResults.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(filteredEvents, event -> {
-            EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
-                    event.getEventID(),
-                    event.getName(),
-                    event.getDescription(),
-                    event.getTime(),
-                    event.getLocation(),
-                    (event.getEntrants() != null ? event.getEntrants().size() : 0),
-                    new ArrayList<>() // Tags placeholder
-            );
-            dialog.show(getParentFragmentManager(), "EventDetailsDialog");
+            ScannedEventDetailsDialogFragment dialog = ScannedEventDetailsDialogFragment.newInstance(event.getEventID());
+            dialog.show(getParentFragmentManager(), "ScannedEventDetailsDialog");
         });
         rvSearchResults.setAdapter(adapter);
     }
