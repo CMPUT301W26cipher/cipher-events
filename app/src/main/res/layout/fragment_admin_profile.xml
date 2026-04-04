@@ -4,12 +4,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    tools:context=".pages.ProfileFragment">
+    android:layout_height="match_parent">
 
     <!-- Profile Image -->
     <ImageView
-        android:id="@+id/profile_image"
+        android:id="@+id/admin_profile_image"
         android:layout_width="140dp"
         android:layout_height="140dp"
         android:src="@drawable/outline_account_circle_24"
@@ -19,26 +18,26 @@
 
     <!-- NAME FIELD -->
     <FrameLayout
-        android:id="@+id/name_container"
+        android:id="@+id/admin_name_container"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginStart="16dp"
         android:layout_marginEnd="24dp"
-        app:layout_constraintTop_toTopOf="@id/profile_image"
-        app:layout_constraintStart_toEndOf="@id/profile_image"
+        app:layout_constraintTop_toTopOf="@id/admin_profile_image"
+        app:layout_constraintStart_toEndOf="@id/admin_profile_image"
         app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
-            android:id="@+id/profile_name"
+            android:id="@+id/admin_profile_name"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:paddingHorizontal="4dp"
-            android:text="Name"
+            android:text="Admin Name"
             android:textSize="16sp" />
 
         <EditText
-            android:id="@+id/profile_name_edit"
+            android:id="@+id/admin_profile_name_edit"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
@@ -51,26 +50,26 @@
 
     <!-- EMAIL FIELD -->
     <FrameLayout
-        android:id="@+id/email_container"
+        android:id="@+id/admin_email_container"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginTop="8dp"
         android:layout_marginEnd="24dp"
-        app:layout_constraintTop_toBottomOf="@id/name_container"
-        app:layout_constraintStart_toStartOf="@id/name_container"
+        app:layout_constraintTop_toBottomOf="@id/admin_name_container"
+        app:layout_constraintStart_toStartOf="@id/admin_name_container"
         app:layout_constraintEnd_toEndOf="parent">
 
         <TextView
-            android:id="@+id/profile_email"
+            android:id="@+id/admin_profile_email"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
-            android:text="Email"
+            android:text="admin@example.com"
             android:textSize="16sp"
             android:paddingHorizontal="4dp" />
 
         <EditText
-            android:id="@+id/profile_email_edit"
+            android:id="@+id/admin_profile_email_edit"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
@@ -81,26 +80,26 @@
             android:visibility="gone" />
     </FrameLayout>
 
-    <!-- LOCATION FIELD -->
+    <!-- PHONE FIELD -->
     <FrameLayout
-        android:id="@+id/location_container"
+        android:id="@+id/admin_phone_container"
         android:layout_width="0dp"
         android:layout_height="48dp"
         android:layout_marginStart="60dp"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/profile_image">
+        app:layout_constraintTop_toBottomOf="@+id/admin_profile_image">
 
         <TextView
-            android:id="@+id/profile_location"
+            android:id="@+id/admin_profile_phone"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:gravity="center_vertical"
             android:paddingHorizontal="4dp"
-            android:text="Location"
+            android:text="Phone Number"
             android:textSize="16sp" />
 
         <EditText
-            android:id="@+id/profile_location_edit"
+            android:id="@+id/admin_profile_phone_edit"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:background="@android:color/transparent"
@@ -113,40 +112,29 @@
 
     <!-- BUTTONS -->
     <Button
-        android:id="@+id/waitlist_btn"
+        android:id="@+id/admin_history_btn"
         android:layout_width="247dp"
         android:layout_height="54dp"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="48dp"
-        android:text="Waitlist"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/location_container" />
-
-    <Button
-        android:id="@+id/history_btn"
-        android:layout_width="254dp"
-        android:layout_height="53dp"
-        android:layout_marginHorizontal="24dp"
-        android:layout_marginTop="12dp"
         android:text="History"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/waitlist_btn" />
+        app:layout_constraintTop_toBottomOf="@id/admin_phone_container" />
 
     <Button
-        android:id="@+id/edit_profile_btn"
-        android:layout_width="240dp"
-        android:layout_height="55dp"
+        android:id="@+id/admin_edit_profile_btn"
+        android:layout_width="254dp"
+        android:layout_height="53dp"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="12dp"
         android:text="Edit Profile"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/history_btn" />
+        app:layout_constraintTop_toBottomOf="@id/admin_history_btn" />
 
     <Button
-        android:id="@+id/signout_btn"
+        android:id="@+id/admin_signout_btn"
         android:layout_width="242dp"
         android:layout_height="55dp"
         android:layout_marginHorizontal="24dp"
@@ -154,18 +142,54 @@
         android:text="Sign Out"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/edit_profile_btn" />
+        app:layout_constraintTop_toBottomOf="@id/admin_edit_profile_btn" />
 
     <Button
-        android:id="@+id/admin_btn"
-        android:layout_width="242dp"
-        android:layout_height="55dp"
+        android:id="@+id/btn_enable_entrant_role"
+        android:layout_width="247dp"
+        android:layout_height="54dp"
         android:layout_marginHorizontal="24dp"
         android:layout_marginTop="12dp"
-        android:text="Admin Dashboard"
-        android:visibility="gone"
+        android:text="Enable Entrant Role"
+        android:backgroundTint="#2196F3"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/signout_btn" />
+        app:layout_constraintTop_toBottomOf="@id/admin_signout_btn" />
+
+    <Button
+        android:id="@+id/btn_disable_entrant_role"
+        android:layout_width="247dp"
+        android:layout_height="54dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="12dp"
+        android:text="Disable Entrant Role"
+        android:backgroundTint="#FF9800"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_enable_entrant_role" />
+
+    <Button
+        android:id="@+id/btn_enable_organizer_role"
+        android:layout_width="247dp"
+        android:layout_height="54dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="12dp"
+        android:text="Enable Organizer Role"
+        android:backgroundTint="#4CAF50"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_disable_entrant_role" />
+
+    <Button
+        android:id="@+id/btn_disable_organizer_role"
+        android:layout_width="247dp"
+        android:layout_height="54dp"
+        android:layout_marginHorizontal="24dp"
+        android:layout_marginTop="12dp"
+        android:text="Disable Organizer Role"
+        android:backgroundTint="#FF9800"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_enable_organizer_role" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -28,17 +28,19 @@ public class AdminHomeFragment extends Fragment {
         Button btnBrowseEvents = view.findViewById(R.id.btn_manage_events);
         Button btnBrowseImages = view.findViewById(R.id.btn_manage_images);
 
-        btnBrowseProfiles.setOnClickListener(v -> {
-            replaceFragment(new AdminBrowseProfilesFragment());
-        });
+        if (btnBrowseProfiles != null) {
+            btnBrowseProfiles.setOnClickListener(v -> replaceFragment(new AdminBrowseProfilesFragment()));
+        }
 
-        btnBrowseEvents.setOnClickListener(v -> {
-            replaceFragment(new AdminBrowseEventsFragment());
-        });
+        if (btnBrowseEvents != null) {
+            btnBrowseEvents.setOnClickListener(v -> replaceFragment(new AdminBrowseEventsFragment()));
+        }
 
-        btnBrowseImages.setOnClickListener(v -> {
-            // Placeholder for browse images if implemented later
-        });
+        if (btnBrowseImages != null) {
+            btnBrowseImages.setOnClickListener(v -> {
+                // Placeholder for browse images if implemented later
+            });
+        }
 
         return view;
     }

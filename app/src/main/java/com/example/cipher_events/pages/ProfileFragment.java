@@ -16,20 +16,10 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
-
-/**
- * Displays the user's profile information (name, email, location)
- * Displays profile photo as well (upon click, user is able to change)
- * when clicking profile, email, or location, user is able to edit the text
- *
- * Navigation buttons are included below
- * - Waitlist: navigates to a waitlist fragment to view events that user has joined the waitlist for
- * - History: displays past events of user
- * - Edit Profile: allows user to edit their profile (navigates to UserProfileFragment)
- * - Sign Out: signs user out of their account, navigates back to sign up/login screen
- */
 
 public class ProfileFragment extends Fragment {
 
@@ -56,44 +46,52 @@ public class ProfileFragment extends Fragment {
 
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
-        // Bind views
         nameText = view.findViewById(R.id.profile_name);
         emailText = view.findViewById(R.id.profile_email);
         locationText = view.findViewById(R.id.profile_location);
-
         nameEdit = view.findViewById(R.id.profile_name_edit);
         emailEdit = view.findViewById(R.id.profile_email_edit);
         locationEdit = view.findViewById(R.id.profile_location_edit);
 
-        // Load real user data from database
         currentUser = dbProxy.getUser(deviceId);
         if (currentUser != null) {
             nameText.setText(currentUser.getName());
             emailText.setText(currentUser.getEmail());
-            // locationText.setText("Edmonton, AB"); // Or from user if added
         } else {
-            // Default values if user doesn't exist (e.g. after deletion)
             nameText.setText("Name");
             emailText.setText("Email");
             locationText.setText("Location");
         }
 
-        // Make fields editable
         setupEditableField(nameText, nameEdit, "name");
         setupEditableField(emailText, emailEdit, "email");
         setupEditableField(locationText, locationEdit, "location");
 
-        //Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
-        //waitlistBtn.setOnClickListener(v -> {
-        //    WaitingListFragment fragment = new WaitingListFragment();
-        //    getParentFragmentManager()
-        //           .beginTransaction()
-        //            .replace(R.id.fragment_container, fragment)
-        //            .addToBackStack(null)
-        //            .commit();
-        //});
+        // Waitlist button
+        Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
+        waitlistBtn.setOnClickListener(v -> {
+            User user = DBProxy.getInstance().getCurrentUser();
+            String role = (user instanceof Organizer) ? "organizer" : "attendee";
+            WaitingListFragment fragment = WaitingListFragment.newInstance(null, role);
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
-        // edit profile button
+        // History button
+        Button historyBtn = view.findViewById(R.id.history_btn);
+        historyBtn.setOnClickListener(v -> {
+            OrganizerHistoryFragment fragment = new OrganizerHistoryFragment();
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
+
+        // Edit Profile button
         Button editProfileBtn = view.findViewById(R.id.edit_profile_btn);
         editProfileBtn.setOnClickListener(v -> {
             UserProfileFragment fragment = new UserProfileFragment();
@@ -103,6 +101,31 @@ public class ProfileFragment extends Fragment {
                     .addToBackStack(null)
                     .commit();
         });
+
+        // Sign Out button
+        Button signOutBtn = view.findViewById(R.id.signout_btn);
+        signOutBtn.setOnClickListener(v -> {
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, new RoleSelectionFragment())
+                    .commit();
+        });
+
+        // Show Admin button only if user is an admin
+        Admin admin = dbProxy.getAdmin(deviceId);
+        if (admin != null) {
+            Button adminBtn = view.findViewById(R.id.admin_btn);
+            if (adminBtn != null) {
+                adminBtn.setVisibility(View.VISIBLE);
+                adminBtn.setOnClickListener(v -> {
+                    getParentFragmentManager()
+                            .beginTransaction()
+                            .replace(R.id.fragment_container, new AdminHomeFragment())
+                            .addToBackStack(null)
+                            .commit();
+                });
+            }
+        }
 
         return view;
     }
@@ -128,21 +151,12 @@ public class ProfileFragment extends Fragment {
                     dbProxy.addUser(currentUser);
                 }
 
-                // Update the User object
                 switch (fieldType) {
-                    case "name":
-                        currentUser.setName(newValue);
-                        break;
-                    case "email":
-                        currentUser.setEmail(newValue);
-                        break;
-                    case "location":
-                        // You can add a location field to User class later
-                        break;
+                    case "name": currentUser.setName(newValue); break;
+                    case "email": currentUser.setEmail(newValue); break;
                 }
-                
-                dbProxy.updateUser(currentUser);
 
+                dbProxy.updateUser(currentUser);
                 editText.setVisibility(View.GONE);
                 textView.setVisibility(View.VISIBLE);
                 return true;
