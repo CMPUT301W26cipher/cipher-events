@@ -60,6 +60,11 @@ public class WaitingListService {
             }
         }
 
+        if (event.getCoOrganizerIds() != null &&
+                event.getCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
         ArrayList<User> entrants = event.getEntrants();
 
         if (entrants == null) {
@@ -311,6 +316,11 @@ public class WaitingListService {
         ArrayList<User> invited = event.getInvitedEntrants();
 
         if (invited == null) {
+            return false;
+        }
+
+        if (event.getCoOrganizerIds() != null &&
+                event.getCoOrganizerIds().contains(user.getDeviceID())) {
             return false;
         }
 
@@ -626,6 +636,18 @@ public class WaitingListService {
         }
 
         return csv.toString();
+    }
+
+    private boolean isCoOrganizer(Event event, User user) {
+        if (event == null || user == null) {
+            return false;
+        }
+
+        if (event.getCoOrganizerIds() == null || user.getDeviceID() == null) {
+            return false;
+        }
+
+        return event.getCoOrganizerIds().contain(user.getDeviceID());
     }
 
     private boolean containsUser(ArrayList<User> users, User target) {
