@@ -1,124 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/rounded_white_bg">
+    android:background="@drawable/dialog_bg"
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="24dp"
-        android:gravity="center_horizontal">
+        android:orientation="vertical">
+
+        <!-- Banner with Rounded Corners -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="16dp">
+
+            <ImageView
+                android:id="@+id/detail_banner"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scaleType="centerCrop"
+                android:src="@drawable/gray_placeholder" />
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/detail_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Event title"
-            android:paddingBottom="8dp"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:textColor="@color/white"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            tools:text="Event Title" />
 
         <TextView
             android:id="@+id/detail_attendees"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="# of attendees"
-            android:paddingBottom="12dp"
-            android:textSize="16sp" />
+            android:textColor="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            tools:text="120 people in waitlist" />
 
-        <ImageView
-            android:id="@+id/detail_banner"
+        <!-- Date and Location Section -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginBottom="16dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/gray_placeholder" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:background="@drawable/input_bg">
 
+            <TextView
+                android:id="@+id/date_location_tag"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Date &amp; Location"
+                android:textColor="@color/text_label"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textAllCaps="true" />
+
+            <TextView
+                android:id="@+id/detail_date_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:layout_marginTop="4dp"
+                tools:text="Dec 12, 2023 - Edmonton" />
+        </LinearLayout>
+
+        <!-- Description Section -->
         <TextView
             android:id="@+id/description_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="16dp"
-            android:text="Description"
-            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:text="About this Event"
+            android:textColor="@color/white"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/detail_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="description"
-            android:paddingBottom="12dp"
-            android:textSize="16sp" />
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_label"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            tools:text="This is a detailed description of the event. It can span multiple lines and should be easy to read." />
 
-        <TextView
-            android:id="@+id/date_location_tag"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingTop="16dp"
-            android:text="Date &amp; Location"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/detail_date_location"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="date, location"
-            android:paddingBottom="16dp"
-            android:textSize="15sp" />
-
+        <!-- Tags Section -->
         <TextView
             android:id="@+id/detail_tags_label"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="Tags"
-            android:textSize="16sp"
+            android:textColor="@color/white"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
-        <LinearLayout
+        <com.google.android.material.chip.ChipGroup
             android:id="@+id/detail_tags_container"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:hint="tags"
-            android:orientation="horizontal" />
-
-        <TextView
-            android:id="@+id/detail_lottery_header"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:paddingTop="20dp"
-            android:text="Lottery Guidelines"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-
-        <TextView
-            android:id="@+id/detail_lottery_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:lineSpacingExtra="4dp"
-            android:paddingTop="6dp"
-            android:textSize="14sp"
-            tools:text="Placeholder guidelines text for preview." />
+            android:layout_marginTop="8dp"
+            app:chipSpacingHorizontal="8dp"
+            app:chipSpacingVertical="4dp" />
+
+        <!-- Lottery Guidelines -->
+        <LinearLayout
+            android:id="@+id/lottery_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="20dp"
+            android:padding="16dp"
+            android:background="@drawable/input_bg">
+
+            <TextView
+                android:id="@+id/detail_lottery_header"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Lottery Guidelines"
+                android:textColor="@color/role_admin"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/detail_lottery_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textColor="@color/text_label"
+                android:textSize="14sp"
+                android:lineSpacingExtra="2dp"
+                tools:text="Lottery details go here..." />
+        </LinearLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:layout_marginTop="24dp"
-            android:layout_marginBottom="16dp"
-            android:background="#DDDDDD" />
+            android:layout_marginBottom="24dp"
+            android:background="@color/input_background" />
 
+        <!-- Comments Section -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Comments"
+            android:textColor="@color/white"
             android:textSize="18sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:layout_marginBottom="12dp"/>
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_comments"
@@ -128,76 +170,90 @@
             android:nestedScrollingEnabled="false"
             tools:listitem="@layout/item_event_comment" />
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp"
-            android:background="#EEEEEE" />
-
-        <TextView
+        <!-- Leave a Comment -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Leave a Comment"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            android:orientation="vertical"
+            android:layout_marginTop="20dp"
+            android:padding="12dp"
+            android:background="@drawable/input_bg">
 
-        <EditText
-            android:id="@+id/et_comment_input"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Write your comment here..."
-            android:inputType="textMultiLine"
-            android:minLines="2"
-            android:maxLines="4"
-            android:gravity="top"
-            android:maxLength="200"
-            android:background="@android:drawable/edit_text"
-            android:padding="8dp"/>
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Join the Conversation"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
 
-        <TextView
-            android:id="@+id/tv_comment_error"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="#B71C1C"
-            android:textSize="12sp"
-            android:visibility="gone"
-            android:layout_marginTop="4dp"
-            tools:text="Comment cannot be empty" />
+            <EditText
+                android:id="@+id/et_comment_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Share your thoughts..."
+                android:textColorHint="@color/text_hint"
+                android:textColor="@color/white"
+                android:background="@android:color/transparent"
+                android:inputType="textMultiLine"
+                android:minLines="2"
+                android:maxLines="4"
+                android:gravity="top"
+                android:padding="4dp"
+                android:textSize="14sp"/>
 
-        <Button
-            android:id="@+id/btn_post_comment"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Post Comment"
-            android:layout_marginTop="8dp"/>
+            <TextView
+                android:id="@+id/tv_comment_error"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/remove_red"
+                android:textSize="12sp"
+                android:visibility="gone"
+                android:layout_marginTop="4dp"
+                tools:text="Comment cannot be empty" />
 
+            <Button
+                android:id="@+id/btn_post_comment"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="end"
+                android:text="Post"
+                android:backgroundTint="@color/button_purple"
+                android:textColor="@color/white"
+                android:layout_marginTop="8dp"
+                style="@style/Widget.Material3.Button.TonalButton"/>
+        </LinearLayout>
+
+        <!-- Action Buttons -->
         <Button
             android:id="@+id/notify_button"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="24dp"
             android:text="Send Notification"
+            android:backgroundTint="@color/role_organizer"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
             android:visibility="gone" />
 
         <Button
             android:id="@+id/scan_button"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:padding="12dp"
-            android:text="Scan to Join Waitlist"
-            android:textColor="@android:color/white"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="Join Waitlist"
+            android:backgroundTint="@color/button_purple"
+            android:textColor="@color/white"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:cornerRadius="12dp" />
 
-        <Button
-            android:id="@+id/btn_view_comments"
+        <!-- Added some bottom padding for better scroll feel -->
+        <View
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="View Comments"
-            android:layout_marginTop="10dp"/>
+            android:layout_height="24dp" />
 
     </LinearLayout>
 </ScrollView>

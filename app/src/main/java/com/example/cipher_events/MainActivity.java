@@ -136,13 +136,15 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    private boolean checkLoginSession() {
+    private void checkPersistentLogin() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+
         if (isLoggedIn) {
             currentRole = prefs.getString(KEY_ROLE, "");
             String deviceID = prefs.getString(KEY_DEVICE_ID, "");
             
+            // Re-sync with DB
             if ("ADMIN".equals(currentRole)) {
                 DB.setCurrentUser(DB.getAdmin(deviceID));
             } else if ("ORGANIZER".equals(currentRole)) {
@@ -150,56 +152,16 @@ public class MainActivity extends AppCompatActivity {
             } else {
                 DB.setCurrentUser(DB.getUser(deviceID));
             }
-            return true;
-        }
-        return false;
-    }
-
-    public void saveLoginSession(String role, String deviceID) {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.putBoolean(KEY_LOGGED_IN, true);
-        editor.putString(KEY_ROLE, role);
-        editor.putString(KEY_DEVICE_ID, deviceID);
-        editor.apply();
-    }
-
-    public void logout() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        SharedPreferences.Editor editor = prefs.edit();
-        editor.clear();
-        editor.apply();
-        
-        currentRole = "";
-        DB.setCurrentUser(null);
-        replaceFragment(LoginFragment.newInstance());
-    }
-
-    public void showCreateEventDialog() {
-        CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.show(getSupportFragmentManager(), "CreateEventDialog");
-    }
-
-    private void checkPersistentLogin() {
-        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, MODE_PRIVATE);
-        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
-
-        if (isLoggedIn) {
-            currentRole = prefs.getString(KEY_ROLE, "");
+            
             updateNavigationMenu();
         } else {
-            replaceFragment(new LoginFragment());
+            replaceFragment(LoginFragment.newInstance());
         }
     }
 
-    public void onRoleSelected(String role) {
-        currentRole = role;
-        saveLoginSession(role, Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID));
-        updateNavigationMenu();
-    }
-
     public void saveLoginSession(String role, String deviceID) {
-        SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
         editor.putBoolean(KEY_LOGGED_IN, true);
         editor.putString(KEY_ROLE, role);
         editor.putString(KEY_DEVICE_ID, deviceID);
@@ -210,15 +172,29 @@ public class MainActivity extends AppCompatActivity {
         onRoleSelected(role);
     }
 
+    public void onRoleSelected(String role) {
+        currentRole = role;
+        String deviceID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+        saveLoginSession(role, deviceID);
+        updateNavigationMenu();
+    }
+
     public void logout() {
-        SharedPreferences.Editor editor = getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit();
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.apply();
-
+        
         currentRole = "";
+        DB.setCurrentUser(null);
         bottomNavigationView.setVisibility(View.GONE);
         if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
-        replaceFragment(new LoginFragment());
+        replaceFragment(LoginFragment.newInstance());
+    }
+
+    public void showCreateEventDialog() {
+        CreateEventDialogFragment dialog = new CreateEventDialogFragment();
+        dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
 
     private void updateNavigationMenu() {
@@ -269,7 +245,7 @@ public class MainActivity extends AppCompatActivity {
     public void onBackPressed() {
         Fragment currentFragment = fragmentManager.findFragmentById(R.id.fragment_container);
         if (currentFragment instanceof SignupFragment) {
-            replaceFragment(new LoginFragment());
+            replaceFragment(LoginFragment.newInstance());
         } else if (currentFragment instanceof HomeFragment || 
                    currentFragment instanceof OrganizerHomeFragment || 
                    currentFragment instanceof AdminHomeFragment ||
