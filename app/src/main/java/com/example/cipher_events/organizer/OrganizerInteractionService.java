@@ -197,6 +197,24 @@ public class OrganizerInteractionService {
         return event.getCoOrganizerIds().contains(userDeviceID);
     }
 
+    private boolean isUserAssociatedWithEvent(Event event, String deviceID) {
+        return containsUser(event.getEntrants(), deviceID)
+                || containsUser(event.getInvitedEntrants(), deviceID)
+                || containsUser(event.getCancelledEntrants(), deviceID)
+                || containsUser(event.getEnrolledEntrants(), deviceID)
+                || containsUser(event.getAttendees(), deviceID);
+    }
+
+    private boolean containsUser(List<User> users, String deviceID) {
+        if (users == null) return false;
+        for (User user : users) {
+            if (user != null && deviceID.equals(user.getDeviceID())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     /**
      * Based on your real Event model:
      * entrants
