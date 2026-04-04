@@ -1,6 +1,5 @@
 package com.example.cipher_events.pages;
 
-import android.content.Context;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.LayoutInflater;
@@ -22,7 +21,7 @@ import com.example.cipher_events.database.User;
 public class UserProfileFragment extends Fragment {
 
     private EditText editName, editEmail, editPassword, editPhone;
-    private Button saveButton, deleteButton;
+    private Button saveButton, deleteButton, signoutButton;
     private DBProxy dbProxy;
     private String deviceId;
     private User currentUser;
@@ -55,6 +54,7 @@ public class UserProfileFragment extends Fragment {
         editPhone = view.findViewById(R.id.editPhone);
         saveButton = view.findViewById(R.id.saveButton);
         deleteButton = view.findViewById(R.id.button2);
+        signoutButton = view.findViewById(R.id.signout_btn);
 
         // Load existing user data
         currentUser = dbProxy.getUser(deviceId);
@@ -94,12 +94,21 @@ public class UserProfileFragment extends Fragment {
             getParentFragmentManager().popBackStack();
         });
 
+        if (signoutButton != null) {
+            signoutButton.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).logout();
+                }
+            });
+        }
+
         deleteButton.setOnClickListener(v -> {
             if (currentUser != null) {
                 dbProxy.deleteUser(deviceId);
                 Toast.makeText(getContext(), "Profile Deleted", Toast.LENGTH_SHORT).show();
-                // Optionally navigate back or to a welcome screen
-                getParentFragmentManager().popBackStack();
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).logout();
+                }
             }
         });
     }

@@ -6,9 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
-import android.widget.Spinner;
+import android.widget.AutoCompleteTextView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -21,6 +19,8 @@ import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class SignupFragment extends Fragment {
 
@@ -39,33 +39,38 @@ public class SignupFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        View view = inflater.inflate(R.layout.fragment_signup, container, false);
+        return inflater.inflate(R.layout.fragment_signup, container, false);
+    }
 
-        Spinner roleSpinner = view.findViewById(R.id.signup_role_spinner);
-        EditText etName = view.findViewById(R.id.signup_name);
-        EditText etEmail = view.findViewById(R.id.signup_email);
-        EditText etPassword = view.findViewById(R.id.signup_password);
-        Button btnSignup = view.findViewById(R.id.btn_signup);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        AutoCompleteTextView roleDropdown = view.findViewById(R.id.signup_role_dropdown);
+        TextInputEditText etName = view.findViewById(R.id.signup_name);
+        TextInputEditText etEmail = view.findViewById(R.id.signup_email);
+        TextInputEditText etPassword = view.findViewById(R.id.signup_password);
+        MaterialButton btnSignup = view.findViewById(R.id.btn_signup);
         TextView tvGoToLogin = view.findViewById(R.id.tv_go_to_login);
 
+        // Setup Role Dropdown
         String[] roles = {"ENTRANT", "ORGANIZER"};
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_spinner_item, roles);
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        roleSpinner.setAdapter(adapter);
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, roles);
+        roleDropdown.setAdapter(adapter);
 
-        // Pre-select role if passed in arguments
+        // Set initial role if provided
         if (getArguments() != null) {
             String initialRole = getArguments().getString("role", "ENTRANT");
-            if ("ORGANIZER".equals(initialRole)) {
-                roleSpinner.setSelection(1);
-            }
+            roleDropdown.setText(initialRole, false);
+        } else {
+            roleDropdown.setText("ENTRANT", false);
         }
 
         btnSignup.setOnClickListener(v -> {
             String name = etName.getText().toString().trim();
             String email = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
-            String role = roleSpinner.getSelectedItem().toString();
+            String role = roleDropdown.getText().toString();
 
             if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
                 Toast.makeText(getContext(), "Please fill in all fields", Toast.LENGTH_SHORT).show();
@@ -87,7 +92,7 @@ public class SignupFragment extends Fragment {
                 db.setCurrentUser(newUser);
             }
 
-            Toast.makeText(getContext(), role + " account created", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), "Welcome to Cipher Events!", Toast.LENGTH_SHORT).show();
 
             if (getActivity() instanceof MainActivity) {
                 ((MainActivity) getActivity()).onRoleSelected(role);
@@ -96,11 +101,9 @@ public class SignupFragment extends Fragment {
 
         tvGoToLogin.setOnClickListener(v -> {
             getParentFragmentManager().beginTransaction()
+                    .setCustomAnimations(android.R.anim.fade_in, android.R.anim.fade_out)
                     .replace(R.id.fragment_container, LoginFragment.newInstance())
-                    .addToBackStack(null)
                     .commit();
         });
-
-        return view;
     }
 }
