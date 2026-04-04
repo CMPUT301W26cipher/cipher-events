@@ -27,6 +27,7 @@ public class AdminHomeFragment extends Fragment {
         Button btnBrowseProfiles = view.findViewById(R.id.btn_manage_users);
         Button btnBrowseEvents = view.findViewById(R.id.btn_manage_events);
         Button btnBrowseImages = view.findViewById(R.id.btn_manage_images);
+        Button btnNotificationLogs = view.findViewById(R.id.btn_notification_logs);
 
         if (btnBrowseProfiles != null) {
             btnBrowseProfiles.setOnClickListener(v -> replaceFragment(new AdminBrowseProfilesFragment()));
@@ -40,6 +41,10 @@ public class AdminHomeFragment extends Fragment {
             btnBrowseImages.setOnClickListener(v -> {
                 // Placeholder for browse images if implemented later
             });
+        }
+
+        if (btnNotificationLogs != null) {
+            btnNotificationLogs.setOnClickListener(v -> replaceFragment(new AdminNotificationsFragment()));
         }
 
         return view;
