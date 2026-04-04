@@ -4,54 +4,81 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/white">
+    android:background="@color/dialog_background">
 
     <TextView
         android:id="@+id/tv_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="24dp"
-        android:layout_marginStart="16dp"
+        android:layout_marginTop="32dp"
+        android:layout_marginStart="24dp"
         android:text="Browse Profiles"
-        android:textColor="@color/black"
-        android:textSize="24sp"
-        android:textStyle="bold"
+        android:textColor="@color/white"
+        android:textSize="28sp"
+        android:fontFamily="sans-serif-medium"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipe_refresh"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginTop="16dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_title">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_profiles"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingHorizontal="12dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical"
+            android:overScrollMode="always"
+            tools:listitem="@layout/item_profile" />
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <ProgressBar
         android:id="@+id/progress_bar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        android:indeterminateTint="@color/button_purple"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <TextView
-        android:id="@+id/tv_empty_state"
+    <LinearLayout
+        android:id="@+id/empty_state_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="No profiles found"
+        android:orientation="vertical"
+        android:gravity="center"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rv_profiles"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:padding="8dp"
-        android:scrollbars="vertical"
-        android:overScrollMode="always"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_title"
-        tools:listitem="@layout/item_profile" />
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/baseline_close_24"
+            app:tint="@color/text_hint"
+            android:alpha="0.5" />
+
+        <TextView
+            android:id="@+id/tv_empty_state"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="No profiles found"
+            android:textColor="@color/text_hint"
+            android:textSize="16sp" />
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

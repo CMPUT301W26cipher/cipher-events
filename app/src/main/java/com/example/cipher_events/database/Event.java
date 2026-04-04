@@ -129,6 +129,10 @@ public class Event {
         this.organizer = organizer;
     }
 
+    public String getOrganizerID() {
+        return (organizer != null) ? organizer.getDeviceID() : null;
+    }
+
     public ArrayList<User> getEntrants() {
         return entrants;
     }

@@ -5,13 +5,13 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.ProfileAdapter;
@@ -24,9 +24,10 @@ public class AdminBrowseProfilesFragment extends Fragment implements DBProxy.OnD
 
     private RecyclerView recyclerView;
     private ProfileAdapter adapter;
-    private List<Object> profileList = new ArrayList<>();
+    private final List<Object> profileList = new ArrayList<>();
     private ProgressBar progressBar;
-    private TextView emptyStateText;
+    private View emptyStateContainer;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private DBProxy dbProxy;
 
     public AdminBrowseProfilesFragment() {
@@ -40,50 +41,80 @@ public class AdminBrowseProfilesFragment extends Fragment implements DBProxy.OnD
 
         recyclerView = view.findViewById(R.id.rv_profiles);
         progressBar = view.findViewById(R.id.progress_bar);
-        emptyStateText = view.findViewById(R.id.tv_empty_state);
+        emptyStateContainer = view.findViewById(R.id.empty_state_container);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
 
         dbProxy = DBProxy.getInstance();
-        dbProxy.addListener(this);
 
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        recyclerView.setNestedScrollingEnabled(true);
-        recyclerView.setHasFixedSize(true);
+        setupSwipeRefresh();
+        setupRecyclerView();
 
-        adapter = new ProfileAdapter(profileList);
-        recyclerView.setAdapter(adapter);
-
-        updateUI();
+        loadProfiles();
 
         return view;
     }
 
+    private void setupSwipeRefresh() {
+        swipeRefreshLayout.setColorSchemeResources(R.color.button_purple);
+        swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.input_background);
+        swipeRefreshLayout.setOnRefreshListener(this::loadProfiles);
+    }
+
+    private void setupRecyclerView() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        recyclerView.setHasFixedSize(true);
+        adapter = new ProfileAdapter(profileList);
+        recyclerView.setAdapter(adapter);
+    }
+
+    private void loadProfiles() {
+        if (profileList.isEmpty()) {
+            progressBar.setVisibility(View.VISIBLE);
+        }
+
+        profileList.clear();
+        profileList.addAll(dbProxy.getAllUsers());
+        profileList.addAll(dbProxy.getAllOrganizers());
+        profileList.addAll(dbProxy.getAllAdmins());
+
+        updateUI();
+    }
+
+    private void updateUI() {
+        if (getActivity() == null) return;
+        
+        getActivity().runOnUiThread(() -> {
+            progressBar.setVisibility(View.GONE);
+            swipeRefreshLayout.setRefreshing(false);
+
+            if (profileList.isEmpty()) {
+                emptyStateContainer.setVisibility(View.VISIBLE);
+                recyclerView.setVisibility(View.GONE);
+            } else {
+                emptyStateContainer.setVisibility(View.GONE);
+                recyclerView.setVisibility(View.VISIBLE);
+                adapter.notifyDataSetChanged();
+            }
+        });
+    }
+
     @Override
-    public void onDestroyView() {
-        super.onDestroyView();
+    public void onResume() {
+        super.onResume();
+        dbProxy.addListener(this);
+        loadProfiles();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
         dbProxy.removeListener(this);
     }
 
     @Override
     public void onDataChanged() {
         if (isAdded()) {
-            getActivity().runOnUiThread(this::updateUI);
-        }
-    }
-
-    private void updateUI() {
-        profileList.clear();
-        profileList.addAll(dbProxy.getAllUsers());
-        profileList.addAll(dbProxy.getAllOrganizers());
-        profileList.addAll(dbProxy.getAllAdmins());
-
-        progressBar.setVisibility(View.GONE);
-        if (profileList.isEmpty()) {
-            emptyStateText.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-        } else {
-            emptyStateText.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
-            adapter.notifyDataSetChanged();
+            loadProfiles();
         }
     }
 }

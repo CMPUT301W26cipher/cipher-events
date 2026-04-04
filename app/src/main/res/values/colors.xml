@@ -7,4 +7,10 @@
     <color name="button_purple">#5B5891</color>
     <color name="text_hint">#A09EBC</color>
     <color name="text_label">#E0E0E0</color>
+
+    <!-- Role Colors -->
+    <color name="role_attendee">#A09EBC</color>
+    <color name="role_organizer">#81C784</color>
+    <color name="role_admin">#FF8A80</color>
+    <color name="remove_red">#FF5252</color>
 </resources>
