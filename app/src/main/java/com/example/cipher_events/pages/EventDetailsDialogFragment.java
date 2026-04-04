@@ -33,6 +33,8 @@ import com.example.cipher_events.comment.EventComment;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.message.MessageThread;
+import com.example.cipher_events.message.MessagingService;
 import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
 import com.google.android.material.chip.Chip;
@@ -47,8 +49,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
     private boolean isOrganizerView = false;
     private String eventId;
-    private DBProxy db = DBProxy.getInstance();
-    private Notifier notifier = Notifier.getInstance();
+    private String currentDeviceID;
+
+    private final DBProxy db = DBProxy.getInstance();
+    private final Notifier notifier = Notifier.getInstance();
+    private final MessagingService messagingService = new MessagingService();
+
     private EventCommentAdapter commentAdapter;
 
     private TextView title;
@@ -59,8 +65,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private ImageView banner;
     private Button actionButton;
     private Button notifyButton;
+    private Button messageButton;
     private View lotteryContainer;
-    private TextView lotteryHeader;
     private TextView lotteryText;
     private ChipGroup tagContainer;
 
@@ -73,7 +79,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             int waitlistCount,
             ArrayList<String> tags
     ) {
-        return newInstance(eventId, name, description, time, location, waitlistCount, tags, false);
+        return newInstance(eventId, name, description, time, location, waitlistCount, tags, false, null);
     }
 
     public static EventDetailsDialogFragment newInstance(
@@ -86,6 +92,20 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             ArrayList<String> tags,
             boolean isOrganizerView
     ) {
+        return newInstance(eventId, name, description, time, location, waitlistCount, tags, isOrganizerView, null);
+    }
+
+    public static EventDetailsDialogFragment newInstance(
+            String eventId,
+            String name,
+            String description,
+            String time,
+            String location,
+            int waitlistCount,
+            ArrayList<String> tags,
+            boolean isOrganizerView,
+            String currentDeviceID
+    ) {
         EventDetailsDialogFragment fragment = new EventDetailsDialogFragment();
         Bundle args = new Bundle();
         args.putString("eventId", eventId);
@@ -96,6 +116,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         args.putInt("waitlistCount", waitlistCount);
         args.putStringArrayList("tags", tags);
         args.putBoolean("isOrganizerView", isOrganizerView);
+        args.putString("currentDeviceID", currentDeviceID);
         fragment.setArguments(args);
         return fragment;
     }
@@ -119,19 +140,17 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
         lotteryContainer = view.findViewById(R.id.lottery_container);
-        lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
+        messageButton = view.findViewById(R.id.message_button);
         tagContainer = view.findViewById(R.id.detail_tags_container);
 
-        // Comment components
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
         EditText etCommentInput = view.findViewById(R.id.et_comment_input);
         TextView tvCommentError = view.findViewById(R.id.tv_comment_error);
         Button btnPostComment = view.findViewById(R.id.btn_post_comment);
 
-        // Setup RecyclerView for comments
         rvComments.setLayoutManager(new LinearLayoutManager(requireContext()));
         commentAdapter = new EventCommentAdapter();
         rvComments.setAdapter(commentAdapter);
@@ -141,7 +160,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         if (args != null) {
             eventId = args.getString("eventId");
             isOrganizerView = args.getBoolean("isOrganizerView", false);
-
+            currentDeviceID = args.getString("currentDeviceID");
             tagsFromArgs = args.getStringArrayList("tags");
         }
 
@@ -164,24 +183,27 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         });
 
         etCommentInput.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {
                 tvCommentError.setVisibility(View.GONE);
             }
-            @Override
-            public void afterTextChanged(Editable s) {}
+            @Override public void afterTextChanged(Editable s) {}
         });
 
         refreshUI();
-
         return view;
     }
 
     private void displayTags(ArrayList<String> tags) {
         if (tagContainer == null) return;
+
         tagContainer.removeAllViews();
+        View root = getView();
+        View tagsLabel = null;
+        if (root != null) {
+            tagsLabel = root.findViewById(R.id.detail_tags_label);
+        }
+
         if (tags != null && !tags.isEmpty()) {
             for (String tag : tags) {
                 Chip chip = new Chip(requireContext());
@@ -192,17 +214,16 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 tagContainer.addView(chip);
             }
             tagContainer.setVisibility(View.VISIBLE);
-            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.VISIBLE);
+            if (tagsLabel != null) tagsLabel.setVisibility(View.VISIBLE);
         } else {
             tagContainer.setVisibility(View.GONE);
-            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.GONE);
+            if (tagsLabel != null) tagsLabel.setVisibility(View.GONE);
         }
     }
 
     private void setupViewMode() {
         if (isOrganizerView) {
             actionButton.setText("View Waitlist");
-            actionButton.setBackgroundTintList(requireContext().getColorStateList(R.color.button_purple));
             actionButton.setOnClickListener(v -> {
                 dismiss();
                 WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, "organizer");
@@ -213,9 +234,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                         .commit();
             });
 
-            lotteryContainer.setVisibility(View.GONE);
             notifyButton.setVisibility(View.VISIBLE);
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
+
+            messageButton.setText("Messages");
+            messageButton.setVisibility(View.VISIBLE);
+            messageButton.setOnClickListener(v -> openOrganizerMessages());
+
+            lotteryContainer.setVisibility(View.GONE);
         } else {
             actionButton.setText("Join Waitlist");
             actionButton.setOnClickListener(v -> {
@@ -227,9 +253,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 }
             });
 
+            messageButton.setText("Message Organizer");
+            messageButton.setVisibility(View.VISIBLE);
+            messageButton.setOnClickListener(v -> openEntrantDirectChat());
+
             descriptionLabel.setVisibility(View.GONE);
             description.setVisibility(View.GONE);
-            
+            notifyButton.setVisibility(View.GONE);
+
             lotteryContainer.setVisibility(View.VISIBLE);
             lotteryText.setText(
                     "⚠️ Disclaimer\n" +
@@ -240,10 +271,63 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                             "• Joining earlier does not increase your odds.\n" +
                             "• If you're selected, you'll receive a confirmation.\n" +
                             "• If you're not selected, you may be placed on a waitlist.\n\n" +
-                            "This system helps keep things fair and avoids first‑come‑first‑served pressure."
+                            "This system helps keep things fair and avoids first-come-first-served pressure."
             );
-            
-            notifyButton.setVisibility(View.GONE);
+        }
+    }
+
+    private void openOrganizerMessages() {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (currentDeviceID == null || currentDeviceID.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing organizer ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        dismiss();
+
+        MessageThreadsFragment fragment = MessageThreadsFragment.newInstance(eventId, currentDeviceID);
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
+    }
+
+    private void openEntrantDirectChat() {
+        if (eventId == null || eventId.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing event ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        if (currentDeviceID == null || currentDeviceID.trim().isEmpty()) {
+            Toast.makeText(requireContext(), "Missing user ID.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        try {
+            MessageThread thread = messagingService.openThread(eventId, currentDeviceID);
+
+            dismiss();
+
+            DirectChatFragment fragment = DirectChatFragment.newInstance(
+                    eventId,
+                    thread.getThreadID(),
+                    currentDeviceID,
+                    false
+            );
+
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
         }
     }
 
@@ -255,12 +339,18 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     }
 
     private void postComment(String message) {
-        String deviceID = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+        String deviceID = Settings.Secure.getString(
+                requireContext().getContentResolver(),
+                Settings.Secure.ANDROID_ID
+        );
+
         User currentUser = db.getUser(deviceID);
         String authorName = (currentUser != null) ? currentUser.getName() : "Anonymous";
-        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault()).format(new Date());
+        String role = isOrganizerView ? "organizer" : "entrant";
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+                .format(new Date());
 
-        EventComment newComment = new EventComment(deviceID, authorName, "Entrant", message, timestamp);
+        EventComment newComment = new EventComment(deviceID, authorName, role, message, timestamp);
         Event event = db.getEvent(eventId);
         if (event != null) {
             event.getComments().add(newComment);
@@ -324,7 +414,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         });
 
         builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-
         builder.show();
     }
 
@@ -384,21 +473,24 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             title.setText(event.getName());
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " people in waitlist");
-            
+
             if (isOrganizerView) {
                 description.setText(event.getDescription());
                 descriptionLabel.setVisibility(View.VISIBLE);
                 description.setVisibility(View.VISIBLE);
             }
-            
+
             dateLocation.setText(event.getTime() + " • " + event.getLocation());
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
-                Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
+                Glide.with(this)
+                        .load(event.getPosterPictureURL())
+                        .placeholder(R.drawable.gray_placeholder)
+                        .into(banner);
             } else {
                 banner.setImageResource(R.drawable.gray_placeholder);
             }
-            
+
             loadComments();
         }
     }

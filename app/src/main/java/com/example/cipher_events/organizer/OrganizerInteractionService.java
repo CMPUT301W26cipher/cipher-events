@@ -176,6 +176,10 @@ public class OrganizerInteractionService {
         Event event = requireEvent(eventID);
         User entrant = requireUser(entrantDeviceID);
 
+        if (!isUserAssociatedWithEvent(event, entrantDeviceID)) {
+            throw new IllegalArgumentException("User is not an entrant for this event.");
+        }
+
         ArrayList<String> coOrganizerIds = event.getCoOrganizerIds();
         if (coOrganizerIds.contains(entrantDeviceID)) {
             throw new IllegalArgumentException("User is already a co-organizer.");
