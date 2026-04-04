@@ -1,7 +1,6 @@
 package com.example.cipher_events.adapters;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +9,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
+import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
@@ -24,7 +24,7 @@ import java.util.List;
 public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileViewHolder> {
 
     private List<Object> profiles;
-    private DBProxy db = DBProxy.getInstance();
+    private final DBProxy db = DBProxy.getInstance();
 
     public ProfileAdapter(List<Object> profiles) {
         this.profiles = profiles;
@@ -44,6 +44,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         String name = "";
         String identifier = "";
         String role = "";
+        int roleColor;
         String imageUrl = null;
         String deviceId = "";
         boolean isRemovable = false;
@@ -51,58 +52,62 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
         if (profile instanceof User) {
             User user = (User) profile;
             name = user.getName();
-            identifier = user.getEmail() != null ? user.getEmail() : user.getDeviceID();
+            identifier = (user.getEmail() != null && !user.getEmail().isEmpty()) ? user.getEmail() : "ID: " + user.getDeviceID();
             role = "Attendee";
             imageUrl = user.getProfilePictureURL();
             deviceId = user.getDeviceID();
-            holder.tvRole.setTextColor(Color.GRAY);
+            roleColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.role_attendee);
             isRemovable = true;
         } else if (profile instanceof Organizer) {
             Organizer organizer = (Organizer) profile;
             name = organizer.getName();
-            identifier = organizer.getEmail() != null ? organizer.getEmail() : organizer.getDeviceID();
-            role = "ORGANIZER";
+            identifier = (organizer.getEmail() != null && !organizer.getEmail().isEmpty()) ? organizer.getEmail() : "ID: " + organizer.getDeviceID();
+            role = "Organizer";
             imageUrl = organizer.getProfilePictureURL();
             deviceId = organizer.getDeviceID();
-            holder.tvRole.setTextColor(Color.parseColor("#4CAF50")); // Green for organizers
+            roleColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.role_organizer);
             isRemovable = true;
-        } else if (profile instanceof Admin) {
+        } else { // Admin
             Admin admin = (Admin) profile;
             name = admin.getName();
-            identifier = admin.getEmail() != null ? admin.getEmail() : admin.getDeviceID();
-            role = "Admin";
+            identifier = (admin.getEmail() != null && !admin.getEmail().isEmpty()) ? admin.getEmail() : "ID: " + admin.getDeviceID();
+            role = "Administrator";
             imageUrl = admin.getProfilePictureURL();
             deviceId = admin.getDeviceID();
-            holder.tvRole.setTextColor(Color.RED);
-            isRemovable = false; // Admins can't remove each other from this simple list
+            roleColor = ContextCompat.getColor(holder.itemView.getContext(), R.color.role_admin);
+            isRemovable = false;
         }
 
-        holder.tvName.setText(name);
+        holder.tvName.setText(name != null && !name.isEmpty() ? name : "Anonymous");
         holder.tvIdentifier.setText(identifier);
         holder.tvRole.setText(role);
+        holder.tvRole.setTextColor(roleColor);
 
         if (imageUrl != null && !imageUrl.isEmpty()) {
             Glide.with(holder.itemView.getContext())
                     .load(imageUrl)
-                    .placeholder(android.R.drawable.ic_menu_gallery)
+                    .centerCrop()
+                    .placeholder(R.drawable.outline_account_circle_24)
                     .into(holder.ivProfilePic);
+            holder.ivProfilePic.setAlpha(1.0f);
         } else {
-            holder.ivProfilePic.setImageResource(android.R.drawable.ic_menu_gallery);
+            holder.ivProfilePic.setImageResource(R.drawable.outline_account_circle_24);
+            holder.ivProfilePic.setAlpha(0.3f);
         }
 
         if (isRemovable) {
             holder.btnRemove.setVisibility(View.VISIBLE);
             final String finalDeviceId = deviceId;
             final String finalRole = role;
-            final String finalName = name;
+            final String finalName = name != null ? name : "this profile";
             holder.btnRemove.setOnClickListener(v -> {
-                new AlertDialog.Builder(holder.itemView.getContext())
+                new AlertDialog.Builder(holder.itemView.getContext(), android.R.style.Theme_DeviceDefault_Dialog_Alert)
                         .setTitle("Remove " + finalRole)
-                        .setMessage("Are you sure you want to remove " + finalName + "?")
+                        .setMessage("Are you sure you want to remove " + finalName + "? This action cannot be undone.")
                         .setPositiveButton("Remove", (dialog, which) -> {
                             if (profile instanceof User) {
                                 db.deleteUser(finalDeviceId);
-                            } else if (profile instanceof Organizer) {
+                            } else {
                                 db.deleteOrganizer(finalDeviceId);
                             }
                             Toast.makeText(holder.itemView.getContext(), finalRole + " removed", Toast.LENGTH_SHORT).show();

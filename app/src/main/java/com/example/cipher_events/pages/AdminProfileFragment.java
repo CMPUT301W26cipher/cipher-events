@@ -7,8 +7,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,22 +16,26 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.google.android.material.button.MaterialButton;
 
 public class AdminProfileFragment extends Fragment {
 
     private TextView nameText, emailText, phoneText;
     private EditText nameEdit, emailEdit, phoneEdit;
+    private ImageView profileImage;
     private Admin currentAdmin;
     private DBProxy dbProxy;
     private String deviceId;
 
-    private Button enableEntrantBtn, disableEntrantBtn;
-    private Button enableOrganizerBtn, disableOrganizerBtn;
+    private MaterialButton enableEntrantBtn, disableEntrantBtn;
+    private MaterialButton enableOrganizerBtn, disableOrganizerBtn;
 
     public AdminProfileFragment() {}
 
@@ -40,24 +44,18 @@ public class AdminProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_admin_profile, container, false);
+    }
 
-        View view = inflater.inflate(R.layout.fragment_admin_profile, container, false);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
         dbProxy = DBProxy.getInstance();
         deviceId = Settings.Secure.getString(
                 requireContext().getContentResolver(),
                 Settings.Secure.ANDROID_ID
         );
-
-        // Load real admin data
-        currentAdmin = dbProxy.getAdmin(deviceId);
-        if (currentAdmin == null) {
-            // fallback
-            currentAdmin = new Admin();
-            currentAdmin.setName("Admin User");
-            currentAdmin.setEmail("admin@example.com");
-            currentAdmin.setPhoneNumber("000-000-0000");
-        }
 
         // Bind views
         nameText = view.findViewById(R.id.admin_profile_name);
@@ -66,89 +64,130 @@ public class AdminProfileFragment extends Fragment {
         nameEdit = view.findViewById(R.id.admin_profile_name_edit);
         emailEdit = view.findViewById(R.id.admin_profile_email_edit);
         phoneEdit = view.findViewById(R.id.admin_profile_phone_edit);
+        profileImage = view.findViewById(R.id.admin_profile_image);
 
-        // Load data into UI
-        nameText.setText(currentAdmin.getName());
-        emailText.setText(currentAdmin.getEmail());
-        phoneText.setText(currentAdmin.getPhoneNumber());
+        loadAdminData();
+        setupActionButtons(view);
+        setupRoleButtons(view);
 
         // Setup editable fields
         setupEditableField(nameText, nameEdit, "name");
         setupEditableField(emailText, emailEdit, "email");
         setupEditableField(phoneText, phoneEdit, "phone");
+    }
 
-        // Navigation buttons
-        Button historyBtn = view.findViewById(R.id.admin_history_btn);
-        Button editProfileBtn = view.findViewById(R.id.admin_edit_profile_btn);
-        Button signoutBtn = view.findViewById(R.id.admin_signout_btn);
+    private void loadAdminData() {
+        currentAdmin = dbProxy.getAdmin(deviceId);
+        if (currentAdmin == null) {
+            currentAdmin = new Admin();
+            currentAdmin.setName("Admin User");
+            currentAdmin.setEmail("admin@example.com");
+            currentAdmin.setPhoneNumber("000-000-0000");
+        }
 
-        historyBtn.setOnClickListener(v ->
-                Toast.makeText(getContext(), "Admin History", Toast.LENGTH_SHORT).show());
+        nameText.setText(currentAdmin.getName());
+        emailText.setText(currentAdmin.getEmail());
+        phoneText.setText(currentAdmin.getPhoneNumber());
 
-        editProfileBtn.setOnClickListener(v ->
-                Toast.makeText(getContext(), "Edit Profile clicked", Toast.LENGTH_SHORT).show());
+        if (currentAdmin.getProfilePictureURL() != null && !currentAdmin.getProfilePictureURL().isEmpty()) {
+            Glide.with(this)
+                    .load(currentAdmin.getProfilePictureURL())
+                    .placeholder(R.drawable.outline_account_circle_24)
+                    .circleCrop()
+                    .into(profileImage);
+            profileImage.setPadding(0, 0, 0, 0);
+            profileImage.setImageTintList(null);
+        }
+    }
 
-        signoutBtn.setOnClickListener(v -> {
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new RoleSelectionFragment())
-                    .commit();
-        });
+    private void setupActionButtons(View view) {
+        MaterialButton historyBtn = view.findViewById(R.id.admin_history_btn);
+        MaterialButton editProfileBtn = view.findViewById(R.id.admin_edit_profile_btn);
+        MaterialButton signoutBtn = view.findViewById(R.id.admin_signout_btn);
 
-        // Role toggle buttons
+        if (historyBtn != null) {
+            historyBtn.setOnClickListener(v ->
+                    Toast.makeText(getContext(), "Admin History Clicked", Toast.LENGTH_SHORT).show());
+        }
+
+        if (editProfileBtn != null) {
+            editProfileBtn.setOnClickListener(v -> navigateTo(new UserProfileFragment()));
+        }
+
+        if (signoutBtn != null) {
+            signoutBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).logout();
+                }
+            });
+        }
+    }
+
+    private void setupRoleButtons(View view) {
         enableEntrantBtn = view.findViewById(R.id.btn_enable_entrant_role);
         disableEntrantBtn = view.findViewById(R.id.btn_disable_entrant_role);
         enableOrganizerBtn = view.findViewById(R.id.btn_enable_organizer_role);
         disableOrganizerBtn = view.findViewById(R.id.btn_disable_organizer_role);
 
-        updateRoleButtons();
+        updateRoleButtonsVisibility();
 
-        enableEntrantBtn.setOnClickListener(v -> {
-            User u = new User();
-            u.setDeviceID(deviceId);
-            u.setName(currentAdmin.getName());
-            u.setEmail(currentAdmin.getEmail());
-            dbProxy.addUser(u);
-            Toast.makeText(getContext(), "Entrant role enabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (enableEntrantBtn != null) {
+            enableEntrantBtn.setOnClickListener(v -> {
+                User u = new User(currentAdmin.getName(), currentAdmin.getEmail(), "", currentAdmin.getPhoneNumber(), currentAdmin.getProfilePictureURL());
+                u.setDeviceID(deviceId);
+                dbProxy.addUser(u);
+                Toast.makeText(getContext(), "Entrant role enabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtonsVisibility();
+            });
+        }
 
-        disableEntrantBtn.setOnClickListener(v -> {
-            dbProxy.deleteUser(deviceId);
-            Toast.makeText(getContext(), "Entrant role disabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (disableEntrantBtn != null) {
+            disableEntrantBtn.setOnClickListener(v -> {
+                dbProxy.deleteUser(deviceId);
+                Toast.makeText(getContext(), "Entrant role disabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtonsVisibility();
+            });
+        }
 
-        enableOrganizerBtn.setOnClickListener(v -> {
-            Organizer o = new Organizer();
-            o.setDeviceID(deviceId);
-            o.setName(currentAdmin.getName());
-            o.setEmail(currentAdmin.getEmail());
-            dbProxy.addOrganizer(o);
-            Toast.makeText(getContext(), "Organizer role enabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (enableOrganizerBtn != null) {
+            enableOrganizerBtn.setOnClickListener(v -> {
+                Organizer o = new Organizer(currentAdmin.getName(), currentAdmin.getEmail(), "", currentAdmin.getPhoneNumber(), currentAdmin.getProfilePictureURL());
+                o.setDeviceID(deviceId);
+                dbProxy.addOrganizer(o);
+                Toast.makeText(getContext(), "Organizer role enabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtonsVisibility();
+            });
+        }
 
-        disableOrganizerBtn.setOnClickListener(v -> {
-            dbProxy.deleteOrganizer(deviceId);
-            Toast.makeText(getContext(), "Organizer role disabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
-
-        return view;
+        if (disableOrganizerBtn != null) {
+            disableOrganizerBtn.setOnClickListener(v -> {
+                dbProxy.deleteOrganizer(deviceId);
+                Toast.makeText(getContext(), "Organizer role disabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtonsVisibility();
+            });
+        }
     }
 
-    private void updateRoleButtons() {
+    private void updateRoleButtonsVisibility() {
         boolean isEntrant = dbProxy.getUser(deviceId) != null;
         boolean isOrganizer = dbProxy.getOrganizer(deviceId) != null;
 
-        enableEntrantBtn.setVisibility(isEntrant ? View.GONE : View.VISIBLE);
-        disableEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
-        enableOrganizerBtn.setVisibility(isOrganizer ? View.GONE : View.VISIBLE);
-        disableOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
+        if (enableEntrantBtn != null) enableEntrantBtn.setVisibility(isEntrant ? View.GONE : View.VISIBLE);
+        if (disableEntrantBtn != null) disableEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
+        if (enableOrganizerBtn != null) enableOrganizerBtn.setVisibility(isOrganizer ? View.GONE : View.VISIBLE);
+        if (disableOrganizerBtn != null) disableOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
+    }
+
+    private void navigateTo(Fragment fragment) {
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void setupEditableField(TextView textView, EditText editText, String fieldType) {
+        if (textView == null || editText == null) return;
         textView.setOnClickListener(v -> {
             editText.setText(textView.getText());
             textView.setVisibility(View.GONE);
@@ -160,16 +199,17 @@ public class AdminProfileFragment extends Fragment {
             if (actionId == EditorInfo.IME_ACTION_DONE ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
 
-                String newValue = editText.getText().toString();
-                textView.setText(newValue);
-
-                switch (fieldType) {
-                    case "name": currentAdmin.setName(newValue); break;
-                    case "email": currentAdmin.setEmail(newValue); break;
-                    case "phone": currentAdmin.setPhoneNumber(newValue); break;
+                String newValue = editText.getText().toString().trim();
+                if (!newValue.isEmpty()) {
+                    textView.setText(newValue);
+                    switch (fieldType) {
+                        case "name": currentAdmin.setName(newValue); break;
+                        case "email": currentAdmin.setEmail(newValue); break;
+                        case "phone": currentAdmin.setPhoneNumber(newValue); break;
+                    }
+                    dbProxy.updateAdmin(currentAdmin);
                 }
 
-                dbProxy.updateAdmin(currentAdmin);
                 editText.setVisibility(View.GONE);
                 textView.setVisibility(View.VISIBLE);
                 return true;

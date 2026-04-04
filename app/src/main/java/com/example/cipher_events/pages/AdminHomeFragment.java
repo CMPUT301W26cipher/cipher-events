@@ -4,10 +4,10 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.cardview.widget.CardView;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
@@ -24,9 +24,10 @@ public class AdminHomeFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_home, container, false);
 
-        Button btnBrowseProfiles = view.findViewById(R.id.btn_manage_users);
-        Button btnBrowseEvents = view.findViewById(R.id.btn_manage_events);
-        Button btnBrowseImages = view.findViewById(R.id.btn_manage_images);
+        CardView btnBrowseProfiles = view.findViewById(R.id.btn_manage_users);
+        CardView btnBrowseEvents = view.findViewById(R.id.btn_manage_events);
+        CardView btnBrowseImages = view.findViewById(R.id.btn_manage_images);
+        CardView btnNotificationLogs = view.findViewById(R.id.btn_notification_logs);
 
         if (btnBrowseProfiles != null) {
             btnBrowseProfiles.setOnClickListener(v -> replaceFragment(new AdminBrowseProfilesFragment()));
@@ -37,9 +38,11 @@ public class AdminHomeFragment extends Fragment {
         }
 
         if (btnBrowseImages != null) {
-            btnBrowseImages.setOnClickListener(v -> {
-                // Placeholder for browse images if implemented later
-            });
+            btnBrowseImages.setOnClickListener(v -> replaceFragment(new AdminBrowseImagesFragment()));
+        }
+
+        if (btnNotificationLogs != null) {
+            btnNotificationLogs.setOnClickListener(v -> replaceFragment(new AdminNotificationsFragment()));
         }
 
         return view;

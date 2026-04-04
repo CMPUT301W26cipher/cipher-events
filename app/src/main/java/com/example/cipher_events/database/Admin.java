@@ -9,7 +9,7 @@ import com.example.cipher_events.App;
  * Each admin has a name, email, password, phone number, and profile picture URL.
  */
 
-public class Admin {
+public class Admin extends User {
     private String deviceID;
     private String name;
     private String email;

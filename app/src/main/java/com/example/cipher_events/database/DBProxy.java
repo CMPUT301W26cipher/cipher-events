@@ -24,6 +24,31 @@ public class DBProxy {
         return currentUser;
     }
 
+    public String login(String email, String password) {
+        for (Admin admin : getAllAdmins()) {
+            if (email.equals(admin.getEmail()) && password.equals(admin.getPassword())) {
+                this.currentUser = admin;
+                return "ADMIN";
+            }
+        }
+
+        for (Organizer org : getAllOrganizers()) {
+            if (email.equals(org.getEmail()) && password.equals(org.getPassword())) {
+                this.currentUser = org;
+                return "ORGANIZER";
+            }
+        }
+
+        for (User user : getAllUsers()) {
+            if (email.equals(user.getEmail()) && password.equals(user.getPassword())) {
+                this.currentUser = user;
+                return "ENTRANT";
+            }
+        }
+
+        return null;
+    }
+
     private final List<OnDataChangedListener> listeners = new ArrayList<>();
 
     private DBProxy() {
@@ -83,6 +108,7 @@ public class DBProxy {
     public void addUser(User user) { userDB.add(user); }
     public User getUser(String deviceID) { return userDB.get(deviceID); }
     public ArrayList<User> getAllUsers() { return userDB.getAll(); }
+    public List<User> searchUsers(String keyword) { return userDB.search(keyword); }
     public void updateUser(User user) { userDB.update(user); }
     public void deleteUser(User user) { userDB.delete(user); }
     public void deleteUser(String deviceID) { userDB.delete(deviceID); }

@@ -12,6 +12,7 @@ import com.google.firebase.firestore.ListenerRegistration;
 import com.google.firebase.firestore.QuerySnapshot;
 
 import java.util.ArrayList;
+import java.util.List;
 
 // UserDB performs operations on the users collection in Firestore.
 public class UserDB {
@@ -80,6 +81,20 @@ public class UserDB {
 
     protected ArrayList<User> getAll() {
         return users;
+    }
+
+    protected List<User> search(String keyword) {
+        String lower = keyword == null ? "" : keyword.trim().toLowerCase();
+        List<User> result = new ArrayList<>();
+        for (User u : users) {
+            if (u == null) continue;
+            if ((u.getName() != null && u.getName().toLowerCase().contains(lower)) ||
+                    (u.getEmail() != null && u.getEmail().toLowerCase().contains(lower)) ||
+                    (u.getPhoneNumber() != null && u.getPhoneNumber().toLowerCase().contains(lower))) {
+                result.add(u);
+            }
+        }
+        return result;
     }
 
     protected void update(User user) {

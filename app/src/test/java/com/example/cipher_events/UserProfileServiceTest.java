@@ -293,6 +293,52 @@ public class UserProfileServiceTest {
     }
 
     // =========================================================
+    // US 01.04.03
+    // Opt-Out Notifications
+    // =========================================================
+
+    @Test
+    public void testSetNotificationsEnabled_disableNotifications_persistsToDb() {
+        User user = new User();
+        user.setDeviceID("device-jack");
+        user.setName("Jack");
+        user.setEmail("jack@example.com");
+        user.setPhoneNumber("7801234567");
+        user.setNotificationsEnabled(true);
+        assertTrue(user.isNotificationsEnabled()); // default is true
+
+        when(dbProxy.getUser(user.getDeviceID())).thenReturn(user);
+
+        userProfileService.setNotificationsEnabled(user.getDeviceID(), false);
+
+        assertFalse(user.isNotificationsEnabled());
+        verify(dbProxy, times(1)).updateUser(user);
+    }
+
+    @Test
+    public void testSetNotificationsEnabled_enableNotifications_persistsToDb() {
+        User user = new User();
+        user.setDeviceID("device-karen");
+        user.setName("Karen");
+        user.setEmail("karen@example.com");
+        user.setPhoneNumber("7809876543");
+        user.setNotificationsEnabled(false);
+
+        when(dbProxy.getUser(user.getDeviceID())).thenReturn(user);
+
+        userProfileService.setNotificationsEnabled(user.getDeviceID(), true);
+
+        assertTrue(user.isNotificationsEnabled());
+        verify(dbProxy, times(1)).updateUser(user);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testSetNotificationsEnabled_nonExistentUser_throwsException() {
+        when(dbProxy.getUser("unknown-device")).thenReturn(null);
+        userProfileService.setNotificationsEnabled("unknown-device", false);
+    }
+
+    // =========================================================
     // US 01.02.04
     // Delete User Profile
     // =========================================================

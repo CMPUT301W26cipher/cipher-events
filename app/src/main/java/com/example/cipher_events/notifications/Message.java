@@ -21,6 +21,8 @@ public class Message {
         this.organizer = organizer;
     }
 
+    public Message(){}
+
     public Date getDate() {
         return date;
     }
