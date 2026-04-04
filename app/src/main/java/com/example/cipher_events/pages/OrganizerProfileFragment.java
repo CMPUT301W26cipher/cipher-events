@@ -91,7 +91,7 @@ public class OrganizerProfileFragment extends Fragment {
         if (signoutBtn != null) {
             signoutBtn.setOnClickListener(v -> {
                 if (getActivity() instanceof MainActivity) {
-                    ((MainActivity) getActivity()).onRoleSelected(""); // Back to role selection
+                    ((MainActivity) getActivity()).logout();
                 }
             });
         }

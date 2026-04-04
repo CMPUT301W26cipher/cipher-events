@@ -1,5 +1,7 @@
 package com.example.cipher_events;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
@@ -34,7 +36,6 @@ import com.example.cipher_events.pages.OrganizerHistoryFragment;
 import com.example.cipher_events.pages.OrganizerHomeFragment;
 import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
-import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
 import com.example.cipher_events.pages.SignupFragment;
 import com.example.cipher_events.user.EntrantEventService;
@@ -54,6 +55,10 @@ public class MainActivity extends AppCompatActivity {
     TextView tvCurrentRole;
 
     private String currentRole = "";
+    private static final String PREFS_NAME = "CipherEventsPrefs";
+    private static final String KEY_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_ROLE = "userRole";
+    private static final String KEY_DEVICE_ID = "deviceID";
 
     // Firestore-backed services
     private UserProfileService userProfileService;
@@ -92,14 +97,16 @@ public class MainActivity extends AppCompatActivity {
         
         tvCurrentRole = findViewById(R.id.tv_current_role);
 
-        // Start with Login instead of Role Selection
-        replaceFragment(LoginFragment.newInstance());
+        // Check for persistent login
+        if (checkLoginSession()) {
+            onRoleSelected(currentRole);
+        } else {
+            replaceFragment(LoginFragment.newInstance());
+        }
 
         bottomNavigationView.setOnItemSelectedListener(menuItem -> {
             Fragment selectedFragment = null;
             int id = menuItem.getItemId();
-            Admin a = new Admin("Henry", "admin@gmail.com", "adminpass", "123", null);
-            DB.addAdmin(a);
 
             if ("ENTRANT".equals(currentRole)) {
                 if (id == R.id.menu_home) {
@@ -139,10 +146,48 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private boolean checkLoginSession() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+        if (isLoggedIn) {
+            currentRole = prefs.getString(KEY_ROLE, "");
+            String deviceID = prefs.getString(KEY_DEVICE_ID, "");
+            
+            if ("ADMIN".equals(currentRole)) {
+                DB.setCurrentUser(DB.getAdmin(deviceID));
+            } else if ("ORGANIZER".equals(currentRole)) {
+                DB.setCurrentUser(DB.getOrganizer(deviceID));
+            } else {
+                DB.setCurrentUser(DB.getUser(deviceID));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void saveLoginSession(String role, String deviceID) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(KEY_LOGGED_IN, true);
+        editor.putString(KEY_ROLE, role);
+        editor.putString(KEY_DEVICE_ID, deviceID);
+        editor.apply();
+    }
+
+    public void logout() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
+        
+        currentRole = "";
+        DB.setCurrentUser(null);
+        replaceFragment(LoginFragment.newInstance());
+    }
+
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
         dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl) -> {
-            // Get current organizer from DB
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
             Organizer currentOrganizer = DB.getOrganizer(deviceId);
             
@@ -157,20 +202,18 @@ public class MainActivity extends AppCompatActivity {
                     date + " " + time,
                     location,
                     currentOrganizer,
-                    new ArrayList<>(), // entrants
-                    new ArrayList<>(), // attendees
-                    bannerUrl,         // posterPictureURL from dialog
-                    true               // publicEvent
+                    new ArrayList<>(), 
+                    new ArrayList<>(),
+                    bannerUrl,         
+                    true               
             );
             
             if (capacity != null) {
                 newEvent.setWaitingListCapacity(capacity);
             }
             
-            // Explicitly add to DB
             DB.addEvent(newEvent);
-            
-            Toast.makeText(this, "Event Created and Added to DB", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Event Created", Toast.LENGTH_SHORT).show();
         });
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
     }
@@ -178,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
     public void onRoleSelected(String role) {
         currentRole = role;
         
-        // Update Role UI
         if (tvCurrentRole != null) {
             tvCurrentRole.setText("Role: " + role);
             tvCurrentRole.setVisibility(View.VISIBLE);
@@ -207,7 +249,6 @@ public class MainActivity extends AppCompatActivity {
                     .replace(R.id.fragment_container, fragment)
                     .commit();
 
-            // Hide UI elements if we go back to login/signup
             if (fragment instanceof LoginFragment || fragment instanceof SignupFragment) {
                 if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
                 bottomNavigationView.setVisibility(View.GONE);

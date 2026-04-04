@@ -16,6 +16,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
@@ -82,18 +83,23 @@ public class AdminProfileFragment extends Fragment {
         Button editProfileBtn = view.findViewById(R.id.admin_edit_profile_btn);
         Button signoutBtn = view.findViewById(R.id.admin_signout_btn);
 
-        historyBtn.setOnClickListener(v ->
-                Toast.makeText(getContext(), "Admin History", Toast.LENGTH_SHORT).show());
+        if (historyBtn != null) {
+            historyBtn.setOnClickListener(v ->
+                    Toast.makeText(getContext(), "Admin History", Toast.LENGTH_SHORT).show());
+        }
 
-        editProfileBtn.setOnClickListener(v ->
-                Toast.makeText(getContext(), "Edit Profile clicked", Toast.LENGTH_SHORT).show());
+        if (editProfileBtn != null) {
+            editProfileBtn.setOnClickListener(v ->
+                    Toast.makeText(getContext(), "Edit Profile clicked", Toast.LENGTH_SHORT).show());
+        }
 
-        signoutBtn.setOnClickListener(v -> {
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new RoleSelectionFragment())
-                    .commit();
-        });
+        if (signoutBtn != null) {
+            signoutBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).logout();
+                }
+            });
+        }
 
         // Role toggle buttons
         enableEntrantBtn = view.findViewById(R.id.btn_enable_entrant_role);
@@ -103,37 +109,45 @@ public class AdminProfileFragment extends Fragment {
 
         updateRoleButtons();
 
-        enableEntrantBtn.setOnClickListener(v -> {
-            User u = new User();
-            u.setDeviceID(deviceId);
-            u.setName(currentAdmin.getName());
-            u.setEmail(currentAdmin.getEmail());
-            dbProxy.addUser(u);
-            Toast.makeText(getContext(), "Entrant role enabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (enableEntrantBtn != null) {
+            enableEntrantBtn.setOnClickListener(v -> {
+                User u = new User();
+                u.setDeviceID(deviceId);
+                u.setName(currentAdmin.getName());
+                u.setEmail(currentAdmin.getEmail());
+                dbProxy.addUser(u);
+                Toast.makeText(getContext(), "Entrant role enabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtons();
+            });
+        }
 
-        disableEntrantBtn.setOnClickListener(v -> {
-            dbProxy.deleteUser(deviceId);
-            Toast.makeText(getContext(), "Entrant role disabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (disableEntrantBtn != null) {
+            disableEntrantBtn.setOnClickListener(v -> {
+                dbProxy.deleteUser(deviceId);
+                Toast.makeText(getContext(), "Entrant role disabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtons();
+            });
+        }
 
-        enableOrganizerBtn.setOnClickListener(v -> {
-            Organizer o = new Organizer();
-            o.setDeviceID(deviceId);
-            o.setName(currentAdmin.getName());
-            o.setEmail(currentAdmin.getEmail());
-            dbProxy.addOrganizer(o);
-            Toast.makeText(getContext(), "Organizer role enabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (enableOrganizerBtn != null) {
+            enableOrganizerBtn.setOnClickListener(v -> {
+                Organizer o = new Organizer();
+                o.setDeviceID(deviceId);
+                o.setName(currentAdmin.getName());
+                o.setEmail(currentAdmin.getEmail());
+                dbProxy.addOrganizer(o);
+                Toast.makeText(getContext(), "Organizer role enabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtons();
+            });
+        }
 
-        disableOrganizerBtn.setOnClickListener(v -> {
-            dbProxy.deleteOrganizer(deviceId);
-            Toast.makeText(getContext(), "Organizer role disabled", Toast.LENGTH_SHORT).show();
-            updateRoleButtons();
-        });
+        if (disableOrganizerBtn != null) {
+            disableOrganizerBtn.setOnClickListener(v -> {
+                dbProxy.deleteOrganizer(deviceId);
+                Toast.makeText(getContext(), "Organizer role disabled", Toast.LENGTH_SHORT).show();
+                updateRoleButtons();
+            });
+        }
 
         return view;
     }
@@ -142,13 +156,14 @@ public class AdminProfileFragment extends Fragment {
         boolean isEntrant = dbProxy.getUser(deviceId) != null;
         boolean isOrganizer = dbProxy.getOrganizer(deviceId) != null;
 
-        enableEntrantBtn.setVisibility(isEntrant ? View.GONE : View.VISIBLE);
-        disableEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
-        enableOrganizerBtn.setVisibility(isOrganizer ? View.GONE : View.VISIBLE);
-        disableOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
+        if (enableEntrantBtn != null) enableEntrantBtn.setVisibility(isEntrant ? View.GONE : View.VISIBLE);
+        if (disableEntrantBtn != null) disableEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
+        if (enableOrganizerBtn != null) enableOrganizerBtn.setVisibility(isOrganizer ? View.GONE : View.VISIBLE);
+        if (disableOrganizerBtn != null) disableOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
     }
 
     private void setupEditableField(TextView textView, EditText editText, String fieldType) {
+        if (textView == null || editText == null) return;
         textView.setOnClickListener(v -> {
             editText.setText(textView.getText());
             textView.setVisibility(View.GONE);

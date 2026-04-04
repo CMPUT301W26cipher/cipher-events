@@ -54,7 +54,7 @@ public class LoginFragment extends Fragment {
             for (Admin admin : admins) {
                 if (email.equals(admin.getEmail()) && password.equals(admin.getPassword())) {
                     db.setCurrentUser(admin);
-                    navigateToMain("ADMIN");
+                    navigateToMain("ADMIN", admin.getDeviceID());
                     return;
                 }
             }
@@ -64,7 +64,7 @@ public class LoginFragment extends Fragment {
             for (Organizer org : organizers) {
                 if (email.equals(org.getEmail()) && password.equals(org.getPassword())) {
                     db.setCurrentUser(org);
-                    navigateToMain("ORGANIZER");
+                    navigateToMain("ORGANIZER", org.getDeviceID());
                     return;
                 }
             }
@@ -74,7 +74,7 @@ public class LoginFragment extends Fragment {
             for (User user : users) {
                 if (email.equals(user.getEmail()) && password.equals(user.getPassword())) {
                     db.setCurrentUser(user);
-                    navigateToMain("ENTRANT");
+                    navigateToMain("ENTRANT", user.getDeviceID());
                     return;
                 }
             }
@@ -92,9 +92,11 @@ public class LoginFragment extends Fragment {
         return view;
     }
 
-    private void navigateToMain(String role) {
+    private void navigateToMain(String role, String deviceID) {
         if (getActivity() instanceof MainActivity) {
-            ((MainActivity) getActivity()).onRoleSelected(role);
+            MainActivity main = (MainActivity) getActivity();
+            main.saveLoginSession(role, deviceID);
+            main.onRoleSelected(role);
         }
     }
 }

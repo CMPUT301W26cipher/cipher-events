@@ -15,6 +15,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
@@ -69,47 +70,54 @@ public class ProfileFragment extends Fragment {
 
         // Waitlist button
         Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
-        waitlistBtn.setOnClickListener(v -> {
-            User user = DBProxy.getInstance().getCurrentUser();
-            String role = (user instanceof Organizer) ? "organizer" : "attendee";
-            WaitingListFragment fragment = WaitingListFragment.newInstance(null, role);
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+        if (waitlistBtn != null) {
+            waitlistBtn.setOnClickListener(v -> {
+                User user = DBProxy.getInstance().getCurrentUser();
+                String role = (user instanceof Organizer) ? "organizer" : "attendee";
+                WaitingListFragment fragment = WaitingListFragment.newInstance(null, role);
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
 
         // History button
         Button historyBtn = view.findViewById(R.id.history_btn);
-        historyBtn.setOnClickListener(v -> {
-            OrganizerHistoryFragment fragment = new OrganizerHistoryFragment();
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+        if (historyBtn != null) {
+            historyBtn.setOnClickListener(v -> {
+                OrganizerHistoryFragment fragment = new OrganizerHistoryFragment();
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
 
         // Edit Profile button
         Button editProfileBtn = view.findViewById(R.id.edit_profile_btn);
-        editProfileBtn.setOnClickListener(v -> {
-            UserProfileFragment fragment = new UserProfileFragment();
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+        if (editProfileBtn != null) {
+            editProfileBtn.setOnClickListener(v -> {
+                UserProfileFragment fragment = new UserProfileFragment();
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, fragment)
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
 
         // Sign Out button
         Button signOutBtn = view.findViewById(R.id.signout_btn);
-        signOutBtn.setOnClickListener(v -> {
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, new RoleSelectionFragment())
-                    .commit();
-        });
+        if (signOutBtn != null) {
+            signOutBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).logout();
+                }
+            });
+        }
 
         // Show Admin button only if user is an admin
         Admin admin = dbProxy.getAdmin(deviceId);
@@ -131,6 +139,7 @@ public class ProfileFragment extends Fragment {
     }
 
     private void setupEditableField(TextView textView, EditText editText, String fieldType) {
+        if (textView == null || editText == null) return;
         textView.setOnClickListener(v -> {
             editText.setText(textView.getText());
             textView.setVisibility(View.GONE);
