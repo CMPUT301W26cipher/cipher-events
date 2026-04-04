@@ -136,6 +136,45 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    private boolean checkLoginSession() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+        if (isLoggedIn) {
+            currentRole = prefs.getString(KEY_ROLE, "");
+            String deviceID = prefs.getString(KEY_DEVICE_ID, "");
+            
+            if ("ADMIN".equals(currentRole)) {
+                DB.setCurrentUser(DB.getAdmin(deviceID));
+            } else if ("ORGANIZER".equals(currentRole)) {
+                DB.setCurrentUser(DB.getOrganizer(deviceID));
+            } else {
+                DB.setCurrentUser(DB.getUser(deviceID));
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public void saveLoginSession(String role, String deviceID) {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(KEY_LOGGED_IN, true);
+        editor.putString(KEY_ROLE, role);
+        editor.putString(KEY_DEVICE_ID, deviceID);
+        editor.apply();
+    }
+
+    public void logout() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
+        
+        currentRole = "";
+        DB.setCurrentUser(null);
+        replaceFragment(LoginFragment.newInstance());
+    }
+
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
         dialog.show(getSupportFragmentManager(), "CreateEventDialog");
