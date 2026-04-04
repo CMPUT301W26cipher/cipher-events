@@ -178,10 +178,22 @@ public class MainActivity extends AppCompatActivity {
             tvCurrentRole.setVisibility(View.VISIBLE);
         }
 
-//        isLoggedIn = false;
         bottomNavigationView.setVisibility(View.GONE);
-        replaceFragment(new LoginFragment());
-//        onLoginSuccess();
+        bottomNavigationView.setVisibility(View.VISIBLE);
+
+        if ("ORGANIZER".equals(currentRole)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
+            replaceFragment(new OrganizerHomeFragment());
+        } else if ("ADMIN".equals(currentRole)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new AdminHomeFragment());
+        } else {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new HomeFragment());
+        }
     }
 
     private void replaceFragment(Fragment fragment) {
