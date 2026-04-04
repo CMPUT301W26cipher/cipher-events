@@ -60,6 +60,11 @@ public class WaitingListService {
             }
         }
 
+        if (event.getCoOrganizerIds() != null &&
+                event.getCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
         ArrayList<User> entrants = event.getEntrants();
 
         if (entrants == null) {
@@ -314,6 +319,11 @@ public class WaitingListService {
             return false;
         }
 
+        if (event.getCoOrganizerIds() != null &&
+                event.getCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
         if (event.getAttendees() == null) {
             event.setAttendees(new ArrayList<>());
         }
@@ -409,84 +419,57 @@ public class WaitingListService {
         // move entrant → invited
         invited.add(replacement);
         entrants.remove(index);
+
         db.updateEvent(event);
 
-        // notify ONLY this user
         if (notificationService != null) {
             notificationService.notifyUser(
                     replacement,
-                    "You're Selected!",
-                    "You have been selected for: " + event.getName()
+                    "Event Selection",
+                    "You have been chosen from the waiting list for: " + event.getName()
             );
         }
 
         return replacement;
     }
 
-    // =========================================================
-    // US 02.06.01
-    // View Invited Entrants List
-    // =========================================================
+    public User drawReplacementEntrant(Event event) {
+        return redrawLottery(event);
+    }
+
     public List<User> getInvitedEntrants(Event event) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-        if (event.getInvitedEntrants() == null) {
+        if (event == null || event.getInvitedEntrants() == null) {
             return new ArrayList<>();
         }
         return new ArrayList<>(event.getInvitedEntrants());
     }
 
-    // =========================================================
-    // US 02.06.02
-    // View Cancelled Entrants List
-    // =========================================================
     public List<User> getCancelledEntrants(Event event) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-        if (event.getCancelledEntrants() == null) {
+        if (event == null || event.getCancelledEntrants() == null) {
             return new ArrayList<>();
         }
         return new ArrayList<>(event.getCancelledEntrants());
     }
 
-    // =========================================================
-    // US 02.06.03
-    // View Final Enrolled List
-    // =========================================================
     public List<User> getEnrolledEntrants(Event event) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-        if (event.getEnrolledEntrants() == null) {
+        if (event == null || event.getEnrolledEntrants() == null) {
             return new ArrayList<>();
         }
         return new ArrayList<>(event.getEnrolledEntrants());
     }
 
-    // =========================================================
-    // US 02.06.04
-    // Cancel Non-Responsive Entrants
-    // =========================================================
     public boolean markAsNoShow(User user, Event event) {
-        if (user == null) {
-            throw new IllegalArgumentException("User cannot be null.");
-        }
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-
+        if (user == null || event == null) return false;
         ArrayList<User> invited = event.getInvitedEntrants();
-        if (invited == null) {
-            return false;
-        }
+        if (invited == null) return false;
 
         for (int i = 0; i < invited.size(); i++) {
-            User current = invited.get(i);
-            if (sameUser(current, user)) {
-                invited.remove(i);
-                event.getCancelledEntrants().add(user);
+            if (sameUser(invited.get(i), user)) {
+                User removed = invited.remove(i);
+                if (event.getCancelledEntrants() == null) {
+                    event.setCancelledEntrants(new ArrayList<>());
+                }
+                event.getCancelledEntrants().add(removed);
                 db.updateEvent(event);
                 return true;
             }
@@ -494,138 +477,39 @@ public class WaitingListService {
         return false;
     }
 
-    // =========================================================
-    // US 02.05.02
-    // Draw Lottery Winners
-    // =========================================================
     public List<User> drawLotteryWinners(Event event, int n) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
+        if (n <= 0) throw new IllegalArgumentException("Number of winners must be greater than 0");
+        List<User> winners = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            User winner = redrawLottery(event);
+            if (winner == null) break;
+            winners.add(winner);
         }
-        if (n <= 0) {
-            throw new IllegalArgumentException("N must be greater than 0.");
-        }
-
-        ArrayList<User> entrants = event.getEntrants();
-        if (entrants == null || entrants.isEmpty()) {
-            return new ArrayList<>();
-        }
-
-        if (event.getInvitedEntrants() == null) {
-            event.setInvitedEntrants(new ArrayList<>());
-        }
-
-        ArrayList<User> invited = event.getInvitedEntrants();
-        ArrayList<User> selected = new ArrayList<>();
-        Random random = new Random();
-
-        int selectCount = Math.min(n, entrants.size());
-
-        for (int i = 0; i < selectCount; i++) {
-            int index = random.nextInt(entrants.size());
-            User winner = entrants.remove(index);
-
-            invited.add(winner);
-            selected.add(winner);
-
-            if (notificationService != null) {
-                notificationService.notifyUser(
-                        winner,
-                        "You're Selected!",
-                        "You have been selected for: " + event.getName()
-                );
-            }
-        }
-
-        if (notificationService != null) {
-            for (User user : entrants) {
-                notificationService.notifyUser(
-                        user,
-                        "Not Selected",
-                        "You were not selected for: " + event.getName()
-                );
-            }
-        }
-        db.updateEvent(event);
-        return selected;
+        return winners;
     }
 
-    // =========================================================
-    // US 02.05.03
-    // Draw Replacement Entrant
-    // =========================================================
-    public User drawReplacementEntrant(Event event) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
-        }
-
-        ArrayList<User> entrants = event.getEntrants();
-        ArrayList<User> invited = event.getInvitedEntrants();
-
-        if (entrants == null || entrants.isEmpty()) {
-            return null;
-        }
-
-        // Filter out anyone already invited or previously selected
-        ArrayList<User> pool = new ArrayList<>();
-        for (User u : entrants) {
-            boolean alreadyInvited = invited != null && containsUser(invited, u);
-            if (!alreadyInvited) {
-                pool.add(u);
-            }
-        }
-
-        if (pool.isEmpty()) {
-            return null;
-        }
-
-        Random random = new Random();
-        int index = random.nextInt(pool.size());
-        User replacement = pool.get(index);
-
-        // Add to invited, remove from entrants
-        if (invited == null) {
-            event.setInvitedEntrants(new ArrayList<>());
-        }
-        event.getInvitedEntrants().add(replacement);
-        entrants.remove(replacement);
-        db.updateEvent(event);
-
-        if (notificationService != null) {
-            notificationService.notifyUser(
-                    replacement,
-                    "You're Selected!",
-                    "You have been selected (replacement) for: " + event.getName()
-            );
-        }
-
-        return replacement;
-    }
-
-    // =========================================================
-    // US 02.06.05
-    // Export Final Enrolled List (CSV)
-    // =========================================================
     public String exportEnrolledListAsCsv(Event event) {
-        if (event == null) {
-            throw new IllegalArgumentException("Event cannot be null.");
+        if (event == null) return "name,email,phone\n";
+        StringBuilder csv = new StringBuilder("name,email,phone\n");
+        List<User> enrolled = getEnrolledEntrants(event);
+        for (User u : enrolled) {
+            csv.append(u.getName() != null ? u.getName() : "").append(",")
+                    .append(u.getEmail() != null ? u.getEmail() : "").append(",")
+                    .append(u.getPhoneNumber() != null ? u.getPhoneNumber() : "").append("\n");
         }
-
-        ArrayList<User> enrolled = event.getEnrolledEntrants();
-        if (enrolled == null || enrolled.isEmpty()) {
-            return "name,email,phone\n";
-        }
-
-        StringBuilder csv = new StringBuilder();
-        csv.append("name,email,phone\n");
-
-        for (User user : enrolled) {
-            csv.append(user.getName() == null ? "" : user.getName()).append(",");
-            csv.append(user.getEmail() == null ? "" : user.getEmail()).append(",");
-            csv.append(user.getPhoneNumber() == null ? "" : user.getPhoneNumber()).append("\n");
-        }
-
         return csv.toString();
+    }
+
+    private boolean isCoOrganizer(Event event, User user) {
+        if (event == null || user == null) {
+            return false;
+        }
+
+        if (event.getCoOrganizerIds() == null || user.getDeviceID() == null) {
+            return false;
+        }
+
+        return event.getCoOrganizerIds().contains(user.getDeviceID());
     }
 
     private boolean containsUser(ArrayList<User> users, User target) {
