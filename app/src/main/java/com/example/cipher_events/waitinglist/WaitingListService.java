@@ -512,6 +512,18 @@ public class WaitingListService {
         return event.getCoOrganizerIds().contains(user.getDeviceID());
     }
 
+    private boolean isCoOrganizer(Event event, User user) {
+        if (event == null || user == null) {
+            return false;
+        }
+
+        if (event.getCoOrganizerIds() == null || user.getDeviceID() == null) {
+            return false;
+        }
+
+        return event.getCoOrganizerIds().contain(user.getDeviceID());
+    }
+
     private boolean containsUser(ArrayList<User> users, User target) {
         for (User u : users) {
             if (sameUser(u, target)) return true;
