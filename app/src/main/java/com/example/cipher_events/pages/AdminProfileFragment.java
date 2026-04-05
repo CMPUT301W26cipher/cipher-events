@@ -1,5 +1,6 @@
 package com.example.cipher_events.pages;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.KeyEvent;
@@ -14,6 +15,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -25,7 +27,7 @@ import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.google.android.material.button.MaterialButton;
 
-public class AdminProfileFragment extends Fragment {
+public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private TextView nameText, emailText, phoneText;
     private EditText nameEdit, emailEdit, phoneEdit;
@@ -39,6 +41,13 @@ public class AdminProfileFragment extends Fragment {
 
     public AdminProfileFragment() {}
 
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        dbProxy = DBProxy.getInstance();
+        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+    }
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -50,12 +59,6 @@ public class AdminProfileFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
-        dbProxy = DBProxy.getInstance();
-        deviceId = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
 
         // Bind views
         nameText = view.findViewById(R.id.admin_profile_name);
@@ -76,27 +79,59 @@ public class AdminProfileFragment extends Fragment {
         setupEditableField(phoneText, phoneEdit, "phone");
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        dbProxy.addListener(this);
+        loadAdminData();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        dbProxy.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        loadAdminData();
+    }
+
     private void loadAdminData() {
-        currentAdmin = dbProxy.getAdmin(deviceId);
+        User user = dbProxy.getCurrentUser();
+        if (user instanceof Admin) {
+            currentAdmin = (Admin) user;
+        } else {
+            currentAdmin = dbProxy.getAdmin(deviceId);
+        }
+
         if (currentAdmin == null) {
             currentAdmin = new Admin();
             currentAdmin.setName("Admin User");
             currentAdmin.setEmail("admin@example.com");
             currentAdmin.setPhoneNumber("000-000-0000");
+            currentAdmin.setDeviceID(deviceId);
         }
 
-        nameText.setText(currentAdmin.getName());
-        emailText.setText(currentAdmin.getEmail());
-        phoneText.setText(currentAdmin.getPhoneNumber());
+        nameText.setText(currentAdmin.getName() != null && !currentAdmin.getName().isEmpty() ? currentAdmin.getName() : "Set Name");
+        emailText.setText(currentAdmin.getEmail() != null && !currentAdmin.getEmail().isEmpty() ? currentAdmin.getEmail() : "Set Email");
+        phoneText.setText(currentAdmin.getPhoneNumber() != null && !currentAdmin.getPhoneNumber().isEmpty() ? currentAdmin.getPhoneNumber() : "Set Phone");
 
-        if (currentAdmin.getProfilePictureURL() != null && !currentAdmin.getProfilePictureURL().isEmpty()) {
+        String picUrl = currentAdmin.getProfilePictureURL();
+        if (picUrl != null && !picUrl.isEmpty()) {
             Glide.with(this)
-                    .load(currentAdmin.getProfilePictureURL())
+                    .load(picUrl)
                     .placeholder(R.drawable.outline_account_circle_24)
                     .circleCrop()
                     .into(profileImage);
             profileImage.setPadding(0, 0, 0, 0);
             profileImage.setImageTintList(null);
+        } else {
+            // Show default icon if no URL
+            profileImage.setImageResource(R.drawable.outline_account_circle_24);
+            int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
+            profileImage.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
+            profileImage.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.white)));
         }
     }
 

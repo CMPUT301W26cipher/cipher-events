@@ -1,7 +1,7 @@
 package com.example.cipher_events.pages;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -23,13 +24,12 @@ import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.google.android.material.button.MaterialButton;
 
-public class ProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private TextView nameText, emailText, locationText;
     private EditText nameEdit, emailEdit, locationEdit;
     private ImageView profileImage;
     private DBProxy dbProxy;
-    private String deviceId;
     private User currentUser;
 
     public ProfileFragment() {}
@@ -38,7 +38,6 @@ public class ProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbProxy = DBProxy.getInstance();
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Nullable
@@ -69,21 +68,48 @@ public class ProfileFragment extends Fragment {
         setupEditableField(locationText, locationEdit, "location");
     }
 
+    @Override
+    public void onStart() {
+        super.onStart();
+        dbProxy.addListener(this);
+        loadUserData();
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        dbProxy.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        loadUserData();
+    }
+
     private void loadUserData() {
-        currentUser = dbProxy.getUser(deviceId);
+        currentUser = dbProxy.getCurrentUser();
+
         if (currentUser != null) {
-            nameText.setText(currentUser.getName() != null ? currentUser.getName() : "Set Name");
-            emailText.setText(currentUser.getEmail() != null ? currentUser.getEmail() : "Set Email");
-            // Location isn't in User model yet based on previous check, but keeping placeholder
+            nameText.setText(currentUser.getName() != null && !currentUser.getName().isEmpty() ? currentUser.getName() : "Set Name");
+            emailText.setText(currentUser.getEmail() != null && !currentUser.getEmail().isEmpty() ? currentUser.getEmail() : "Set Email");
+            // Location isn't in User model yet, keeping placeholder
             locationText.setText("Set Location");
 
-            if (currentUser.getProfilePictureURL() != null && !currentUser.getProfilePictureURL().isEmpty()) {
+            String picUrl = currentUser.getProfilePictureURL();
+            if (picUrl != null && !picUrl.isEmpty()) {
                 Glide.with(this)
-                        .load(currentUser.getProfilePictureURL())
+                        .load(picUrl)
                         .placeholder(R.drawable.outline_account_circle_24)
                         .circleCrop()
                         .into(profileImage);
                 profileImage.setPadding(0, 0, 0, 0);
+                profileImage.setImageTintList(null);
+            } else {
+                // If no URL, show default icon with proper padding and tint
+                profileImage.setImageResource(R.drawable.outline_account_circle_24);
+                int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
+                profileImage.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
+                profileImage.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.white)));
             }
         }
     }
@@ -153,17 +179,12 @@ public class ProfileFragment extends Fragment {
     }
 
     private void updateUserField(String fieldType, String value) {
-        if (currentUser == null) {
-            currentUser = new User("New User", "Email", "", "", null);
-            currentUser.setDeviceID(deviceId);
-            dbProxy.addUser(currentUser);
+        if (currentUser != null) {
+            switch (fieldType) {
+                case "name": currentUser.setName(value); break;
+                case "email": currentUser.setEmail(value); break;
+            }
+            dbProxy.updateUser(currentUser);
         }
-
-        switch (fieldType) {
-            case "name": currentUser.setName(value); break;
-            case "email": currentUser.setEmail(value); break;
-        }
-
-        dbProxy.updateUser(currentUser);
     }
 }

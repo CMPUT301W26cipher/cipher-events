@@ -18,6 +18,8 @@ public class DBProxy {
 
     public void setCurrentUser(User user) {
         this.currentUser = user;
+        // Immediate notification when setting user manually
+        notifyListeners();
     }
 
     public User getCurrentUser() {
@@ -27,21 +29,21 @@ public class DBProxy {
     public String login(String email, String password) {
         for (Admin admin : getAllAdmins()) {
             if (email.equals(admin.getEmail()) && password.equals(admin.getPassword())) {
-                this.currentUser = admin;
+                this.setCurrentUser(admin);
                 return "ADMIN";
             }
         }
 
         for (Organizer org : getAllOrganizers()) {
             if (email.equals(org.getEmail()) && password.equals(org.getPassword())) {
-                this.currentUser = org;
+                this.setCurrentUser(org);
                 return "ORGANIZER";
             }
         }
 
         for (User user : getAllUsers()) {
             if (email.equals(user.getEmail()) && password.equals(user.getPassword())) {
-                this.currentUser = user;
+                this.setCurrentUser(user);
                 return "ENTRANT";
             }
         }
@@ -77,6 +79,25 @@ public class DBProxy {
     }
 
     public void notifyListeners() {
+        if (currentUser != null) {
+            String deviceID = currentUser.getDeviceID();
+            User updated = null;
+            
+            if (currentUser instanceof Admin) updated = getAdmin(deviceID);
+            else if (currentUser instanceof Organizer) updated = getOrganizer(deviceID);
+            else updated = getUser(deviceID);
+            
+            if (updated == null) updated = getAdmin(deviceID);
+            if (updated == null) updated = getOrganizer(deviceID);
+            if (updated == null) updated = getUser(deviceID);
+            
+            if (updated != null) {
+                if (this.currentUser != updated) {
+                    this.currentUser = updated;
+                }
+            }
+        }
+
         for (OnDataChangedListener listener : new ArrayList<>(listeners)) {
             listener.onDataChanged();
         }
@@ -109,7 +130,17 @@ public class DBProxy {
     public User getUser(String deviceID) { return userDB.get(deviceID); }
     public ArrayList<User> getAllUsers() { return userDB.getAll(); }
     public List<User> searchUsers(String keyword) { return userDB.search(keyword); }
-    public void updateUser(User user) { userDB.update(user); }
+    
+    public void updateUser(User user) {
+        if (user instanceof Admin) {
+            adminDB.update((Admin) user);
+        } else if (user instanceof Organizer) {
+            organizerDB.update((Organizer) user);
+        } else {
+            userDB.update(user);
+        }
+    }
+    
     public void deleteUser(User user) { userDB.delete(user); }
     public void deleteUser(String deviceID) { userDB.delete(deviceID); }
 

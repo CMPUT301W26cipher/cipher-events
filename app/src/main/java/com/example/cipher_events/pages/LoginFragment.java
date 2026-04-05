@@ -92,11 +92,10 @@ public class LoginFragment extends Fragment {
         return view;
     }
 
-    private void navigateToMain(String role, String deviceID) {
+    private void navigateToMain(String role, String accountID) {
         if (getActivity() instanceof MainActivity) {
             MainActivity main = (MainActivity) getActivity();
-            main.saveLoginSession(role, deviceID);
-            main.onRoleSelected(role);
+            main.loginSuccess(role, accountID);
         }
     }
 }
