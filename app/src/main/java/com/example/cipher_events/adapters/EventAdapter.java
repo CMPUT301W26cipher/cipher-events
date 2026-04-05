@@ -15,6 +15,7 @@ import com.example.cipher_events.R;
 import com.example.cipher_events.database.Event;
 
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Displays a list of Event objects
@@ -63,6 +64,27 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.organizer.setVisibility(View.GONE);
         }
 
+        // Bind Description
+        String desc = event.getDescription();
+        if (desc != null && !desc.isEmpty()) {
+            holder.description.setText(desc);
+            holder.description.setVisibility(View.VISIBLE);
+        } else {
+            holder.description.setVisibility(View.GONE);
+        }
+
+        // Bind Waitlist Count and Capacity
+        int entrantsCount = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
+        holder.waitlistCount.setText(String.format(Locale.getDefault(), "%d Waitlisted", entrantsCount));
+        
+        Integer capacity = event.getWaitingListCapacity();
+        if (capacity != null && capacity > 0) {
+            holder.capacity.setText(String.format(Locale.getDefault(), "%d Capacity", capacity));
+            holder.capacity.setVisibility(View.VISIBLE);
+        } else {
+            holder.capacity.setVisibility(View.GONE);
+        }
+
         String url = event.getPosterPictureURL();
 
         if (url != null && !url.isEmpty()) {
@@ -97,7 +119,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     }
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
-        TextView title, date, location, organizer;
+        TextView title, date, location, organizer, waitlistCount, capacity, description;
         ImageView image;
 
         public EventViewHolder(@NonNull View itemView) {
@@ -107,6 +129,9 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             date = itemView.findViewById(R.id.event_date);
             location = itemView.findViewById(R.id.event_location);
             organizer = itemView.findViewById(R.id.event_organizer);
+            waitlistCount = itemView.findViewById(R.id.event_waitlist_count);
+            capacity = itemView.findViewById(R.id.event_capacity);
+            description = itemView.findViewById(R.id.event_description);
         }
     }
 }
