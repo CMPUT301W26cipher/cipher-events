@@ -1,5 +1,6 @@
 package com.example.cipher_events.adapters;
 
+import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,12 +18,21 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
 
     public enum ListType { WAITLIST, INVITED, CANCELLED, ENROLLED }
 
+    public interface OnEnrolledRemoveListener {
+        void onRemoveFromEnrolled(User user);
+    }
+
     private List<User> users;
     private ListType listType;
+    private OnEnrolledRemoveListener removeListener;
 
     public EntrantAdapter(List<User> users, ListType listType) {
         this.users = users;
         this.listType = listType;
+    }
+
+    public void setOnEnrolledRemoveListener(OnEnrolledRemoveListener listener) {
+        this.removeListener = listener;
     }
 
     @NonNull
@@ -36,7 +46,6 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
     @Override
     public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
         User user = users.get(position);
-
         holder.name.setText(user.getName());
 
         switch (listType) {
@@ -52,6 +61,20 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
             case ENROLLED:
                 holder.status.setText("Enrolled");
                 break;
+        }
+
+        // Only enrolled entrants are clickable for removal
+        if (listType == ListType.ENROLLED && removeListener != null) {
+            holder.itemView.setOnClickListener(v -> {
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setTitle("Remove Participant")
+                        .setMessage("Do you want to remove " + user.getName() + " from enrolled and move them back to waitlist?")
+                        .setPositiveButton("Yes", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
+                        .setNegativeButton("No", null)
+                        .show();
+            });
+        } else {
+            holder.itemView.setOnClickListener(null);
         }
     }
 

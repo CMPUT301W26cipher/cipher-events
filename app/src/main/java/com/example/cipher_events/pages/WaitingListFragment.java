@@ -31,6 +31,7 @@ import com.google.android.material.tabs.TabLayout;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WaitingListFragment extends Fragment implements DBProxy.OnDataChangedListener {
@@ -104,8 +105,20 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
                 Toast.makeText(getContext(), "Event not found", Toast.LENGTH_SHORT).show();
                 return;
             }
+
+            // Option B: only allow replacement if someone cancelled
+            ArrayList<User> cancelled = event.getCancelledEntrants();
+            if (cancelled == null || cancelled.isEmpty()) {
+                Toast.makeText(getContext(),
+                        "No cancelled spots available for replacement",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             User replacement = waitingListService.drawReplacementEntrant(event);
             if (replacement != null) {
+                // Consume one cancelled spot
+                event.getCancelledEntrants().remove(0);
                 db.updateEvent(event);
                 Toast.makeText(getContext(),
                         "Replacement selected: " + replacement.getName(),
@@ -117,7 +130,6 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
                         Toast.LENGTH_SHORT).show();
             }
         });
-
         // Export CSV
         btnExportCsv.setOnClickListener(v -> exportCsv());
 
@@ -275,6 +287,18 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         }
 
         adapter = new EntrantAdapter(users, listType);
+
+        if (listType == EntrantAdapter.ListType.ENROLLED) {
+            adapter.setOnEnrolledRemoveListener(user -> {
+                Event currentEvent = db.getEvent(eventId);
+                if (currentEvent == null) return;
+                currentEvent.getEnrolledEntrants().remove(user);
+                if (currentEvent.getEntrants() == null) currentEvent.setEntrants(new java.util.ArrayList<>());
+                currentEvent.getEntrants().add(user);
+                db.updateEvent(currentEvent);
+                refreshUI(getView());
+            });
+        }
         recyclerView.setAdapter(adapter);
     }
 }

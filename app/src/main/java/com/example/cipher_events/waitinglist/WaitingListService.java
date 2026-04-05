@@ -334,14 +334,6 @@ public class WaitingListService {
             if (sameUser(current, user)) {
 
                 invited.remove(i);
-
-                if (event.getEntrants() == null) {
-                    event.setEntrants(new ArrayList<>());
-                }
-
-                if (!containsUser(event.getEntrants(), user)) {
-                    event.getEntrants().add(user);
-                }
                 db.updateEvent(event);
                 return true;
             }
