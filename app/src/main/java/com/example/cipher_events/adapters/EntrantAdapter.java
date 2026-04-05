@@ -15,7 +15,7 @@ import java.util.List;
 
 public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantViewHolder> {
 
-    public enum ListType { INVITED, CANCELLED, ENROLLED }
+    public enum ListType { WAITLIST, INVITED, CANCELLED, ENROLLED }
 
     private List<User> users;
     private ListType listType;
@@ -40,6 +40,9 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
         holder.name.setText(user.getName());
 
         switch (listType) {
+            case WAITLIST:
+                holder.status.setText("Waitlisted");
+                break;
             case INVITED:
                 holder.status.setText("Invited");
                 break;
