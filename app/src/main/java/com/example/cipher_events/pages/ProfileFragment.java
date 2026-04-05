@@ -118,10 +118,7 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
         MaterialButton waitlistBtn = view.findViewById(R.id.waitlist_btn);
         if (waitlistBtn != null) {
             waitlistBtn.setOnClickListener(v -> {
-                User user = DBProxy.getInstance().getCurrentUser();
-                String role = (user instanceof Organizer) ? "organizer" : "attendee";
-                WaitingListFragment fragment = WaitingListFragment.newInstance(null, role);
-                navigateTo(fragment);
+                navigateTo(new FavouritesFragment());
             });
         }
 

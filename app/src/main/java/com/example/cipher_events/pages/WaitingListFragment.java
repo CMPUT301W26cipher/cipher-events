@@ -232,9 +232,10 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         EntrantAdapter.ListType listType;
 
         switch (selectedTab) {
-            case 1: listType = EntrantAdapter.ListType.CANCELLED; break;
-            case 2: listType = EntrantAdapter.ListType.ENROLLED; break;
-            default: listType = EntrantAdapter.ListType.INVITED; break;
+            case 1: listType = EntrantAdapter.ListType.INVITED; break;
+            case 2: listType = EntrantAdapter.ListType.CANCELLED; break;
+            case 3: listType = EntrantAdapter.ListType.ENROLLED; break;
+            default: listType = EntrantAdapter.ListType.WAITLIST; break;
         }
 
         showList(listType);
@@ -267,6 +268,7 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
         List<User> users;
         switch (listType) {
+            case INVITED:   users = waitingListService.getInvitedEntrants(event); break;
             case CANCELLED: users = waitingListService.getCancelledEntrants(event); break;
             case ENROLLED:  users = waitingListService.getEnrolledEntrants(event); break;
             default:        users = waitingListService.getWaitingList(event); break;

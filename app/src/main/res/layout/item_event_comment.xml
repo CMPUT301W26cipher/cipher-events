@@ -38,6 +38,16 @@
                 android:textColor="@color/text_hint"
                 android:textSize="11sp"
                 tools:text="12:30 PM" />
+
+            <ImageButton
+                android:id="@+id/btnDeleteComment"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_marginStart="8dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:background="@android:color/transparent"
+                app:tint="@color/text_hint"
+                android:visibility="gone" />
         </LinearLayout>
 
         <TextView

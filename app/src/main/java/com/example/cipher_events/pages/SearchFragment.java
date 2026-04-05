@@ -77,7 +77,7 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
                     event.getTime(),
                     event.getLocation(),
                     (event.getEntrants() != null ? event.getEntrants().size() : 0),
-                    new ArrayList<>() // Tags placeholder
+                    new ArrayList<>()
             );
             dialog.show(getParentFragmentManager(), "EventDetailsDialog");
         });

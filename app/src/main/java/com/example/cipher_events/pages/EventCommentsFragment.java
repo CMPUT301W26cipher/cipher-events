@@ -75,6 +75,13 @@ public class EventCommentsFragment extends Fragment {
         rvComments.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvComments.setAdapter(adapter);
 
+        // Check if admin
+        boolean isAdmin = DBProxy.getInstance().getAdmin(deviceID) != null;
+        adapter.setup(deviceID, isAdmin, comment -> {
+            commentService.deleteComment(eventID, comment.getCommentID());
+            loadComments();
+        });
+
         commentService = new EntrantCommentService();
 
         loadComments();
