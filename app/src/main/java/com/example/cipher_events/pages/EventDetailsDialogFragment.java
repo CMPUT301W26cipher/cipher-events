@@ -136,6 +136,17 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         commentAdapter = new EventCommentAdapter();
         rvComments.setAdapter(commentAdapter);
 
+        String currentDeviceId = android.provider.Settings.Secure.getString(
+                requireContext().getContentResolver(),
+                android.provider.Settings.Secure.ANDROID_ID
+        );
+        boolean isAdmin = DBProxy.getInstance().getAdmin(currentDeviceId) != null;
+        commentAdapter.setup(currentDeviceId, isAdmin, comment -> {
+            new com.example.cipher_events.comment.EntrantCommentService()
+                    .deleteComment(eventId, comment.getCommentID());
+            refreshUI();
+        });
+
         Bundle args = getArguments();
         ArrayList<String> tagsFromArgs = null;
         if (args != null) {
