@@ -63,6 +63,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView descriptionLabel;
     private TextView dateLocation;
     private ImageView banner;
+    private ImageView favoriteButton;
     private Button actionButton;
     private Button notifyButton;
     private Button messageButton;
@@ -140,6 +141,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         description = view.findViewById(R.id.detail_description);
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
+        favoriteButton = view.findViewById(R.id.btn_favorite);
         lotteryContainer = view.findViewById(R.id.lottery_container);
         lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
@@ -241,6 +243,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             messageButton.setText("Messages");
             messageButton.setVisibility(View.VISIBLE);
             messageButton.setOnClickListener(v -> openOrganizerMessages());
+            
+            favoriteButton.setVisibility(View.GONE);
         } else {
             actionButton.setText("Join Waitlist");
             actionButton.setOnClickListener(v -> {
@@ -264,6 +268,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                             "• If you're not selected, you may be placed on a waitlist.\n\n" +
                             "This system helps keep things fair and avoids first-come-first-served pressure."
             );
+
+            favoriteButton.setVisibility(View.VISIBLE);
         }
     }
 
@@ -437,6 +443,29 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
             } else {
                 banner.setImageResource(R.drawable.gray_placeholder);
+            }
+
+            // Favourite logic
+            User currentUser = db.getCurrentUser();
+            if (currentUser != null && favoriteButton != null && !isOrganizerView) {
+                favoriteButton.setVisibility(View.VISIBLE);
+                if (currentUser.isFavorite(eventId)) {
+                    favoriteButton.setImageResource(R.drawable.baseline_star_24);
+                } else {
+                    favoriteButton.setImageResource(R.drawable.baseline_star_border_24);
+                }
+
+                favoriteButton.setOnClickListener(v -> {
+                    if (currentUser.isFavorite(eventId)) {
+                        currentUser.removeFavoriteEvent(eventId);
+                    } else {
+                        currentUser.addFavoriteEvent(eventId);
+                    }
+                    db.updateUser(currentUser);
+                    refreshUI();
+                });
+            } else if (favoriteButton != null) {
+                favoriteButton.setVisibility(View.GONE);
             }
 
             loadComments();

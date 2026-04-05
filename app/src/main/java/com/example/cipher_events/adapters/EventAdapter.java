@@ -12,7 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.User;
 
 import java.util.List;
 import java.util.Locale;
@@ -29,15 +31,24 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     private List<Event> events;
     private OnEventClickListener listener;
+    private OnFavoriteClickListener favoriteListener;
 
     public interface OnEventClickListener {
         void onEventClick(Event event);
+    }
+
+    public interface OnFavoriteClickListener {
+        void onFavoriteClick(Event event);
     }
 
 
     public EventAdapter(List<Event> events, OnEventClickListener listener) {
         this.events = events;
         this.listener = listener;
+    }
+
+    public void setOnFavoriteClickListener(OnFavoriteClickListener favoriteListener) {
+        this.favoriteListener = favoriteListener;
     }
 
 
@@ -100,6 +111,34 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.image.setImageDrawable(null);
         }
 
+        // Favourite logic
+        User currentUser = DBProxy.getInstance().getCurrentUser();
+        if (currentUser != null) {
+            holder.favorite.setVisibility(View.VISIBLE);
+            if (currentUser.isFavorite(event.getEventID())) {
+                holder.favorite.setImageResource(R.drawable.baseline_star_24);
+            } else {
+                holder.favorite.setImageResource(R.drawable.baseline_star_border_24);
+            }
+
+            holder.favorite.setOnClickListener(v -> {
+                if (favoriteListener != null) {
+                    favoriteListener.onFavoriteClick(event);
+                } else {
+                    // Default behavior if no listener is set
+                    if (currentUser.isFavorite(event.getEventID())) {
+                        currentUser.removeFavoriteEvent(event.getEventID());
+                    } else {
+                        currentUser.addFavoriteEvent(event.getEventID());
+                    }
+                    DBProxy.getInstance().updateUser(currentUser);
+                    notifyItemChanged(position);
+                }
+            });
+        } else {
+            holder.favorite.setVisibility(View.GONE);
+        }
+
         // debugging: testing if image url loads
         Log.d("EVENT_DEBUG", "Poster URL for " + event.getName() + ": " + url);
 
@@ -120,11 +159,12 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView title, date, location, organizer, waitlistCount, capacity, description;
-        ImageView image;
+        ImageView image, favorite;
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.event_image);
+            favorite = itemView.findViewById(R.id.event_favourite);
             title = itemView.findViewById(R.id.event_title);
             date = itemView.findViewById(R.id.event_date);
             location = itemView.findViewById(R.id.event_location);

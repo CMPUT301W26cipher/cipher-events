@@ -2,7 +2,6 @@ package com.example.cipher_events.pages;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +30,6 @@ public class OrganizerProfileFragment extends Fragment implements DBProxy.OnData
     private EditText nameEdit, emailEdit, phoneEdit;
     private ImageView profileImage;
     private DBProxy dbProxy;
-    private String deviceId;
     private Organizer currentOrganizer;
 
     public OrganizerProfileFragment() {}
@@ -40,7 +38,6 @@ public class OrganizerProfileFragment extends Fragment implements DBProxy.OnData
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbProxy = DBProxy.getInstance();
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Nullable
@@ -95,8 +92,6 @@ public class OrganizerProfileFragment extends Fragment implements DBProxy.OnData
         User user = dbProxy.getCurrentUser();
         if (user instanceof Organizer) {
             currentOrganizer = (Organizer) user;
-        } else {
-            currentOrganizer = dbProxy.getOrganizer(deviceId);
         }
 
         if (currentOrganizer != null) {

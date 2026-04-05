@@ -1,6 +1,7 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +40,8 @@ public class RoleSelectionFragment extends Fragment {
 
     private void selectRole(String role) {
         if (getActivity() instanceof MainActivity) {
-            ((MainActivity) getActivity()).onRoleSelected(role);
+            String accountID = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+            ((MainActivity) getActivity()).onRoleSelected(role, accountID);
         }
     }
 }

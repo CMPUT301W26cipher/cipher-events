@@ -19,6 +19,7 @@ import com.example.cipher_events.adapters.CarouselEventAdapter;
 import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.User;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.carousel.CarouselLayoutManager;
 import com.google.android.material.carousel.CarouselSnapHelper;
@@ -82,11 +83,13 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         // Main List
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(displayedEvents, this::showEventDetails);
+        adapter.setOnFavoriteClickListener(this::toggleFavorite);
         recyclerView.setAdapter(adapter);
 
         // Carousel
         carouselRecyclerView.setLayoutManager(new CarouselLayoutManager());
         carouselAdapter = new CarouselEventAdapter(featuredEvents, this::showEventDetails);
+        carouselAdapter.setOnFavoriteClickListener(this::toggleFavorite);
         carouselRecyclerView.setAdapter(carouselAdapter);
         
         snapHelper = new CarouselSnapHelper();
@@ -103,6 +106,19 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
                 }
             }
         });
+    }
+
+    private void toggleFavorite(Event event) {
+        User currentUser = db.getCurrentUser();
+        if (currentUser != null) {
+            if (currentUser.isFavorite(event.getEventID())) {
+                currentUser.removeFavoriteEvent(event.getEventID());
+            } else {
+                currentUser.addFavoriteEvent(event.getEventID());
+            }
+            db.updateUser(currentUser);
+            // UI will refresh via onDataChanged listener
+        }
     }
 
     private void setupAutoRotation() {

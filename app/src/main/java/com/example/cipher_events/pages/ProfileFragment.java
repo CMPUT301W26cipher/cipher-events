@@ -2,7 +2,6 @@ package com.example.cipher_events.pages;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -31,7 +30,6 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
     private EditText nameEdit, emailEdit, locationEdit;
     private ImageView profileImage;
     private DBProxy dbProxy;
-    private String deviceId;
     private User currentUser;
 
     public ProfileFragment() {}
@@ -40,7 +38,6 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbProxy = DBProxy.getInstance();
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Nullable
@@ -91,9 +88,6 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
 
     private void loadUserData() {
         currentUser = dbProxy.getCurrentUser();
-        if (currentUser == null) {
-            currentUser = dbProxy.getUser(deviceId);
-        }
 
         if (currentUser != null) {
             nameText.setText(currentUser.getName() != null && !currentUser.getName().isEmpty() ? currentUser.getName() : "Set Name");
@@ -188,17 +182,12 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
     }
 
     private void updateUserField(String fieldType, String value) {
-        if (currentUser == null) {
-            currentUser = new User("New User", "Email", "", "", null);
-            currentUser.setDeviceID(deviceId);
-            dbProxy.addUser(currentUser);
+        if (currentUser != null) {
+            switch (fieldType) {
+                case "name": currentUser.setName(value); break;
+                case "email": currentUser.setEmail(value); break;
+            }
+            dbProxy.updateUser(currentUser);
         }
-
-        switch (fieldType) {
-            case "name": currentUser.setName(value); break;
-            case "email": currentUser.setEmail(value); break;
-        }
-
-        dbProxy.updateUser(currentUser);
     }
 }

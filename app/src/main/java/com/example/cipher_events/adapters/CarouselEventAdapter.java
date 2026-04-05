@@ -12,7 +12,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.User;
 
 import java.util.List;
 
@@ -24,6 +26,7 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
 
     private final List<Event> events;
     private final OnEventClickListener listener;
+    private OnFavoriteClickListener favoriteListener;
     // Use a smaller number than Integer.MAX_VALUE to avoid memory issues with CarouselLayoutManager
     private static final int LOOP_COUNT = 10000;
 
@@ -31,9 +34,17 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
         void onEventClick(Event event);
     }
 
+    public interface OnFavoriteClickListener {
+        void onFavoriteClick(Event event);
+    }
+
     public CarouselEventAdapter(List<Event> events, OnEventClickListener listener) {
         this.events = events;
         this.listener = listener;
+    }
+
+    public void setOnFavoriteClickListener(OnFavoriteClickListener favoriteListener) {
+        this.favoriteListener = favoriteListener;
     }
 
     @NonNull
@@ -48,7 +59,7 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
     public void onBindViewHolder(@NonNull CarouselViewHolder holder, int position) {
         if (events.isEmpty()) return;
         Event event = events.get(position % events.size());
-        holder.bind(event, listener);
+        holder.bind(event, listener, favoriteListener);
     }
 
     @Override
@@ -68,17 +79,19 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
 
     static class CarouselViewHolder extends RecyclerView.ViewHolder {
         private final ImageView image;
+        private final ImageView favorite;
         private final TextView title;
         private final TextView date;
 
         public CarouselViewHolder(@NonNull View itemView) {
             super(itemView);
             image = itemView.findViewById(R.id.event_image);
+            favorite = itemView.findViewById(R.id.event_favourite);
             title = itemView.findViewById(R.id.event_title);
             date = itemView.findViewById(R.id.event_date);
         }
 
-        public void bind(Event event, OnEventClickListener listener) {
+        public void bind(Event event, OnEventClickListener listener, OnFavoriteClickListener favoriteListener) {
             title.setText(event.getName());
             date.setText(event.getTime());
 
@@ -91,6 +104,38 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
             } else {
                 image.setImageResource(R.drawable.outline_account_circle_24);
                 image.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.button_purple));
+            }
+
+            // Favourite logic
+            User currentUser = DBProxy.getInstance().getCurrentUser();
+            if (currentUser != null && favorite != null) {
+                favorite.setVisibility(View.VISIBLE);
+                if (currentUser.isFavorite(event.getEventID())) {
+                    favorite.setImageResource(R.drawable.baseline_star_24);
+                } else {
+                    favorite.setImageResource(R.drawable.baseline_star_border_24);
+                }
+
+                favorite.setOnClickListener(v -> {
+                    if (favoriteListener != null) {
+                        favoriteListener.onFavoriteClick(event);
+                    } else {
+                        if (currentUser.isFavorite(event.getEventID())) {
+                            currentUser.removeFavoriteEvent(event.getEventID());
+                        } else {
+                            currentUser.addFavoriteEvent(event.getEventID());
+                        }
+                        DBProxy.getInstance().updateUser(currentUser);
+                        // Using a simple refresh of the favorite icon since it's a carousel
+                        if (currentUser.isFavorite(event.getEventID())) {
+                            favorite.setImageResource(R.drawable.baseline_star_24);
+                        } else {
+                            favorite.setImageResource(R.drawable.baseline_star_border_24);
+                        }
+                    }
+                });
+            } else if (favorite != null) {
+                favorite.setVisibility(View.GONE);
             }
 
             itemView.setOnClickListener(v -> {

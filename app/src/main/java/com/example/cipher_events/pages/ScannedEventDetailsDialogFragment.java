@@ -4,7 +4,6 @@ import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -31,12 +30,12 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
     private String eventId;
     private DBProxy db = DBProxy.getInstance();
     private ImageView bannerImage;
+    private ImageView favoriteButton;
     private TextView titleText;
     private TextView waitlistCountText;
     private TextView descriptionText;
     private TextView dateLocationText;
     private Button joinButton;
-    private String deviceId;
 
     public static ScannedEventDetailsDialogFragment newInstance(String eventId) {
         ScannedEventDetailsDialogFragment fragment = new ScannedEventDetailsDialogFragment();
@@ -44,12 +43,6 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
         args.putString("eventId", eventId);
         fragment.setArguments(args);
         return fragment;
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Nullable
@@ -62,6 +55,7 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
         View view = inflater.inflate(R.layout.dialog_scanned_event_details, container, false);
 
         bannerImage = view.findViewById(R.id.scanned_event_banner);
+        favoriteButton = view.findViewById(R.id.btn_favorite);
         titleText = view.findViewById(R.id.scanned_event_title);
         waitlistCountText = view.findViewById(R.id.scanned_event_waitlist_count);
         descriptionText = view.findViewById(R.id.scanned_event_description);
@@ -118,16 +112,32 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
             }
 
             // Get real user from DB
-            User currentUser = db.getUser(deviceId);
-            if (currentUser == null) {
-                // Fallback if user doesn't exist in DB yet
-                currentUser = new User("New Attendee", "", "", "", null);
-                currentUser.setDeviceID(deviceId);
+            User currentUser = db.getCurrentUser();
+
+            if (currentUser != null) {
+                favoriteButton.setVisibility(View.VISIBLE);
+                if (currentUser.isFavorite(eventId)) {
+                    favoriteButton.setImageResource(R.drawable.baseline_star_24);
+                } else {
+                    favoriteButton.setImageResource(R.drawable.baseline_star_border_24);
+                }
+
+                favoriteButton.setOnClickListener(v -> {
+                    if (currentUser.isFavorite(eventId)) {
+                        currentUser.removeFavoriteEvent(eventId);
+                    } else {
+                        currentUser.addFavoriteEvent(eventId);
+                    }
+                    db.updateUser(currentUser);
+                    refreshUI();
+                });
+            } else {
+                favoriteButton.setVisibility(View.GONE);
             }
 
             // Membership check
             boolean alreadyIn = false;
-            if (event.getEntrants() != null) {
+            if (event.getEntrants() != null && currentUser != null) {
                 for (User u : event.getEntrants()) {
                     if (u.getDeviceID().equals(currentUser.getDeviceID())) {
                         alreadyIn = true;
@@ -142,8 +152,9 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
                 setButtonToJoinWaitlist(joinButton);
             }
 
-            final User finalUser = currentUser;
             joinButton.setOnClickListener(v -> {
+                if (currentUser == null) return;
+                
                 if (event.getEntrants() == null) {
                     event.setEntrants(new ArrayList<>());
                 }
@@ -151,14 +162,14 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
                 // Check again to toggle
                 User foundUser = null;
                 for (User u : event.getEntrants()) {
-                    if (u.getDeviceID().equals(finalUser.getDeviceID())) {
+                    if (u.getDeviceID().equals(currentUser.getDeviceID())) {
                         foundUser = u;
                         break;
                     }
                 }
 
                 if (foundUser == null) {
-                    event.getEntrants().add(finalUser);
+                    event.getEntrants().add(currentUser);
                     db.updateEvent(event);
                     Toast.makeText(getContext(), "Joined waitlist successfully!", Toast.LENGTH_SHORT).show();
                 } else {
@@ -166,11 +177,11 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
                     db.updateEvent(event);
                     Toast.makeText(getContext(), "Left waitlist successfully!", Toast.LENGTH_SHORT).show();
                 }
-                // UI will refresh automatically via DB listener
             });
         } else {
             titleText.setText("Event Not Found");
             joinButton.setEnabled(false);
+            favoriteButton.setVisibility(View.GONE);
         }
     }
 

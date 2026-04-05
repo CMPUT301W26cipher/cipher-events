@@ -12,7 +12,7 @@
         android:layout_height="wrap_content"
         android:orientation="vertical">
 
-        <!-- Banner with Rounded Corners -->
+        <!-- Banner with Rounded Corners and Favorite Button -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="200dp"
@@ -20,12 +20,30 @@
             app:cardElevation="0dp"
             android:layout_marginBottom="16dp">
 
-            <ImageView
-                android:id="@+id/detail_banner"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/gray_placeholder" />
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/detail_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/gray_placeholder" />
+
+                <ImageView
+                    android:id="@+id/btn_favorite"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="12dp"
+                    android:padding="8dp"
+                    android:background="@drawable/button_background_purple"
+                    android:backgroundTint="#44454261"
+                    android:alpha="0.6"
+                    android:src="@drawable/baseline_star_border_24"
+                    app:tint="@color/white" />
+            </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
         <TextView

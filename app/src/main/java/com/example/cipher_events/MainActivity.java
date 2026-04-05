@@ -24,8 +24,8 @@ import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.notifications.NotificationService;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminBrowseEventsFragment;
-import com.example.cipher_events.pages.AdminBrowseImagesFragment;
 import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
+import com.example.cipher_events.pages.AdminBrowseImagesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.AdminNotificationsFragment;
 import com.example.cipher_events.pages.AdminProfileFragment;
@@ -47,7 +47,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements DBProxy.OnDataChangedListener {
     DBProxy DB = DBProxy.getInstance();
     Notifier notifier;
     FragmentManager fragmentManager = getSupportFragmentManager();
@@ -58,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String PREFS_NAME = "CipherEventsPrefs";
     private static final String KEY_LOGGED_IN = "isLoggedIn";
     private static final String KEY_ROLE = "userRole";
-    private static final String KEY_DEVICE_ID = "deviceID";
+    private static final String KEY_DEVICE_ID = "deviceID"; // Represents the unique account UID
 
     // Firestore-backed services
     private UserProfileService userProfileService;
@@ -96,6 +96,9 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.setVisibility(View.GONE); // Hide by default
         
         tvCurrentRole = findViewById(R.id.tv_current_role);
+
+        // Add listener BEFORE checking persistence
+        DB.addListener(this);
 
         // Check for persistent login
         checkPersistentLogin();
@@ -139,21 +142,53 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        DB.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        // DBProxy handles updating the currentUser object internally.
+        // Ensure the currentRole is in sync if it changed.
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+        if (isLoggedIn) {
+            String role = prefs.getString(KEY_ROLE, "");
+            if (this.currentRole != null && !this.currentRole.equals(role)) {
+                this.currentRole = role;
+                updateNavigationMenu();
+            }
+        }
+    }
+
     private void checkPersistentLogin() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
         boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
 
         if (isLoggedIn) {
             currentRole = prefs.getString(KEY_ROLE, "");
-            String deviceID = prefs.getString(KEY_DEVICE_ID, "");
+            String accountID = prefs.getString(KEY_DEVICE_ID, "");
             
             // Re-sync with DB
-            if ("ADMIN".equals(currentRole)) {
-                DB.setCurrentUser(DB.getAdmin(deviceID));
-            } else if ("ORGANIZER".equals(currentRole)) {
-                DB.setCurrentUser(DB.getOrganizer(deviceID));
+            User found = null;
+            if ("ADMIN".equals(currentRole)) found = DB.getAdmin(accountID);
+            else if ("ORGANIZER".equals(currentRole)) found = DB.getOrganizer(accountID);
+            else found = DB.getUser(accountID);
+            
+            if (found != null) {
+                DB.setCurrentUser(found);
             } else {
-                DB.setCurrentUser(DB.getUser(deviceID));
+                // Not found in local lists yet. Set a placeholder with the ID.
+                // DBProxy will swap this for the real user once Firestore data arrives.
+                User placeholder;
+                if ("ADMIN".equals(currentRole)) placeholder = new Admin();
+                else if ("ORGANIZER".equals(currentRole)) placeholder = new Organizer();
+                else placeholder = new User();
+                
+                placeholder.setDeviceID(accountID);
+                DB.setCurrentUser(placeholder);
             }
             
             updateNavigationMenu();
@@ -171,14 +206,19 @@ public class MainActivity extends AppCompatActivity {
         editor.apply();
     }
 
-    public void loginSuccess(String role) {
-        onRoleSelected(role);
+    public void loginSuccess(String role, String accountID) {
+        onRoleSelected(role, accountID);
     }
 
     public void onRoleSelected(String role) {
-        currentRole = role;
+        // Fallback for older code using device ID as account ID
         String deviceID = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-        saveLoginSession(role, deviceID);
+        onRoleSelected(role, deviceID);
+    }
+
+    public void onRoleSelected(String role, String accountID) {
+        currentRole = role;
+        saveLoginSession(role, accountID);
         updateNavigationMenu();
     }
 
@@ -208,7 +248,7 @@ public class MainActivity extends AppCompatActivity {
             tvCurrentRole.setVisibility(View.VISIBLE);
             tvCurrentRole.setText("Role: " + currentRole);
             
-            // Optional: Color role tag based on role
+            // Color role tag based on role
             int roleColorRes = R.color.role_attendee;
             if ("ORGANIZER".equals(currentRole)) roleColorRes = R.color.role_organizer;
             else if ("ADMIN".equals(currentRole)) roleColorRes = R.color.role_admin;

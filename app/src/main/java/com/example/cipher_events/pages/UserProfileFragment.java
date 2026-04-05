@@ -6,7 +6,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
-import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.LayoutInflater;
@@ -45,7 +44,6 @@ public class UserProfileFragment extends Fragment {
     private ProgressBar progressBar;
     
     private DBProxy dbProxy;
-    private String deviceId;
     private User currentUser;
     private Uri selectedImageUri;
 
@@ -71,7 +69,6 @@ public class UserProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbProxy = DBProxy.getInstance();
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Override
@@ -110,7 +107,7 @@ public class UserProfileFragment extends Fragment {
     }
 
     private void loadUserData() {
-        currentUser = dbProxy.getUser(deviceId);
+        currentUser = dbProxy.getCurrentUser();
         if (currentUser != null) {
             editName.setText(currentUser.getName());
             editEmail.setText(currentUser.getEmail());
@@ -149,7 +146,7 @@ public class UserProfileFragment extends Fragment {
 
         deleteButton.setOnClickListener(v -> {
             if (currentUser != null) {
-                dbProxy.deleteUser(deviceId);
+                dbProxy.deleteUser(currentUser.getDeviceID());
                 Toast.makeText(getContext(), "Profile Deleted", Toast.LENGTH_SHORT).show();
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).logout();
@@ -173,6 +170,11 @@ public class UserProfileFragment extends Fragment {
     }
 
     private void saveProfile() {
+        if (currentUser == null) {
+            Toast.makeText(getContext(), "Error: No user logged in", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         String name = editName.getText().toString().trim();
         String email = editEmail.getText().toString().trim();
         String password = editPassword.getText().toString().trim();
@@ -200,22 +202,16 @@ public class UserProfileFragment extends Fragment {
         saveButton.setEnabled(false);
 
         String profilePicUrl = (selectedImageUri != null) ? selectedImageUri.toString() : 
-                              (currentUser != null ? currentUser.getProfilePictureURL() : null);
+                              currentUser.getProfilePictureURL();
 
-        if (currentUser == null) {
-            currentUser = new User(name, email, password, phone, profilePicUrl);
-            currentUser.setDeviceID(deviceId);
-            currentUser.setNotificationsEnabled(notifications);
-            dbProxy.addUser(currentUser);
-        } else {
-            currentUser.setName(name);
-            currentUser.setEmail(email);
-            currentUser.setPassword(password);
-            currentUser.setPhoneNumber(phone);
-            currentUser.setProfilePictureURL(profilePicUrl);
-            currentUser.setNotificationsEnabled(notifications);
-            dbProxy.updateUser(currentUser);
-        }
+        currentUser.setName(name);
+        currentUser.setEmail(email);
+        currentUser.setPassword(password);
+        currentUser.setPhoneNumber(phone);
+        currentUser.setProfilePictureURL(profilePicUrl);
+        currentUser.setNotificationsEnabled(notifications);
+        
+        dbProxy.updateUser(currentUser);
 
         // Simulate a brief delay for a better "aesthetic" feel of saving
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
