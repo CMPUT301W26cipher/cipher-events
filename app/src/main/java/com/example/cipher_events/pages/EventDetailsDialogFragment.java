@@ -64,6 +64,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView dateLocation;
     private ImageView banner;
     private ImageView favoriteButton;
+    private ImageView closeButton;
+    private Button closeButtonBottom;
     private Button actionButton;
     private Button notifyButton;
     private Button messageButton;
@@ -142,6 +144,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         dateLocation = view.findViewById(R.id.detail_date_location);
         banner = view.findViewById(R.id.detail_banner);
         favoriteButton = view.findViewById(R.id.btn_favorite);
+        closeButton = view.findViewById(R.id.btn_close);
+        closeButtonBottom = view.findViewById(R.id.btn_close_bottom);
         lotteryContainer = view.findViewById(R.id.lottery_container);
         lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
@@ -166,6 +170,13 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             isOrganizerView = args.getBoolean("isOrganizerView", false);
             currentDeviceID = args.getString("currentDeviceID");
             tagsFromArgs = args.getStringArrayList("tags");
+        }
+
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> dismiss());
+        }
+        if (closeButtonBottom != null) {
+            closeButtonBottom.setOnClickListener(v -> dismiss());
         }
 
         setupViewMode();
@@ -292,12 +303,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     }
 
     private void postComment(String message) {
-        String deviceID = Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
-
-        User currentUser = db.getUser(deviceID);
+        User currentUser = db.getCurrentUser();
+        String deviceID = currentUser != null ? currentUser.getDeviceID() : "unknown";
         String authorName = (currentUser != null) ? currentUser.getName() : "Anonymous";
         String role = isOrganizerView ? "organizer" : "entrant";
         String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())

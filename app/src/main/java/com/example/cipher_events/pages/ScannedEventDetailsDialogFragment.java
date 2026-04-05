@@ -31,6 +31,7 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
     private DBProxy db = DBProxy.getInstance();
     private ImageView bannerImage;
     private ImageView favoriteButton;
+    private ImageView closeButton;
     private TextView titleText;
     private TextView waitlistCountText;
     private TextView descriptionText;
@@ -56,6 +57,7 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
 
         bannerImage = view.findViewById(R.id.scanned_event_banner);
         favoriteButton = view.findViewById(R.id.btn_favorite);
+        closeButton = view.findViewById(R.id.btn_close);
         titleText = view.findViewById(R.id.scanned_event_title);
         waitlistCountText = view.findViewById(R.id.scanned_event_waitlist_count);
         descriptionText = view.findViewById(R.id.scanned_event_description);
@@ -65,6 +67,10 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
         if (getArguments() != null) {
             eventId = getArguments().getString("eventId");
             refreshUI();
+        }
+
+        if (closeButton != null) {
+            closeButton.setOnClickListener(v -> dismiss());
         }
 
         return view;

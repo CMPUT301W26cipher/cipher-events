@@ -43,6 +43,19 @@
                     android:alpha="0.6"
                     android:src="@drawable/baseline_star_border_24"
                     app:tint="@color/white" />
+
+                <ImageView
+                    android:id="@+id/btn_close"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:padding="8dp"
+                    android:background="@drawable/button_background_purple"
+                    android:backgroundTint="#44454261"
+                    android:alpha="0.6"
+                    android:src="@drawable/baseline_close_24"
+                    app:tint="@color/white" />
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
@@ -277,6 +290,17 @@
             android:backgroundTint="@color/button_purple"
             android:textColor="@color/white"
             android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+        <Button
+            android:id="@+id/btn_close_bottom"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="Close"
+            android:backgroundTint="@color/input_background"
+            android:textColor="@color/white"
             android:textStyle="bold"
             app:cornerRadius="12dp" />
 
