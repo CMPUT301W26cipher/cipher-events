@@ -141,9 +141,25 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
                 favoriteButton.setVisibility(View.GONE);
             }
 
-            // Membership check
+            if (currentUser == null) {
+                setButtonToJoinWaitlist(joinButton);
+                return;
+            }
+
+// Check if invited
+            boolean isInvited = false;
+            if (event.getInvitedEntrants() != null) {
+                for (User u : event.getInvitedEntrants()) {
+                    if (u.getDeviceID().equals(currentUser.getDeviceID())) {
+                        isInvited = true;
+                        break;
+                    }
+                }
+            }
+
+// Check if already in waitlist
             boolean alreadyIn = false;
-            if (event.getEntrants() != null && currentUser != null) {
+            if (event.getEntrants() != null) {
                 for (User u : event.getEntrants()) {
                     if (u.getDeviceID().equals(currentUser.getDeviceID())) {
                         alreadyIn = true;
@@ -152,7 +168,46 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
                 }
             }
 
-            if (alreadyIn) {
+            if (isInvited) {
+                // Show accept/decline buttons
+                joinButton.setText("Accept Invitation");
+                joinButton.setTextColor(ContextCompat.getColor(requireContext(), R.color.white));
+                joinButton.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.role_organizer)));
+                joinButton.setOnClickListener(v -> {
+                    com.example.cipher_events.waitinglist.WaitingListService service =
+                            new com.example.cipher_events.waitinglist.WaitingListService(
+                                    new com.example.cipher_events.user.UserEventHistoryRepository());
+                    service.acceptInvitation(currentUser, event);
+                    // Move to enrolled
+                    if (event.getEnrolledEntrants() == null) event.setEnrolledEntrants(new java.util.ArrayList<>());
+                    event.getEnrolledEntrants().add(currentUser);
+                    db.updateEvent(event);
+                    Toast.makeText(getContext(), "Invitation accepted!", Toast.LENGTH_SHORT).show();
+                    refreshUI();
+                });
+
+                // Add decline button - reuse existing button, add new one programmatically
+                // For now show toast option via long press
+                joinButton.setOnLongClickListener(v -> {
+                    new android.app.AlertDialog.Builder(requireContext())
+                            .setTitle("Decline Invitation")
+                            .setMessage("Are you sure you want to decline?")
+                            .setPositiveButton("Decline", (dialog, which) -> {
+                                com.example.cipher_events.waitinglist.WaitingListService service =
+                                        new com.example.cipher_events.waitinglist.WaitingListService(
+                                                new com.example.cipher_events.user.UserEventHistoryRepository());
+                                service.declineInvitation(currentUser, event);
+                                if (event.getCancelledEntrants() == null) event.setCancelledEntrants(new java.util.ArrayList<>());
+                                event.getCancelledEntrants().add(currentUser);
+                                db.updateEvent(event);
+                                Toast.makeText(getContext(), "Invitation declined", Toast.LENGTH_SHORT).show();
+                                refreshUI();
+                            })
+                            .setNegativeButton("Cancel", null)
+                            .show();
+                    return true;
+                });
+            } else if (alreadyIn) {
                 setButtonToJoined(joinButton);
             } else {
                 setButtonToJoinWaitlist(joinButton);
