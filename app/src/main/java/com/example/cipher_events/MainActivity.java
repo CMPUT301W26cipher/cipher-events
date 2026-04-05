@@ -24,6 +24,7 @@ import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.notifications.NotificationService;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminBrowseEventsFragment;
+import com.example.cipher_events.pages.AdminBrowseImagesFragment;
 import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
 import com.example.cipher_events.pages.AdminBrowseImagesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
