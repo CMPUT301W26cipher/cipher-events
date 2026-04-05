@@ -1,7 +1,6 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +9,6 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
-import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -33,7 +31,6 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
     private EventAdapter adapter;
     private final List<Event> filteredEvents = new ArrayList<>();
     private final DBProxy db = DBProxy.getInstance();
-    private String deviceId;
     
     private TextView tabWaitlist, tabFavourite;
     private View emptyStateContainer;
@@ -44,12 +41,6 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
 
     public FavouritesFragment() {
         // Required empty public constructor
-    }
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Override
@@ -123,17 +114,25 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
     private void refreshUI() {
         filteredEvents.clear();
         ArrayList<Event> allEvents = db.getAllEvents();
+        User currentUser = db.getCurrentUser();
 
         if (isWaitlistTab) {
             for (Event event : allEvents) {
-                if (isUserInWaitlist(event)) {
+                if (isUserInWaitlist(event, currentUser)) {
                     filteredEvents.add(event);
                 }
             }
             tvEmptyMsg.setText("You haven't joined any waitlists yet.");
             emptyIcon.setImageResource(R.drawable.baseline_notifications_none_24);
         } else {
-            // Placeholder for Favourite logic
+            if (currentUser != null) {
+                ArrayList<String> favorites = currentUser.getFavoriteEventIds();
+                for (Event event : allEvents) {
+                    if (favorites.contains(event.getEventID())) {
+                        filteredEvents.add(event);
+                    }
+                }
+            }
             tvEmptyMsg.setText("No favourite events yet.");
             emptyIcon.setImageResource(R.drawable.baseline_star_border_24);
         }
@@ -151,10 +150,11 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
         updateTabStyles();
     }
 
-    private boolean isUserInWaitlist(Event event) {
-        if (event.getEntrants() == null) return false;
+    private boolean isUserInWaitlist(Event event, User currentUser) {
+        if (event.getEntrants() == null || currentUser == null) return false;
+        String currentId = currentUser.getDeviceID();
         for (User u : event.getEntrants()) {
-            if (u.getDeviceID() != null && u.getDeviceID().equals(deviceId)) {
+            if (u.getDeviceID() != null && u.getDeviceID().equals(currentId)) {
                 return true;
             }
         }

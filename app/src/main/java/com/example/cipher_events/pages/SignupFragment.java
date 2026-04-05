@@ -1,7 +1,6 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -77,17 +76,19 @@ public class SignupFragment extends Fragment {
                 return;
             }
 
-            String deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
             DBProxy db = DBProxy.getInstance();
+            String accountID;
 
             if ("ORGANIZER".equals(role)) {
                 Organizer newOrg = new Organizer(name, email, password, "", null);
-                newOrg.setDeviceID(deviceId);
+                // deviceID is now a unique account UUID generated in User constructor.
+                // We no longer overwrite it with hardware ANDROID_ID to support multiple accounts.
+                accountID = newOrg.getDeviceID();
                 db.addOrganizer(newOrg);
                 db.setCurrentUser(newOrg);
             } else {
                 User newUser = new User(name, email, password, "", null);
-                newUser.setDeviceID(deviceId);
+                accountID = newUser.getDeviceID();
                 db.addUser(newUser);
                 db.setCurrentUser(newUser);
             }
@@ -95,7 +96,7 @@ public class SignupFragment extends Fragment {
             Toast.makeText(getContext(), "Welcome to Cipher Events!", Toast.LENGTH_SHORT).show();
 
             if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).onRoleSelected(role);
+                ((MainActivity) getActivity()).onRoleSelected(role, accountID);
             }
         });
 

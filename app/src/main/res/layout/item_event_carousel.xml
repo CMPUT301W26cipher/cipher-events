@@ -20,6 +20,19 @@
             android:src="@drawable/outline_account_circle_24"
             android:contentDescription="Event Image" />
 
+        <ImageView
+            android:id="@+id/event_favourite"
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:layout_margin="12dp"
+            android:padding="6dp"
+            android:src="@drawable/baseline_star_border_24"
+            android:background="@drawable/button_background_purple"
+            android:backgroundTint="#44454261"
+            android:alpha="0.6"
+            android:layout_gravity="top|start"
+            app:tint="@color/white" />
+
         <View
             android:layout_width="match_parent"
             android:layout_height="match_parent"
