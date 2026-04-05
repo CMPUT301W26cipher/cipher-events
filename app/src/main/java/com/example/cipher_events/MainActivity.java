@@ -24,6 +24,7 @@ import com.example.cipher_events.notifications.Notifier;
 import com.example.cipher_events.notifications.NotificationService;
 import com.example.cipher_events.organizer.OrganizerEventService;
 import com.example.cipher_events.pages.AdminBrowseEventsFragment;
+import com.example.cipher_events.pages.AdminBrowseImagesFragment;
 import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.AdminNotificationsFragment;
@@ -116,7 +117,9 @@ public class MainActivity extends AppCompatActivity {
                     replaceFragment(new AdminBrowseEventsFragment());
                 } else if (id == R.id.menu_admin_profiles) {
                     replaceFragment(new AdminBrowseProfilesFragment());
-                } else if (id == R.id.menu_admin_notifications) {
+                } else if (id == R.id.menu_admin_images) {
+                    replaceFragment(new AdminBrowseImagesFragment());
+                } else if (id == R.id.menu_admin_logs) {
                     replaceFragment(new AdminNotificationsFragment());
                 } else if (id == R.id.menu_admin_profile) {
                     replaceFragment(new AdminProfileFragment());

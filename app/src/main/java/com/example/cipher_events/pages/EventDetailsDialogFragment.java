@@ -251,9 +251,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                     Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
                 }
             });
-
-            descriptionLabel.setVisibility(View.GONE);
-            description.setVisibility(View.GONE);
             
             lotteryContainer.setVisibility(View.VISIBLE);
             lotteryText.setText(
@@ -424,10 +421,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " people in waitlist");
             
-            if (isOrganizerView) {
-                description.setText(event.getDescription());
+            String desc = event.getDescription();
+            if (desc != null && !desc.isEmpty()) {
+                description.setText(desc);
                 descriptionLabel.setVisibility(View.VISIBLE);
                 description.setVisibility(View.VISIBLE);
+            } else {
+                descriptionLabel.setVisibility(View.GONE);
+                description.setVisibility(View.GONE);
             }
             
             dateLocation.setText(event.getTime() + " • " + event.getLocation());

@@ -1,11 +1,13 @@
 package com.example.cipher_events.pages;
 
 import android.app.AlertDialog;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -15,6 +17,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
@@ -25,12 +28,16 @@ import com.example.cipher_events.database.User;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Fragment for administrators to browse and manage all uploaded images (event posters and profile pictures).
+ */
 public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private RecyclerView recyclerView;
-    private TextView tvEmptyState;
+    private View emptyStateContainer;
+    private SwipeRefreshLayout swipeRefreshLayout;
     private ImageAdapter adapter;
-    private DBProxy db = DBProxy.getInstance();
+    private final DBProxy db = DBProxy.getInstance();
 
     public AdminBrowseImagesFragment() {
         // Required empty public constructor
@@ -42,11 +49,15 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         View view = inflater.inflate(R.layout.fragment_admin_browse_images, container, false);
 
         recyclerView = view.findViewById(R.id.rv_images);
-        tvEmptyState = view.findViewById(R.id.tv_empty_state);
+        emptyStateContainer = view.findViewById(R.id.empty_state_container);
+        swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
 
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         adapter = new ImageAdapter(new ArrayList<>(), this::onImageClick, this::onDeleteClick);
         recyclerView.setAdapter(adapter);
+
+        swipeRefreshLayout.setColorSchemeResources(R.color.button_purple);
+        swipeRefreshLayout.setOnRefreshListener(this::loadImages);
 
         loadImages();
 
@@ -54,6 +65,8 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
     }
 
     private void loadImages() {
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(true);
+        
         List<AdminImage> imageList = new ArrayList<>();
 
         // Collect event posters
@@ -75,25 +88,35 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         }
 
         if (imageList.isEmpty()) {
-            tvEmptyState.setVisibility(View.VISIBLE);
+            emptyStateContainer.setVisibility(View.VISIBLE);
             recyclerView.setVisibility(View.GONE);
         } else {
-            tvEmptyState.setVisibility(View.GONE);
+            emptyStateContainer.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
             adapter.setImages(imageList);
         }
+
+        if (swipeRefreshLayout != null) swipeRefreshLayout.setRefreshing(false);
     }
 
     private void onImageClick(AdminImage image) {
-        // Simple preview dialog
         View dialogView = LayoutInflater.from(getContext()).inflate(R.layout.dialog_image_preview, null);
         ImageView ivPreview = dialogView.findViewById(R.id.iv_preview);
-        Glide.with(this).load(image.url).into(ivPreview);
+        
+        Glide.with(this)
+                .load(image.url)
+                .into(ivPreview);
 
-        new AlertDialog.Builder(getContext())
+        AlertDialog dialog = new AlertDialog.Builder(getContext())
                 .setView(dialogView)
-                .setPositiveButton("Close", null)
-                .show();
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        
+        ivPreview.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     private void onDeleteClick(AdminImage image) {
@@ -103,11 +126,11 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
                 .setPositiveButton("Remove", (dialog, which) -> {
                     if (image.sourceObject instanceof Event) {
                         Event event = (Event) image.sourceObject;
-                        event.setPosterPictureURL(""); // Or null
+                        event.setPosterPictureURL("");
                         db.updateEvent(event);
                     } else if (image.sourceObject instanceof User) {
                         User user = (User) image.sourceObject;
-                        user.setProfilePictureURL(""); // Or null
+                        user.setProfilePictureURL("");
                         db.updateUser(user);
                     }
                     Toast.makeText(getContext(), "Image removed", Toast.LENGTH_SHORT).show();
@@ -136,6 +159,9 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         }
     }
 
+    /**
+     * Data model for the adapter representing an image and its source.
+     */
     private static class AdminImage {
         String url;
         String type;
@@ -150,8 +176,8 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
 
     private static class ImageAdapter extends RecyclerView.Adapter<ImageAdapter.ViewHolder> {
         private List<AdminImage> images;
-        private OnImageClickListener clickListener;
-        private OnDeleteClickListener deleteListener;
+        private final OnImageClickListener clickListener;
+        private final OnDeleteClickListener deleteListener;
 
         interface OnImageClickListener { void onImageClick(AdminImage image); }
         interface OnDeleteClickListener { void onDeleteClick(AdminImage image); }
@@ -177,14 +203,20 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
             AdminImage image = images.get(position);
-            Glide.with(holder.itemView.getContext()).load(image.url).into(holder.ivImage);
+            
+            Glide.with(holder.itemView.getContext())
+                    .load(image.url)
+                    .centerCrop()
+                    .placeholder(R.drawable.gray_placeholder)
+                    .into(holder.ivImage);
+            
             holder.tvType.setText(image.type);
             
             String sourceName = "Unknown";
             if (image.sourceObject instanceof Event) {
-                sourceName = "Event: " + ((Event) image.sourceObject).getName();
+                sourceName = ((Event) image.sourceObject).getName();
             } else if (image.sourceObject instanceof User) {
-                sourceName = "User: " + ((User) image.sourceObject).getName();
+                sourceName = ((User) image.sourceObject).getName();
             }
             holder.tvSource.setText(sourceName);
 
@@ -198,7 +230,7 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         static class ViewHolder extends RecyclerView.ViewHolder {
             ImageView ivImage;
             TextView tvType, tvSource;
-            Button btnDelete;
+            ImageButton btnDelete;
 
             ViewHolder(View itemView) {
                 super(itemView);
