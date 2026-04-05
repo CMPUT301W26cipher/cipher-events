@@ -1,19 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <item android:title="Events"
-        android:icon="@drawable/baseline_home_24"
-        android:id="@+id/menu_admin_events" />
+    <item android:id="@+id/menu_admin_events"
+        android:title="Events"
+        android:icon="@drawable/baseline_home_24" />
 
-    <item android:title="Profiles"
-        android:icon="@drawable/baseline_star_border_24"
-        android:id="@+id/menu_admin_profiles" />
+    <item android:id="@+id/menu_admin_profiles"
+        android:title="Profiles"
+        android:icon="@drawable/baseline_star_border_24" />
 
-    <item android:title="Notifications"
-        android:icon="@drawable/baseline_notifications_none_24"
-        android:id="@+id/menu_admin_notifications" />
+    <item android:id="@+id/menu_admin_images"
+        android:title="Images"
+        android:icon="@android:drawable/ic_menu_gallery" />
 
-    <item android:title="Profile"
-        android:icon="@drawable/outline_account_circle_24"
-        android:id="@+id/menu_admin_profile" />
+    <item android:id="@+id/menu_admin_logs"
+        android:title="Logs"
+        android:icon="@drawable/baseline_notifications_24" />
+
+    <item android:id="@+id/menu_admin_profile"
+        android:title="Profile"
+        android:icon="@drawable/outline_account_circle_24" />
+
 </menu>

@@ -239,6 +239,18 @@
             android:visibility="gone" />
 
         <Button
+            android:id="@+id/message_button"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="16dp"
+            android:text="Message Organizer"
+            android:backgroundTint="@color/button_purple"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+        <Button
             android:id="@+id/scan_button"
             android:layout_width="match_parent"
             android:layout_height="56dp"

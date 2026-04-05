@@ -1,93 +1,118 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dialog_background"
-    android:orientation="vertical">
+    android:background="@color/dialog_background">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Explore Events"
-        android:textColor="@color/white"
-        android:textSize="28sp"
-        android:textStyle="bold"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginBottom="16dp"/>
-
-    <HorizontalScrollView
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:scrollbars="none"
-        android:paddingStart="24dp"
-        android:paddingEnd="24dp"
-        android:clipToPadding="false"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical">
 
-        <LinearLayout
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="horizontal">
+            android:text="Featured Events"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginStart="24dp"
+            android:layout_marginTop="24dp"
+            android:layout_marginBottom="12dp"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_filter_today"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_carousel"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:clipToPadding="false"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:layout_marginBottom="16dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Explore All"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginStart="24dp"
+            android:layout_marginBottom="12dp"/>
+
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:paddingStart="24dp"
+            android:paddingEnd="24dp"
+            android:clipToPadding="false"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Today"
-                android:textColor="@color/white"
-                android:textAllCaps="false"
-                app:cornerRadius="20dp"
-                app:backgroundTint="@color/button_purple"
-                android:layout_marginEnd="8dp"/>
+                android:orientation="horizontal">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_filter_this_week"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="This Week"
-                android:textColor="@color/white"
-                android:textAllCaps="false"
-                app:cornerRadius="20dp"
-                app:backgroundTint="@color/button_purple"
-                android:layout_marginEnd="8dp"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_filter_today"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Today"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp"
+                    app:backgroundTint="@color/button_purple"
+                    android:layout_marginEnd="8dp"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_filter_public"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Public"
-                android:textColor="@color/white"
-                android:textAllCaps="false"
-                app:cornerRadius="20dp"
-                app:backgroundTint="@color/button_purple"
-                android:layout_marginEnd="8dp"/>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_filter_this_week"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="This Week"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp"
+                    app:backgroundTint="@color/button_purple"
+                    android:layout_marginEnd="8dp"/>
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btn_filter_capacity"
-                style="@style/Widget.MaterialComponents.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Not Full"
-                android:textColor="@color/white"
-                android:textAllCaps="false"
-                app:cornerRadius="20dp"
-                app:backgroundTint="@color/button_purple"/>
-        </LinearLayout>
-    </HorizontalScrollView>
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_filter_public"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Public"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp"
+                    app:backgroundTint="@color/button_purple"
+                    android:layout_marginEnd="8dp"/>
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recycler_events"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:paddingStart="16dp"
-        android:paddingEnd="16dp"
-        android:clipToPadding="false"
-        android:scrollbars="vertical"
-        android:overScrollMode="never" />
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_filter_capacity"
+                    style="@style/Widget.MaterialComponents.Button.TextButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Not Full"
+                    android:textColor="@color/white"
+                    android:textAllCaps="false"
+                    app:cornerRadius="20dp"
+                    app:backgroundTint="@color/button_purple"/>
+            </LinearLayout>
+        </HorizontalScrollView>
 
-</LinearLayout>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recycler_events"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:clipToPadding="false"
+            android:scrollbars="vertical"
+            android:overScrollMode="never"
+            android:nestedScrollingEnabled="false" />
+
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
