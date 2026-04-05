@@ -127,6 +127,7 @@
             tools:text="This is a detailed description of the event. It can span multiple lines and should be easy to read." />
 
         <!-- Action Button -->
+        <!-- Action Button -->
         <Button
             android:id="@+id/btn_join_waitlist"
             android:layout_width="match_parent"
@@ -137,6 +138,19 @@
             android:textColor="@color/white"
             android:textSize="16sp"
             android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+        <Button
+            android:id="@+id/btn_decline_invitation"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="Decline Invitation"
+            android:backgroundTint="#F44336"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone"
             app:cornerRadius="12dp" />
 
         <!-- Added some bottom padding for better scroll feel -->
