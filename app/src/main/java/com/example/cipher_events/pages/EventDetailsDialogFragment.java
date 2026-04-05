@@ -217,7 +217,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             notifyButton.setVisibility(View.VISIBLE);
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
         } else {
-            actionButton.setText("Join Waitlist");
+            actionButton.setText("Scan to Join");
             actionButton.setOnClickListener(v -> {
                 if (eventId != null) {
                     QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
