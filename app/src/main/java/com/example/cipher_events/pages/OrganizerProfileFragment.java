@@ -1,5 +1,6 @@
 package com.example.cipher_events.pages;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.KeyEvent;
@@ -13,6 +14,7 @@ import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -20,9 +22,10 @@ import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.database.User;
 import com.google.android.material.button.MaterialButton;
 
-public class OrganizerProfileFragment extends Fragment {
+public class OrganizerProfileFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private TextView nameText, emailText, phoneText;
     private EditText nameEdit, emailEdit, phoneEdit;
@@ -70,21 +73,52 @@ public class OrganizerProfileFragment extends Fragment {
         setupEditableField(phoneText, phoneEdit, "phone");
     }
 
-    private void loadOrganizerData() {
-        currentOrganizer = dbProxy.getOrganizer(deviceId);
-        if (currentOrganizer != null) {
-            nameText.setText(currentOrganizer.getName() != null ? currentOrganizer.getName() : "Set Name");
-            emailText.setText(currentOrganizer.getEmail() != null ? currentOrganizer.getEmail() : "Set Email");
-            phoneText.setText(currentOrganizer.getPhoneNumber() != null ? currentOrganizer.getPhoneNumber() : "Set Phone");
+    @Override
+    public void onStart() {
+        super.onStart();
+        dbProxy.addListener(this);
+        loadOrganizerData();
+    }
 
-            if (currentOrganizer.getProfilePictureURL() != null && !currentOrganizer.getProfilePictureURL().isEmpty()) {
+    @Override
+    public void onStop() {
+        super.onStop();
+        dbProxy.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        loadOrganizerData();
+    }
+
+    private void loadOrganizerData() {
+        User user = dbProxy.getCurrentUser();
+        if (user instanceof Organizer) {
+            currentOrganizer = (Organizer) user;
+        } else {
+            currentOrganizer = dbProxy.getOrganizer(deviceId);
+        }
+
+        if (currentOrganizer != null) {
+            nameText.setText(currentOrganizer.getName() != null && !currentOrganizer.getName().isEmpty() ? currentOrganizer.getName() : "Set Name");
+            emailText.setText(currentOrganizer.getEmail() != null && !currentOrganizer.getEmail().isEmpty() ? currentOrganizer.getEmail() : "Set Email");
+            phoneText.setText(currentOrganizer.getPhoneNumber() != null && !currentOrganizer.getPhoneNumber().isEmpty() ? currentOrganizer.getPhoneNumber() : "Set Phone");
+
+            String picUrl = currentOrganizer.getProfilePictureURL();
+            if (picUrl != null && !picUrl.isEmpty()) {
                 Glide.with(this)
-                        .load(currentOrganizer.getProfilePictureURL())
+                        .load(picUrl)
                         .placeholder(R.drawable.outline_account_circle_24)
                         .circleCrop()
                         .into(profileImage);
                 profileImage.setPadding(0, 0, 0, 0);
                 profileImage.setImageTintList(null);
+            } else {
+                // Show default icon if no URL
+                profileImage.setImageResource(R.drawable.outline_account_circle_24);
+                int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
+                profileImage.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
+                profileImage.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.white)));
             }
         }
     }
