@@ -23,12 +23,17 @@ import com.example.cipher_events.database.User;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.carousel.CarouselLayoutManager;
 import com.google.android.material.carousel.CarouselSnapHelper;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /**
  * HomeFragment displays a list of events with filtering options and a carousel for featured events.
@@ -43,9 +48,10 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
     private final ArrayList<Event> displayedEvents = new ArrayList<>();
     private final ArrayList<Event> featuredEvents = new ArrayList<>();
 
-    private MaterialButton btnToday, btnThisWeek, btnPublic, btnCapacity;
+    private MaterialButton btnToday, btnThisWeek, btnCapacity, btnTags;
     
     private String currentFilter = "ALL";
+    private String selectedTag = null;
 
     private final DBProxy db = DBProxy.getInstance();
 
@@ -73,8 +79,8 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
     private void initializeViews(View view) {
         btnToday = view.findViewById(R.id.btn_filter_today);
         btnThisWeek = view.findViewById(R.id.btn_filter_this_week);
-        btnPublic = view.findViewById(R.id.btn_filter_public);
         btnCapacity = view.findViewById(R.id.btn_filter_capacity);
+        btnTags = view.findViewById(R.id.btn_filter_tags);
         recyclerView = view.findViewById(R.id.recycler_events);
         carouselRecyclerView = view.findViewById(R.id.recycler_carousel);
     }
@@ -159,7 +165,7 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
                 event.getTime(),
                 event.getLocation(),
                 event.getEntrants() != null ? event.getEntrants().size() : 0,
-                new ArrayList<>() // Placeholder for tags
+                event.getTags() != null ? event.getTags() : new ArrayList<>()
         );
         dialog.show(getParentFragmentManager(), "EventDetailsDialog");
     }
@@ -167,10 +173,53 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
     private void setupListeners() {
         btnToday.setOnClickListener(v -> updateFilter("TODAY"));
         btnThisWeek.setOnClickListener(v -> updateFilter("THIS_WEEK"));
-        btnPublic.setOnClickListener(v -> updateFilter("PUBLIC"));
         if (btnCapacity != null) {
             btnCapacity.setOnClickListener(v -> updateFilter("CAPACITY"));
         }
+        if (btnTags != null) {
+            btnTags.setOnClickListener(v -> showTagSelectionDialog());
+        }
+    }
+
+    private void showTagSelectionDialog() {
+        Set<String> allTagsSet = new HashSet<>();
+        for (Event event : allEvents) {
+            if (event.getTags() != null) {
+                allTagsSet.addAll(event.getTags());
+            }
+        }
+        
+        List<String> sortedTags = new ArrayList<>(allTagsSet);
+        Collections.sort(sortedTags);
+        
+        String[] tagsArray = new String[sortedTags.size() + 1];
+        tagsArray[0] = "All Tags";
+        for (int i = 0; i < sortedTags.size(); i++) {
+            tagsArray[i + 1] = sortedTags.get(i);
+        }
+
+        int checkedItem = 0;
+        if (selectedTag != null) {
+            for (int i = 0; i < sortedTags.size(); i++) {
+                if (sortedTags.get(i).equals(selectedTag)) {
+                    checkedItem = i + 1;
+                    break;
+                }
+            }
+        }
+
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("Filter by Tag")
+                .setSingleChoiceItems(tagsArray, checkedItem, (dialog, which) -> {
+                    if (which == 0) {
+                        selectedTag = null;
+                    } else {
+                        selectedTag = tagsArray[which];
+                    }
+                    applyFilters();
+                    dialog.dismiss();
+                })
+                .show();
     }
 
     private void updateFilter(String filter) {
@@ -180,7 +229,11 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
 
     private void loadEvents() {
         allEvents.clear();
-        allEvents.addAll(db.getAllEvents());
+        for (Event event : db.getAllEvents()) {
+            if (event.isPublicEvent()) {
+                allEvents.add(event);
+            }
+        }
         
         featuredEvents.clear();
         for (Event e : allEvents) {
@@ -209,7 +262,8 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         Date nextWeek = cal.getTime();
 
         for (Event event : allEvents) {
-            if (matchesFilter(event, todayStr, today, nextWeek)) {
+            boolean matchesTag = (selectedTag == null) || (event.getTags() != null && event.getTags().contains(selectedTag));
+            if (matchesTag && matchesFilter(event, todayStr, today, nextWeek)) {
                 displayedEvents.add(event);
             }
         }
@@ -220,10 +274,6 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
 
     private boolean matchesFilter(Event event, String todayStr, Date today, Date nextWeek) {
         if (currentFilter.equals("ALL")) return true;
-
-        if (currentFilter.equals("PUBLIC")) {
-            return event.isPublicEvent();
-        }
 
         if (currentFilter.equals("CAPACITY")) {
             Integer capacity = event.getWaitingListCapacity();
@@ -254,9 +304,16 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
     private void updateButtonUI() {
         setButtonStyle(btnToday, "TODAY".equals(currentFilter));
         setButtonStyle(btnThisWeek, "THIS_WEEK".equals(currentFilter));
-        setButtonStyle(btnPublic, "PUBLIC".equals(currentFilter));
         if (btnCapacity != null) {
             setButtonStyle(btnCapacity, "CAPACITY".equals(currentFilter));
+        }
+        if (btnTags != null) {
+            setButtonStyle(btnTags, selectedTag != null);
+            if (selectedTag != null) {
+                btnTags.setText(selectedTag);
+            } else {
+                btnTags.setText("Tags");
+            }
         }
     }
 

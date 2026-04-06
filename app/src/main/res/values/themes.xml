@@ -16,16 +16,15 @@
     </style>
 
     <!-- Aesthetic Dialog Styles -->
-    <style name="CustomMaterialCalendar" parent="Widget.Material3.MaterialCalendar">
-        <item name="materialCalendarStyle">@style/Widget.Material3.MaterialCalendar</item>
-        <item name="materialCalendarFullscreenTheme">@style/Theme.Material3.DayNight.NoActionBar</item>
+    <style name="CustomMaterialCalendar" parent="ThemeOverlay.Material3.MaterialCalendar">
+        <!-- Add theme overrides here if needed, e.g. colorPrimary -->
     </style>
 
-    <style name="CustomMaterialTimePicker" parent="Widget.Material3.MaterialTimePicker">
-        <item name="materialTimePickerStyle">@style/Widget.Material3.MaterialTimePicker</item>
+    <style name="CustomMaterialTimePicker" parent="ThemeOverlay.Material3.MaterialTimePicker">
+        <!-- Add theme overrides here if needed -->
     </style>
 
-    <style name="CustomAlertDialog" parent="Theme.Material3.DayNight.Dialog.Alert">
+    <style name="CustomAlertDialog" parent="ThemeOverlay.Material3.Dialog.Alert">
         <item name="android:windowBackground">@android:color/transparent</item>
         <item name="android:backgroundDimEnabled">true</item>
     </style>
