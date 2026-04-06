@@ -7,6 +7,8 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
+import com.jakewharton.threetenabp.AndroidThreeTen;
+
 public class App extends Application {
     private static Context context;
     private static Activity currentActivity;
@@ -16,6 +18,7 @@ public class App extends Application {
     public void onCreate() {
         super.onCreate();
         context = getApplicationContext();
+        AndroidThreeTen.init(this);
 
         // Automatically track current activity
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {

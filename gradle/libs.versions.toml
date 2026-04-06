@@ -11,6 +11,8 @@ activity = "1.13.0"
 constraintlayout = "2.2.1"
 firebaseFunctions = "22.1.0"
 swiperefreshlayout = "1.2.0"
+materialCalendarView = "2.0.1"
+threetenabp = "1.4.9"
 
 [libraries]
 core = { module = "com.google.zxing:core", version.ref = "core" }
@@ -26,6 +28,8 @@ activity = { group = "androidx.activity", name = "activity", version.ref = "acti
 constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 firebase-functions = { group = "com.google.firebase", name = "firebase-functions", version.ref = "firebaseFunctions" }
 swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
+material-calendarview = { module = "com.github.prolificinteractive:material-calendarview", version.ref = "materialCalendarView" }
+threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref = "threetenabp" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

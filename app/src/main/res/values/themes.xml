@@ -17,7 +17,27 @@
 
     <!-- Aesthetic Dialog Styles -->
     <style name="CustomMaterialCalendar" parent="ThemeOverlay.Material3.MaterialCalendar">
-        <!-- Add theme overrides here if needed, e.g. colorPrimary -->
+        <item name="colorSurface">@color/input_background</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="colorPrimary">@color/button_purple</item>
+        <!-- Brighter month/year text -->
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorPrimaryInverse">@color/white</item>
+        <item name="android:textColorSecondary">@color/white</item>
+    </style>
+
+    <style name="CalendarDateText" parent="android:TextAppearance.DeviceDefault.Small">
+        <item name="android:textColor">@color/white</item>
+    </style>
+
+    <style name="CalendarWeekText" parent="android:TextAppearance.DeviceDefault.Small">
+        <item name="android:textColor">@color/text_hint</item>
+        <item name="android:textStyle">bold</item>
+    </style>
+
+    <style name="CalendarHeaderText" parent="android:TextAppearance.DeviceDefault.Medium">
+        <item name="android:textColor">@color/white</item>
+        <item name="android:textStyle">bold</item>
     </style>
 
     <style name="CustomMaterialTimePicker" parent="ThemeOverlay.Material3.MaterialTimePicker">
