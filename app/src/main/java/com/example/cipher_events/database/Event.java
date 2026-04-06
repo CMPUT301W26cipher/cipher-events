@@ -29,6 +29,7 @@ public class Event {
 
     private ArrayList<EventComment> comments;
     private ArrayList<String> coOrganizerIds;
+    private ArrayList<String> pendingCoOrganizerIds;
     private ArrayList<String> tags;
     private boolean publicEvent;
     private Long registrationOpenTime;
@@ -70,6 +71,7 @@ public class Event {
 
         this.comments = new ArrayList<>();
         this.coOrganizerIds = new ArrayList<>();
+        this.pendingCoOrganizerIds = new ArrayList<>();
         this.tags = new ArrayList<>();
         this.messageThreads = messageThreads;
     }
@@ -232,6 +234,17 @@ public class Event {
 
     public void setCoOrganizerIds(ArrayList<String> coOrganizerIds) {
         this.coOrganizerIds = coOrganizerIds;
+    }
+
+    public ArrayList<String> getPendingCoOrganizerIds() {
+        if (pendingCoOrganizerIds == null) {
+            pendingCoOrganizerIds = new ArrayList<>();
+        }
+        return pendingCoOrganizerIds;
+    }
+
+    public void setPendingCoOrganizerIds(ArrayList<String> pendingCoOrganizerIds) {
+        this.pendingCoOrganizerIds = pendingCoOrganizerIds;
     }
 
     public ArrayList<String> getTags() {

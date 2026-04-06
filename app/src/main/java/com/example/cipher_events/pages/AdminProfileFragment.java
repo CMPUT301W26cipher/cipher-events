@@ -38,6 +38,7 @@ public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChan
 
     private MaterialButton enableEntrantBtn, disableEntrantBtn;
     private MaterialButton enableOrganizerBtn, disableOrganizerBtn;
+    private MaterialButton useEntrantBtn, useOrganizerBtn;
 
     public AdminProfileFragment() {}
 
@@ -164,13 +165,28 @@ public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChan
         enableOrganizerBtn = view.findViewById(R.id.btn_enable_organizer_role);
         disableOrganizerBtn = view.findViewById(R.id.btn_disable_organizer_role);
 
+        useEntrantBtn = view.findViewById(R.id.btn_use_entrant_view);
+        useOrganizerBtn = view.findViewById(R.id.btn_use_organizer_view);
         updateRoleButtonsVisibility();
 
         if (enableEntrantBtn != null) {
             enableEntrantBtn.setOnClickListener(v -> {
-                User u = new User(currentAdmin.getName(), currentAdmin.getEmail(), "", currentAdmin.getPhoneNumber(), currentAdmin.getProfilePictureURL());
-                u.setDeviceID(deviceId);
-                dbProxy.addUser(u);
+                User u = dbProxy.getUser(deviceId);
+
+                if (u == null) {
+                    u = new User(
+                            currentAdmin.getName(),
+                            currentAdmin.getEmail(),
+                            "",
+                            currentAdmin.getPhoneNumber(),
+                            currentAdmin.getProfilePictureURL()
+                    );
+                    u.setDeviceID(deviceId);
+                    dbProxy.addUser(u);
+                }
+                currentAdmin.setEntrantRole(true);
+                dbProxy.updateAdmin(currentAdmin);
+
                 Toast.makeText(getContext(), "Entrant role enabled", Toast.LENGTH_SHORT).show();
                 updateRoleButtonsVisibility();
             });
@@ -179,6 +195,9 @@ public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChan
         if (disableEntrantBtn != null) {
             disableEntrantBtn.setOnClickListener(v -> {
                 dbProxy.deleteUser(deviceId);
+                currentAdmin.setEntrantRole(false);
+                dbProxy.updateAdmin(currentAdmin);
+
                 Toast.makeText(getContext(), "Entrant role disabled", Toast.LENGTH_SHORT).show();
                 updateRoleButtonsVisibility();
             });
@@ -186,9 +205,22 @@ public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChan
 
         if (enableOrganizerBtn != null) {
             enableOrganizerBtn.setOnClickListener(v -> {
-                Organizer o = new Organizer(currentAdmin.getName(), currentAdmin.getEmail(), "", currentAdmin.getPhoneNumber(), currentAdmin.getProfilePictureURL());
-                o.setDeviceID(deviceId);
-                dbProxy.addOrganizer(o);
+                Organizer o = dbProxy.getOrganizer(deviceId);
+
+                if (o == null) {
+                    o = new Organizer(
+                            currentAdmin.getName(),
+                            currentAdmin.getEmail(),
+                            "",
+                            currentAdmin.getPhoneNumber(),
+                            currentAdmin.getProfilePictureURL()
+                    );
+                    o.setDeviceID(deviceId);
+                    dbProxy.addOrganizer(o);
+                }
+
+                currentAdmin.setOrganizerRole(true);
+                dbProxy.updateAdmin(currentAdmin);
                 Toast.makeText(getContext(), "Organizer role enabled", Toast.LENGTH_SHORT).show();
                 updateRoleButtonsVisibility();
             });
@@ -197,20 +229,70 @@ public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChan
         if (disableOrganizerBtn != null) {
             disableOrganizerBtn.setOnClickListener(v -> {
                 dbProxy.deleteOrganizer(deviceId);
+                currentAdmin.setOrganizerRole(false);
+                dbProxy.updateAdmin(currentAdmin);
+
                 Toast.makeText(getContext(), "Organizer role disabled", Toast.LENGTH_SHORT).show();
                 updateRoleButtonsVisibility();
+            });
+        }
+
+        if (useEntrantBtn != null) {
+            useEntrantBtn.setOnClickListener(v -> {
+                if (currentAdmin != null && currentAdmin.hasEntrantRole()) {
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).switchToEntrantView();
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Entrant role is not enabled", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        if (useOrganizerBtn != null) {
+            useOrganizerBtn.setOnClickListener(v -> {
+                if (currentAdmin != null && currentAdmin.hasOrganizerRole()) {
+                    if (getActivity() instanceof MainActivity) {
+                        ((MainActivity) getActivity()).switchToOrganizerView();
+                    }
+                } else {
+                    Toast.makeText(getContext(), "Organizer role is not enabled", Toast.LENGTH_SHORT).show();
+                }
             });
         }
     }
 
     private void updateRoleButtonsVisibility() {
-        boolean isEntrant = dbProxy.getUser(deviceId) != null;
-        boolean isOrganizer = dbProxy.getOrganizer(deviceId) != null;
+        boolean isEntrant = false;
+        boolean isOrganizer = false;
 
-        if (enableEntrantBtn != null) enableEntrantBtn.setVisibility(isEntrant ? View.GONE : View.VISIBLE);
-        if (disableEntrantBtn != null) disableEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
-        if (enableOrganizerBtn != null) enableOrganizerBtn.setVisibility(isOrganizer ? View.GONE : View.VISIBLE);
-        if (disableOrganizerBtn != null) disableOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
+        if (currentAdmin != null) {
+            isEntrant = currentAdmin.hasEntrantRole();
+            isOrganizer = currentAdmin.hasOrganizerRole();
+        } else {
+            isEntrant = dbProxy.getUser(deviceId) != null;
+            isOrganizer = dbProxy.getOrganizer(deviceId) != null;
+        }
+
+        if (enableEntrantBtn != null) {
+            enableEntrantBtn.setVisibility(isEntrant ? View.GONE : View.VISIBLE);
+        }
+        if (disableEntrantBtn != null) {
+            disableEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
+        }
+        if (enableOrganizerBtn != null) {
+            enableOrganizerBtn.setVisibility(isOrganizer ? View.GONE : View.VISIBLE);
+        }
+        if (disableOrganizerBtn != null) {
+            disableOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
+        }
+
+        if (useEntrantBtn != null) {
+            useEntrantBtn.setVisibility(isEntrant ? View.VISIBLE : View.GONE);
+        }
+        if (useOrganizerBtn != null) {
+            useOrganizerBtn.setVisibility(isOrganizer ? View.VISIBLE : View.GONE);
+        }
     }
 
     private void navigateTo(Fragment fragment) {

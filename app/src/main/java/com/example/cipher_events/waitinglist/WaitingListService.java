@@ -65,6 +65,11 @@ public class WaitingListService {
             return false;
         }
 
+        if (event.getPendingCoOrganizerIds() != null &&
+                event.getPendingCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
         ArrayList<User> entrants = event.getEntrants();
 
         if (entrants == null) {
@@ -321,6 +326,11 @@ public class WaitingListService {
 
         if (event.getCoOrganizerIds() != null &&
                 event.getCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
+        if (event.getPendingCoOrganizerIds() != null &&
+                event.getPendingCoOrganizerIds().contains(user.getDeviceID())) {
             return false;
         }
 
