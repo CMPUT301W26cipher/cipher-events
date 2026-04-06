@@ -32,6 +32,7 @@ import com.example.cipher_events.adapters.EventCommentAdapter;
 import com.example.cipher_events.comment.EventComment;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.message.MessageThread;
 import com.example.cipher_events.message.MessagingService;
@@ -73,6 +74,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView lotteryHeader;
     private TextView lotteryText;
     private ChipGroup tagContainer;
+
+    private View organizerContainer;
+    private ImageView organizerImage;
+    private TextView organizerName;
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -153,6 +158,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         notifyButton = view.findViewById(R.id.notify_button);
         messageButton = view.findViewById(R.id.message_button);
         tagContainer = view.findViewById(R.id.detail_tags_container);
+
+        organizerContainer = view.findViewById(R.id.organizer_container);
+        organizerImage = view.findViewById(R.id.organizer_image);
+        organizerName = view.findViewById(R.id.organizer_name);
 
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
         EditText etCommentInput = view.findViewById(R.id.et_comment_input);
@@ -267,6 +276,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             messageButton.setOnClickListener(v -> openOrganizerMessages());
             
             favoriteButton.setVisibility(View.GONE);
+            if (organizerContainer != null) organizerContainer.setVisibility(View.GONE);
         } else {
             actionButton.setText("Scan to Join");
             actionButton.setOnClickListener(v -> {
@@ -292,6 +302,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             );
 
             favoriteButton.setVisibility(View.VISIBLE);
+            if (organizerContainer != null) organizerContainer.setVisibility(View.VISIBLE);
         }
     }
 
@@ -461,6 +472,21 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
             } else {
                 banner.setImageResource(R.drawable.gray_placeholder);
+            }
+
+            // Organizer UI
+            String organizerId = event.getOrganizerID();
+            Organizer organizer = (organizerId != null) ? db.getOrganizer(organizerId) : null;
+            if (organizer != null && organizerName != null) {
+                organizerName.setText(organizer.getName());
+                if (organizer.getProfilePictureURL() != null && !organizer.getProfilePictureURL().isEmpty()) {
+                    Glide.with(this)
+                            .load(organizer.getProfilePictureURL())
+                            .placeholder(R.drawable.gray_placeholder)
+                            .into(organizerImage);
+                } else {
+                    organizerImage.setImageResource(R.drawable.gray_placeholder);
+                }
             }
 
             // Favourite logic
