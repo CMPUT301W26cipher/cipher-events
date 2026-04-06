@@ -253,9 +253,12 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
             setButtonToJoined(joinButton);
             declineButton.setVisibility(View.GONE);
             joinButton.setOnClickListener(v -> {
-                event.getEntrants().remove(finalUser);
-                db.updateEvent(event);
-                Toast.makeText(getContext(), "Left waitlist successfully!", Toast.LENGTH_SHORT).show();
+                if (event.getEntrants() != null) {
+                    event.getEntrants().removeIf(u -> u.getDeviceID() != null && u.getDeviceID().equals(finalUser.getDeviceID()));
+                    db.updateEvent(event);
+                    Toast.makeText(getContext(), "Left waitlist successfully!", Toast.LENGTH_SHORT).show();
+                    refreshUI();
+                }
             });
 
         } else {
@@ -263,9 +266,22 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
             declineButton.setVisibility(View.GONE);
             joinButton.setOnClickListener(v -> {
                 if (event.getEntrants() == null) event.setEntrants(new ArrayList<>());
-                event.getEntrants().add(finalUser);
-                db.updateEvent(event);
-                Toast.makeText(getContext(), "Joined waitlist successfully!", Toast.LENGTH_SHORT).show();
+                
+                // Prevent duplicate addition (just in case)
+                boolean isAlreadyPresent = false;
+                for (User u : event.getEntrants()) {
+                    if (u.getDeviceID() != null && u.getDeviceID().equals(finalUser.getDeviceID())) {
+                        isAlreadyPresent = true;
+                        break;
+                    }
+                }
+                
+                if (!isAlreadyPresent) {
+                    event.getEntrants().add(finalUser);
+                    db.updateEvent(event);
+                    Toast.makeText(getContext(), "Joined waitlist successfully!", Toast.LENGTH_SHORT).show();
+                    refreshUI();
+                }
             });
         }
     }

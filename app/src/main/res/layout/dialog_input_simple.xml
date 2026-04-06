@@ -45,6 +45,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/white"
+            android:textColorHint="#77768c"
             android:padding="16dp"
             android:textSize="15sp"
             android:background="@android:color/transparent" />
