@@ -13,6 +13,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -72,6 +73,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private Button actionButton;
     private Button notifyButton;
     private Button messageButton;
+    private Button organizerMessageButton;
     private Button deleteButton;
     private Button editButton;
     private View lotteryContainer;
@@ -82,6 +84,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private View organizerContainer;
     private ImageView organizerImage;
     private TextView organizerName;
+
+    private View organizerBadge;
+    private View organizerStatsCard;
+    private TextView tvStatsWaitlist;
+    private TextView tvStatsCapacity;
+    private View entrantActionContainer;
+    private View organizerActionContainer;
+    private Button organizerViewWaitlistButton;
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -161,6 +171,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
         messageButton = view.findViewById(R.id.message_button);
+        organizerMessageButton = view.findViewById(R.id.organizer_message_button);
         deleteButton = view.findViewById(R.id.delete_event_button);
         editButton = view.findViewById(R.id.edit_event_button);
         tagContainer = view.findViewById(R.id.detail_tags_container);
@@ -168,6 +179,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         organizerContainer = view.findViewById(R.id.organizer_container);
         organizerImage = view.findViewById(R.id.organizer_image);
         organizerName = view.findViewById(R.id.organizer_name);
+
+        organizerBadge = view.findViewById(R.id.organizer_badge);
+        organizerStatsCard = view.findViewById(R.id.organizer_stats_card);
+        tvStatsWaitlist = view.findViewById(R.id.tv_stats_waitlist);
+        tvStatsCapacity = view.findViewById(R.id.tv_stats_capacity);
+        entrantActionContainer = view.findViewById(R.id.entrant_action_container);
+        organizerActionContainer = view.findViewById(R.id.organizer_action_container);
+        organizerViewWaitlistButton = view.findViewById(R.id.organizer_view_waitlist_button);
 
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
         EditText etCommentInput = view.findViewById(R.id.et_comment_input);
@@ -185,6 +204,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             isOrganizerView = args.getBoolean("isOrganizerView", false);
             currentDeviceID = args.getString("currentDeviceID");
             tagsFromArgs = args.getStringArrayList("tags");
+        }
+
+        if (currentDeviceID == null && db.getCurrentUser() != null) {
+            currentDeviceID = db.getCurrentUser().getDeviceID();
         }
 
         if (currentDeviceID == null) {
@@ -264,9 +287,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
     private void setupViewMode() {
         if (isOrganizerView) {
-            actionButton.setText("View Waitlist");
-            actionButton.setBackgroundTintList(requireContext().getColorStateList(R.color.button_purple));
-            actionButton.setOnClickListener(v -> {
+            organizerBadge.setVisibility(View.VISIBLE);
+            organizerStatsCard.setVisibility(View.VISIBLE);
+            organizerActionContainer.setVisibility(View.VISIBLE);
+            entrantActionContainer.setVisibility(View.GONE);
+            
+            organizerViewWaitlistButton.setOnClickListener(v -> {
                 dismiss();
                 WaitingListFragment fragment = WaitingListFragment.newInstance(eventId, "organizer");
                 getParentFragmentManager()
@@ -277,22 +303,23 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             });
 
             lotteryContainer.setVisibility(View.GONE);
-            notifyButton.setVisibility(View.VISIBLE);
             notifyButton.setOnClickListener(v -> showNotificationInputDialog());
 
-            messageButton.setText("Messages");
-            messageButton.setVisibility(View.VISIBLE);
-            messageButton.setOnClickListener(v -> openOrganizerMessages());
+            if (organizerMessageButton != null) {
+                organizerMessageButton.setOnClickListener(v -> openOrganizerMessages());
+            }
 
-            deleteButton.setVisibility(View.VISIBLE);
             deleteButton.setOnClickListener(v -> showDeleteConfirmationDialog());
-
-            editButton.setVisibility(View.VISIBLE);
             editButton.setOnClickListener(v -> showEditEventDialog());
             
             favoriteButton.setVisibility(View.GONE);
             if (organizerContainer != null) organizerContainer.setVisibility(View.GONE);
         } else {
+            organizerBadge.setVisibility(View.GONE);
+            organizerStatsCard.setVisibility(View.GONE);
+            organizerActionContainer.setVisibility(View.GONE);
+            entrantActionContainer.setVisibility(View.VISIBLE);
+
             actionButton.setText("Scan to Join");
             actionButton.setOnClickListener(v -> {
                 if (eventId != null) {
@@ -316,12 +343,11 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                             "This system helps keep things fair and avoids first-come-first-served pressure."
             );
 
-            messageButton.setText("Message Organizer");
-            messageButton.setVisibility(View.VISIBLE);
-            messageButton.setOnClickListener(v -> openEntrantChat());
-
-            deleteButton.setVisibility(View.GONE);
-            editButton.setVisibility(View.GONE);
+            if (messageButton != null) {
+                messageButton.setText("Message");
+                messageButton.setVisibility(View.VISIBLE);
+                messageButton.setOnClickListener(v -> openEntrantChat());
+            }
 
             favoriteButton.setVisibility(View.VISIBLE);
             if (organizerContainer != null) organizerContainer.setVisibility(View.VISIBLE);
@@ -332,32 +358,28 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         Event event = db.getEvent(eventId);
         if (event == null) return;
 
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Edit Event Details");
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_edit_event, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
 
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(50, 40, 50, 10);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
 
-        final EditText etTitle = new EditText(requireContext());
-        etTitle.setHint("Event Title");
+        EditText etTitle = dialogView.findViewById(R.id.et_edit_event_title);
+        EditText etDescription = dialogView.findViewById(R.id.et_edit_event_description);
+        EditText etLocation = dialogView.findViewById(R.id.et_edit_event_location);
+        EditText etDate = dialogView.findViewById(R.id.et_edit_event_date);
+        EditText etTime = dialogView.findViewById(R.id.et_edit_event_time);
+        EditText etCapacity = dialogView.findViewById(R.id.et_edit_event_capacity);
+        Button btnCancel = dialogView.findViewById(R.id.btn_edit_event_cancel);
+        Button btnSave = dialogView.findViewById(R.id.btn_edit_event_save);
+
         etTitle.setText(event.getName());
-        layout.addView(etTitle);
-
-        final EditText etDescription = new EditText(requireContext());
-        etDescription.setHint("Description");
         etDescription.setText(event.getDescription());
-        etDescription.setMinLines(2);
-        layout.addView(etDescription);
-
-        final EditText etLocation = new EditText(requireContext());
-        etLocation.setHint("Location");
         etLocation.setText(event.getLocation());
-        layout.addView(etLocation);
-
-        final EditText etDate = new EditText(requireContext());
-        etDate.setHint("Date (YYYY-MM-DD)");
-        etDate.setFocusable(false);
+        
         String currentDateTime = event.getTime() != null ? event.getTime() : "";
         String currentDate = "";
         String currentTime = "";
@@ -369,25 +391,15 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             currentDate = currentDateTime;
         }
         etDate.setText(currentDate);
-        etDate.setOnClickListener(v -> showDatePicker(etDate));
-        layout.addView(etDate);
-
-        final EditText etTime = new EditText(requireContext());
-        etTime.setHint("Time (HH:MM)");
-        etTime.setFocusable(false);
         etTime.setText(currentTime);
-        etTime.setOnClickListener(v -> showTimePicker(etTime));
-        layout.addView(etTime);
-
-        final EditText etCapacity = new EditText(requireContext());
-        etCapacity.setHint("Waitlist Capacity (leave empty for unlimited)");
         etCapacity.setText(event.getWaitingListCapacity() != null ? String.valueOf(event.getWaitingListCapacity()) : "");
-        etCapacity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        layout.addView(etCapacity);
 
-        builder.setView(layout);
+        etDate.setOnClickListener(v -> showDatePicker(etDate));
+        etTime.setOnClickListener(v -> showTimePicker(etTime));
 
-        builder.setPositiveButton("Save Changes", (dialog, which) -> {
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnSave.setOnClickListener(v -> {
             String newTitle = etTitle.getText().toString().trim();
             String newDesc = etDescription.getText().toString().trim();
             String newLoc = etLocation.getText().toString().trim();
@@ -415,11 +427,11 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
             db.updateEvent(event);
             Toast.makeText(getContext(), "Event updated!", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
             refreshUI();
         });
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        dialog.show();
     }
 
     private void showDatePicker(EditText etDate) {
@@ -521,52 +533,40 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     }
 
     private void showNotificationInputDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Send Notification");
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_send_notification, null);
+        
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
 
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setPadding(40, 30, 40, 10);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
 
-        final EditText titleInput = new EditText(requireContext());
-        titleInput.setHint("Notification Title");
-        layout.addView(titleInput);
+        AutoCompleteTextView groupSpinner = dialogView.findViewById(R.id.spinner_notification_group);
+        EditText titleInput = dialogView.findViewById(R.id.et_notification_title);
+        EditText bodyInput = dialogView.findViewById(R.id.et_notification_body);
+        Button btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        Button btnSend = dialogView.findViewById(R.id.btn_send);
 
-        final EditText bodyInput = new EditText(requireContext());
-        bodyInput.setHint("Notification Message");
-        bodyInput.setMinLines(3);
-        bodyInput.setMaxLines(5);
-        bodyInput.setGravity(Gravity.TOP);
-
-        LinearLayout.LayoutParams params =
-                new LinearLayout.LayoutParams(
-                        ViewGroup.LayoutParams.MATCH_PARENT,
-                        ViewGroup.LayoutParams.WRAP_CONTENT);
-        params.setMargins(0, 20, 0, 0);
-        bodyInput.setLayoutParams(params);
-
-        layout.addView(bodyInput);
-
-        final Spinner groupSpinner = new Spinner(requireContext());
         String[] groups = {"Invited", "Cancelled", "Enrolled"};
-
         ArrayAdapter<String> adapter = new ArrayAdapter<>(
                 requireContext(),
-                android.R.layout.simple_spinner_dropdown_item,
+                R.layout.item_dropdown_simple,
                 groups
         );
         groupSpinner.setAdapter(adapter);
-        layout.addView(groupSpinner);
 
-        builder.setView(layout);
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
 
-        builder.setPositiveButton("Send", (dialog, which) -> {
+        btnSend.setOnClickListener(v -> {
             String titleStr = titleInput.getText().toString().trim();
             String bodyStr = bodyInput.getText().toString().trim();
-            String selectedGroup = groupSpinner.getSelectedItem().toString();
+            String selectedGroup = groupSpinner.getText().toString();
 
             if (!titleStr.isEmpty() && !bodyStr.isEmpty()) {
                 sendNotificationToGroup(titleStr, bodyStr, selectedGroup);
+                dialog.dismiss();
             } else {
                 Toast.makeText(getContext(),
                         "Title and message cannot be empty",
@@ -574,8 +574,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             }
         });
 
-        builder.setNegativeButton("Cancel", (dialog, which) -> dialog.dismiss());
-        builder.show();
+        dialog.show();
     }
 
     private void sendNotificationToGroup(String title, String body, String group) {
@@ -634,6 +633,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             title.setText(event.getName());
             int count = (event.getEntrants() != null) ? event.getEntrants().size() : 0;
             attendees.setText(count + " people in waitlist");
+            
+            if (isOrganizerView) {
+                tvStatsWaitlist.setText(String.valueOf(count));
+                Integer cap = event.getWaitingListCapacity();
+                tvStatsCapacity.setText(cap != null ? String.valueOf(cap) : "∞");
+            }
             
             String desc = event.getDescription();
             if (desc != null && !desc.isEmpty()) {

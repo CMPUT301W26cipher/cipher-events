@@ -12,7 +12,7 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <!-- Banner with Rounded Corners and Favorite Button -->
+        <!-- Banner with Rounded Corners and Close Button -->
         <com.google.android.material.card.MaterialCardView
             android:layout_width="match_parent"
             android:layout_height="200dp"
@@ -58,6 +58,23 @@
         </com.google.android.material.card.MaterialCardView>
 
         <TextView
+            android:id="@+id/organizer_badge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/input_bg"
+            android:backgroundTint="@color/role_organizer"
+            android:paddingHorizontal="12dp"
+            android:paddingVertical="4dp"
+            android:text="Organizer Mode"
+            android:textColor="@color/black"
+            android:textSize="10sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:visibility="gone"
+            tools:visibility="visible"/>
+
+        <TextView
             android:id="@+id/detail_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -74,6 +91,73 @@
             android:textSize="14sp"
             android:layout_marginTop="4dp"
             tools:text="120 people in waitlist" />
+
+        <!-- Organizer Stats Card -->
+        <LinearLayout
+            android:id="@+id/organizer_stats_card"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:padding="16dp"
+            android:background="@drawable/input_bg"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/tv_stats_waitlist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="120" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Waitlist"
+                    android:textColor="@color/text_hint"
+                    android:textSize="10sp"
+                    android:textAllCaps="true"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+            <View
+                android:layout_width="1dp"
+                android:layout_height="match_parent"
+                android:background="#1AFFFFFF"
+                android:layout_marginHorizontal="16dp"/>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:gravity="center">
+                <TextView
+                    android:id="@+id/tv_stats_capacity"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:textStyle="bold"
+                    tools:text="∞" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Capacity"
+                    android:textColor="@color/text_hint"
+                    android:textSize="10sp"
+                    android:textAllCaps="true"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+        </LinearLayout>
 
         <!-- Organizer Section -->
         <LinearLayout
@@ -95,8 +179,9 @@
                 app:strokeColor="#33FFFFFF"/>
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:layout_marginStart="12dp">
 
@@ -123,7 +208,6 @@
                 android:id="@+id/message_button"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
                 android:text="Message"
                 android:backgroundTint="@color/button_purple"
                 android:textColor="@color/white"
@@ -131,6 +215,8 @@
                 app:cornerRadius="8dp"
                 android:paddingHorizontal="12dp"
                 android:textAllCaps="false"
+                app:icon="@drawable/ic_message_24"
+                app:iconSize="16dp"
                 style="@style/Widget.Material3.Button.TonalButton" />
         </LinearLayout>
 
@@ -314,64 +400,144 @@
                 style="@style/Widget.Material3.Button.TonalButton"/>
         </LinearLayout>
 
-        <!-- Action Buttons -->
-        <Button
-            android:id="@+id/notify_button"
+        <!-- Organizer Actions Dashboard -->
+        <LinearLayout
+            android:id="@+id/organizer_action_container"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="20dp"
-            android:text="Send Notification"
-            android:backgroundTint="@color/role_organizer"
-            android:textColor="@color/black"
-            android:textStyle="bold"
-            app:cornerRadius="12dp"
-            android:visibility="gone" />
-
-        <Button
-            android:id="@+id/scan_button"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
-            android:text="Join Waitlist"
-            android:backgroundTint="@color/button_purple"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="12dp" />
-
-        <Button
-            android:id="@+id/edit_event_button"
-            android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
-            android:text="Edit Event Details"
-            android:backgroundTint="@color/button_purple"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="12dp"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="@drawable/input_bg"
+            android:backgroundTint="#1A81C784"
+            android:layout_marginTop="24dp"
             android:visibility="gone"
-            tools:visibility="visible" />
+            tools:visibility="visible">
 
-        <Button
-            android:id="@+id/delete_event_button"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Organizer Dashboard"
+                android:textColor="@color/role_organizer"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:textAllCaps="true"
+                android:layout_marginBottom="16dp"
+                android:letterSpacing="0.1"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/organizer_view_waitlist_button"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:text="Manage Waiting List"
+                android:backgroundTint="@color/role_organizer"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/outline_account_circle_24"
+                app:iconGravity="textStart"
+                app:iconPadding="12dp"
+                app:iconTint="@color/black" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/notify_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="Notify"
+                    android:textColor="@color/white"
+                    app:backgroundTint="#33FFFFFF"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/baseline_notifications_24"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/organizer_message_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="Messages"
+                    android:textColor="@color/white"
+                    app:backgroundTint="#33FFFFFF"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_message_24"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/white" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="12dp">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/edit_event_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="6dp"
+                    android:text="Edit Details"
+                    android:textColor="@color/white"
+                    app:backgroundTint="#33FFFFFF"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/ic_edit_24"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/white" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/delete_event_button"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="52dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="6dp"
+                    android:text="Delete"
+                    android:textColor="@color/remove_red"
+                    app:backgroundTint="#22FF5252"
+                    app:cornerRadius="12dp"
+                    app:icon="@drawable/baseline_close_24"
+                    app:iconPadding="4dp"
+                    app:iconTint="@color/remove_red" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Entrant Actions Section -->
+        <LinearLayout
+            android:id="@+id/entrant_action_container"
             android:layout_width="match_parent"
-            android:layout_height="52dp"
-            android:layout_marginTop="12dp"
-            android:text="Delete Event"
-            android:backgroundTint="@color/remove_red"
-            android:textColor="@color/white"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            app:cornerRadius="12dp"
-            android:visibility="gone"
-            tools:visibility="visible" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <Button
+                android:id="@+id/scan_button"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="20dp"
+                android:text="Join Waitlist"
+                android:backgroundTint="@color/button_purple"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                app:cornerRadius="12dp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/btn_close_bottom"
             android:layout_width="match_parent"
             android:layout_height="52dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="20dp"
             android:text="Close"
             android:backgroundTint="#2A2A3C"
             android:textColor="@color/white"
