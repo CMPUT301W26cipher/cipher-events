@@ -511,4 +511,11 @@ public class WaitingListService {
         return false;
     }
 
+    public void markAsNoShow(Event event, User user) {
+        if (event.getInvitedEntrants().contains(user)) {
+            event.getInvitedEntrants().remove(user);
+            event.getCancelledEntrants().add(user);
+        }
+    }
+
 }
