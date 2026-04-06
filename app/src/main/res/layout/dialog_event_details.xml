@@ -194,30 +194,41 @@
                     android:textAllCaps="true"
                     android:textStyle="bold" />
 
-                <TextView
-                    android:id="@+id/organizer_name"
+                <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:textColor="@color/white"
-                    android:textSize="16sp"
-                    android:textStyle="bold"
-                    tools:text="Organizer Name" />
-            </LinearLayout>
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/message_button"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Message"
-                android:backgroundTint="@color/button_purple"
-                android:textColor="@color/white"
-                android:textSize="12sp"
-                app:cornerRadius="8dp"
-                android:paddingHorizontal="12dp"
-                android:textAllCaps="false"
-                app:icon="@drawable/ic_message_24"
-                app:iconSize="16dp"
-                style="@style/Widget.Material3.Button.TonalButton" />
+                    <TextView
+                        android:id="@+id/organizer_name"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textColor="@color/white"
+                        android:textSize="16sp"
+                        android:textStyle="bold"
+                        tools:text="Organizer Name" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/message_button"
+                        android:layout_width="wrap_content"
+                        android:layout_height="32dp"
+                        android:minHeight="0dp"
+                        android:layout_marginStart="12dp"
+                        android:text="Message"
+                        android:backgroundTint="@color/button_purple"
+                        android:textColor="@color/white"
+                        android:textSize="11sp"
+                        app:cornerRadius="8dp"
+                        android:paddingHorizontal="10dp"
+                        android:textAllCaps="false"
+                        app:icon="@drawable/ic_message_24"
+                        app:iconSize="14dp"
+                        android:insetTop="0dp"
+                        android:insetBottom="0dp"
+                        style="@style/Widget.Material3.Button.TonalButton" />
+                </LinearLayout>
+            </LinearLayout>
         </LinearLayout>
 
         <!-- Date and Location Section -->

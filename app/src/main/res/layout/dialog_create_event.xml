@@ -4,39 +4,43 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@drawable/dialog_bg">
+    android:background="@drawable/dialog_bg"
+    android:overScrollMode="never"
+    android:scrollbars="none">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="24dp">
+        android:padding="20dp">
 
         <TextView
             android:id="@+id/dialog_title"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Create Event"
+            android:text="New Event"
             android:textColor="@color/white"
             android:textSize="24sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="20dp"/>
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginBottom="16dp"/>
 
-        <!-- Banner Preview / Add Button -->
+        <!-- Banner Preview Area -->
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/btn_add_banner"
             android:layout_width="match_parent"
-            android:layout_height="160dp"
-            app:cardCornerRadius="12dp"
+            android:layout_height="140dp"
+            app:cardCornerRadius="16dp"
             app:cardElevation="0dp"
-            app:strokeColor="#33FFFFFF"
+            app:strokeColor="#1AFFFFFF"
             app:strokeWidth="1dp"
-            android:layout_marginBottom="24dp">
+            android:layout_marginBottom="20dp"
+            android:clickable="true"
+            android:focusable="true">
 
             <FrameLayout
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="@color/input_background">
+                android:background="#0DFFFFFF">
 
                 <ImageView
                     android:id="@+id/iv_banner_preview"
@@ -44,7 +48,7 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:src="@drawable/gray_placeholder"
-                    android:alpha="0.5"/>
+                    android:alpha="0.4"/>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
@@ -53,24 +57,29 @@
                     android:gravity="center"
                     android:orientation="vertical">
 
-                    <ImageView
-                        android:layout_width="32dp"
-                        android:layout_height="32dp"
+                    <com.google.android.material.imageview.ShapeableImageView
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="10dp"
                         android:src="@drawable/plus_icon"
+                        android:background="#26FFFFFF"
+                        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
                         app:tint="@color/white" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="8dp"
-                        android:text="Add Event Banner"
+                        android:text="Add Cover Image"
                         android:textColor="@color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold"/>
+                        android:textSize="13sp"
+                        android:fontFamily="sans-serif-medium"
+                        android:alpha="0.8"/>
                 </LinearLayout>
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <!-- Form Section -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_title"
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
@@ -78,45 +87,53 @@
             android:layout_height="wrap_content"
             android:hint="Event Title"
             android:textColorHint="@color/text_hint"
-            app:boxBackgroundColor="@color/input_background"
+            app:boxBackgroundColor="#0DFFFFFF"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
             app:boxStrokeColor="@color/button_purple"
             app:hintTextColor="@color/white"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_event_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textCapWords"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:padding="14dp"
+                android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/til_date"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
+                android:layout_weight="1.2"
+                android:layout_marginEnd="6dp"
                 android:hint="Date"
                 android:textColorHint="@color/text_hint"
-                app:boxBackgroundColor="@color/input_background"
+                app:boxBackgroundColor="#0DFFFFFF"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="1dp"
                 app:boxStrokeColor="@color/button_purple"
-                app:hintTextColor="@color/white">
+                app:hintTextColor="@color/white"
+                app:startIconDrawable="@drawable/baseline_notifications_24"
+                app:startIconTint="@color/text_hint">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/et_event_date"
@@ -124,7 +141,9 @@
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:clickable="true"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:padding="14dp"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
@@ -133,14 +152,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:layout_marginStart="8dp"
+                android:layout_marginStart="6dp"
                 android:hint="Time"
                 android:textColorHint="@color/text_hint"
-                app:boxBackgroundColor="@color/input_background"
+                app:boxBackgroundColor="#0DFFFFFF"
                 app:boxCornerRadiusBottomEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusTopStart="12dp"
+                app:boxStrokeWidth="0dp"
+                app:boxStrokeWidthFocused="1dp"
                 app:boxStrokeColor="@color/button_purple"
                 app:hintTextColor="@color/white">
 
@@ -150,7 +171,9 @@
                     android:layout_height="wrap_content"
                     android:focusable="false"
                     android:clickable="true"
-                    android:textColor="@color/white" />
+                    android:textColor="@color/white"
+                    android:padding="14dp"
+                    android:textSize="15sp" />
             </com.google.android.material.textfield.TextInputLayout>
         </LinearLayout>
 
@@ -159,23 +182,27 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Location"
+            android:hint="Venue / Location"
             android:textColorHint="@color/text_hint"
-            app:boxBackgroundColor="@color/input_background"
+            app:boxBackgroundColor="#0DFFFFFF"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
             app:boxStrokeColor="@color/button_purple"
             app:hintTextColor="@color/white"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_event_location"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="textPostalAddress"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:padding="14dp"
+                android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -185,21 +212,25 @@
             android:layout_height="wrap_content"
             android:hint="Waitlist Capacity (Optional)"
             android:textColorHint="@color/text_hint"
-            app:boxBackgroundColor="@color/input_background"
+            app:boxBackgroundColor="#0DFFFFFF"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
             app:boxStrokeColor="@color/button_purple"
             app:hintTextColor="@color/white"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="12dp">
 
             <com.google.android.material.textfield.TextInputEditText
                 android:id="@+id/et_waiting_list_capacity"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:inputType="number"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:padding="14dp"
+                android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
         <com.google.android.material.textfield.TextInputLayout
@@ -207,13 +238,15 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Description"
+            android:hint="About the Event"
             android:textColorHint="@color/text_hint"
-            app:boxBackgroundColor="@color/input_background"
+            app:boxBackgroundColor="#0DFFFFFF"
             app:boxCornerRadiusBottomEnd="12dp"
             app:boxCornerRadiusBottomStart="12dp"
             app:boxCornerRadiusTopEnd="12dp"
             app:boxCornerRadiusTopStart="12dp"
+            app:boxStrokeWidth="0dp"
+            app:boxStrokeWidthFocused="1dp"
             app:boxStrokeColor="@color/button_purple"
             app:hintTextColor="@color/white"
             android:layout_marginBottom="16dp">
@@ -222,81 +255,107 @@
                 android:id="@+id/et_event_description"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:minLines="3"
+                android:minLines="2"
                 android:gravity="top"
                 android:inputType="textMultiLine|textCapSentences"
-                android:textColor="@color/white" />
+                android:textColor="@color/white"
+                android:padding="14dp"
+                android:textSize="15sp" />
         </com.google.android.material.textfield.TextInputLayout>
 
-        <!-- Tags Section -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Private Event Switch Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tags"
-            android:textColor="@color/text_label"
-            android:textSize="14sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp"/>
+            app:cardCornerRadius="14dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="#0DFFFFFF"
+            android:layout_marginBottom="18dp">
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/switch_private_event"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:padding="12dp"
+                android:text="Private Invitation Only"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:fontFamily="sans-serif-medium"
+                app:thumbTint="@color/white"
+                app:trackTint="@color/button_purple" />
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Tags Header -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Tags"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_add_tag"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Add New"
+                android:textColor="@color/role_organizer"
+                android:textSize="12sp"
+                android:textAllCaps="false"
+                app:icon="@drawable/plus_icon"
+                app:iconSize="12dp"
+                app:iconPadding="4dp"
+                android:minHeight="0dp"
+                android:padding="4dp"/>
+        </LinearLayout>
 
         <com.google.android.material.chip.ChipGroup
             android:id="@+id/cg_event_tags"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            app:chipSpacingHorizontal="8dp" />
+            android:layout_marginBottom="24dp"
+            app:chipSpacingHorizontal="6dp"
+            app:chipSpacingVertical="2dp" />
 
-        <LinearLayout
-            android:id="@+id/btn_add_tag"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center_vertical"
-            android:padding="8dp"
-            android:background="?attr/selectableItemBackground"
-            android:layout_marginBottom="24dp">
-
-            <ImageView
-                android:layout_width="20dp"
-                android:layout_height="20dp"
-                android:src="@drawable/plus_icon"
-                app:tint="@color/role_organizer" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="8dp"
-                android:text="Add Tag"
-                android:textColor="@color/role_organizer"
-                android:textSize="14sp"
-                android:textStyle="bold" />
-        </LinearLayout>
-
+        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:gravity="end">
+            android:gravity="center_vertical">
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_cancel"
                 style="@style/Widget.Material3.Button.TextButton"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="1"
                 android:text="Cancel"
                 android:textColor="@color/text_hint"
-                android:layout_marginEnd="8dp"/>
+                android:layout_marginEnd="10dp"
+                app:cornerRadius="14dp"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_add_event"
-                android:layout_width="wrap_content"
-                android:layout_height="56dp"
+                android:layout_width="0dp"
+                android:layout_height="52dp"
+                android:layout_weight="2"
                 android:backgroundTint="@color/role_organizer"
-                android:paddingHorizontal="32dp"
                 android:text="Create Event"
                 android:textAllCaps="false"
                 android:textColor="@color/black"
+                android:textSize="15sp"
                 android:textStyle="bold"
-                app:cornerRadius="12dp" />
+                app:cornerRadius="14dp" />
         </LinearLayout>
 
     </LinearLayout>

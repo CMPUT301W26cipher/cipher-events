@@ -11,6 +11,8 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.view.WindowManager;
+import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -23,10 +25,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.DialogFragment;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.example.cipher_events.R;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.datepicker.MaterialDatePicker;
+import com.google.android.material.materialswitch.MaterialSwitch;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.android.material.timepicker.MaterialTimePicker;
 import com.google.android.material.timepicker.TimeFormat;
@@ -34,15 +38,18 @@ import com.google.android.material.timepicker.TimeFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.TimeZone;
 
+/**
+ * DialogFragment for creating a new event.
+ * Provides an aesthetic interface for organizers to input event details.
+ */
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
-        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl, List<String> tags);
+        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl, List<String> tags, boolean isPrivate);
     }
 
     private CreateEventListener listener;
@@ -50,6 +57,7 @@ public class CreateEventDialogFragment extends DialogFragment {
     private ImageView ivBannerPreview;
     private TextInputLayout tilTitle, tilDate, tilTime, tilLocation, tilDescription;
     private EditText etTitle, etDate, etTime, etLocation, etDescription, etCapacity;
+    private MaterialSwitch swPrivate;
     private ChipGroup cgTags;
     private List<String> tags = new ArrayList<>();
 
@@ -65,11 +73,16 @@ public class CreateEventDialogFragment extends DialogFragment {
         if (getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
             getDialog().getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+            getDialog().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
         }
 
         initViews(view);
         setupPickers();
         setupTextWatchers();
+
+        // Entry animation
+        view.setAlpha(0f);
+        view.animate().alpha(1f).setDuration(300).start();
 
         return view;
     }
@@ -87,6 +100,7 @@ public class CreateEventDialogFragment extends DialogFragment {
         etLocation = view.findViewById(R.id.et_event_location);
         etDescription = view.findViewById(R.id.et_event_description);
         etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
+        swPrivate = view.findViewById(R.id.switch_private_event);
         
         cgTags = view.findViewById(R.id.cg_event_tags);
         View btnAddTag = view.findViewById(R.id.btn_add_tag);
@@ -97,7 +111,7 @@ public class CreateEventDialogFragment extends DialogFragment {
 
         btnAddBanner.setOnClickListener(v -> showAddBannerDialog());
         btnAddTag.setOnClickListener(v -> showAddTagDialog());
-        btnCancel.setOnClickListener(v -> dismiss());
+        btnCancel.setOnClickListener(v -> dismissWithAnimation());
 
         btnAddEvent.setOnClickListener(v -> {
             if (validateForm()) {
@@ -107,6 +121,7 @@ public class CreateEventDialogFragment extends DialogFragment {
                 String location = etLocation.getText().toString().trim();
                 String description = etDescription.getText().toString().trim();
                 String capacityStr = etCapacity.getText().toString().trim();
+                boolean isPrivate = swPrivate != null && swPrivate.isChecked();
 
                 Integer capacity = null;
                 if (!capacityStr.isEmpty()) {
@@ -116,7 +131,7 @@ public class CreateEventDialogFragment extends DialogFragment {
                 }
 
                 if (listener != null) {
-                    listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl, new ArrayList<>(tags));
+                    listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl, new ArrayList<>(tags), isPrivate);
                 }
                 dismiss();
             }
@@ -128,13 +143,13 @@ public class CreateEventDialogFragment extends DialogFragment {
             MaterialDatePicker<Long> datePicker = MaterialDatePicker.Builder.datePicker()
                     .setTitleText("Select Event Date")
                     .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
-                    .setTheme(com.google.android.material.R.style.Widget_Material3_MaterialCalendar)
+                    .setTheme(R.style.CustomMaterialCalendar)
                     .build();
 
             datePicker.addOnPositiveButtonClickListener(selection -> {
                 Calendar calendar = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
                 calendar.setTimeInMillis(selection);
-                SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+                SimpleDateFormat format = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
                 etDate.setText(format.format(calendar.getTime()));
                 tilDate.setError(null);
             });
@@ -144,15 +159,18 @@ public class CreateEventDialogFragment extends DialogFragment {
 
         etTime.setOnClickListener(v -> {
             MaterialTimePicker timePicker = new MaterialTimePicker.Builder()
-                    .setTimeFormat(TimeFormat.CLOCK_24H)
+                    .setTimeFormat(TimeFormat.CLOCK_12H)
                     .setHour(12)
                     .setMinute(0)
                     .setTitleText("Select Event Time")
-                    .setTheme(com.google.android.material.R.style.Widget_Material3_MaterialTimePicker)
+                    .setTheme(R.style.CustomMaterialTimePicker)
                     .build();
 
             timePicker.addOnPositiveButtonClickListener(view -> {
-                String time = String.format(Locale.getDefault(), "%02d:%02d", timePicker.getHour(), timePicker.getMinute());
+                String amPm = timePicker.getHour() >= 12 ? "PM" : "AM";
+                int hour = timePicker.getHour() % 12;
+                if (hour == 0) hour = 12;
+                String time = String.format(Locale.getDefault(), "%02d:%02d %s", hour, timePicker.getMinute(), amPm);
                 etTime.setText(time);
                 tilTime.setError(null);
             });
@@ -204,67 +222,65 @@ public class CreateEventDialogFragment extends DialogFragment {
     }
 
     private void showAddBannerDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), com.google.android.material.R.style.Theme_Material3_Dark_Dialog_Alert);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_input_simple, null);
+        TextView titleTv = dialogView.findViewById(R.id.dialog_input_title);
+        TextView messageTv = dialogView.findViewById(R.id.dialog_input_message);
+        EditText inputEt = dialogView.findViewById(R.id.dialog_input_edittext);
         
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        layout.setPadding(padding, padding, padding, 0);
+        titleTv.setText("Event Cover");
+        messageTv.setText("Paste an image URL for your event banner");
+        inputEt.setHint("https://...");
+        if (bannerUrl != null) inputEt.setText(bannerUrl);
 
-        final EditText input = new EditText(requireContext());
-        input.setHint("https://example.com/image.jpg");
-        input.setText(bannerUrl != null ? bannerUrl : "");
-        input.setTextColor(Color.WHITE);
-        input.setHintTextColor(getContext().getColor(R.color.text_hint));
-        input.setBackground(getContext().getDrawable(R.drawable.input_bg));
-        input.setPadding(padding / 2, padding / 2, padding / 2, padding / 2);
-        layout.addView(input);
-
-        builder.setTitle("Event Banner URL")
-               .setMessage("Provide a direct link to your event poster image.")
-               .setView(layout)
-               .setPositiveButton("Set Image", (dialog, which) -> {
-                   String url = input.getText().toString().trim();
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
+               .setView(dialogView)
+               .setPositiveButton("Apply", (d, which) -> {
+                   String url = inputEt.getText().toString().trim();
                    if (!url.isEmpty()) {
                        bannerUrl = url;
                        Glide.with(this)
                             .load(bannerUrl)
+                            .transition(DrawableTransitionOptions.withCrossFade())
                             .placeholder(R.drawable.gray_placeholder)
                             .centerCrop()
                             .into(ivBannerPreview);
-                       ivBannerPreview.setAlpha(1.0f);
+                       ivBannerPreview.animate().alpha(1.0f).setDuration(500).start();
                    }
                })
                .setNegativeButton("Cancel", null)
-               .show();
+               .create();
+        
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.show();
     }
 
     private void showAddTagDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), com.google.android.material.R.style.Theme_Material3_Dark_Dialog_Alert);
+        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_input_simple, null);
+        TextView titleTv = dialogView.findViewById(R.id.dialog_input_title);
+        TextView messageTv = dialogView.findViewById(R.id.dialog_input_message);
+        EditText inputEt = dialogView.findViewById(R.id.dialog_input_edittext);
         
-        LinearLayout layout = new LinearLayout(requireContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        int padding = (int) (24 * getResources().getDisplayMetrics().density);
-        layout.setPadding(padding, padding, padding, 0);
+        titleTv.setText("Add Tag");
+        messageTv.setText("Enter a category or keyword for your event");
+        inputEt.setHint("e.g. Workshop");
 
-        final EditText input = new EditText(requireContext());
-        input.setHint("Tag Name");
-        input.setTextColor(Color.WHITE);
-        input.setHintTextColor(getContext().getColor(R.color.text_hint));
-        input.setBackground(getContext().getDrawable(R.drawable.input_bg));
-        input.setPadding(padding / 2, padding / 2, padding / 2, padding / 2);
-        layout.addView(input);
-
-        builder.setTitle("Add Tag")
-               .setView(layout)
-               .setPositiveButton("Add", (dialog, which) -> {
-                   String tag = input.getText().toString().trim();
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
+               .setView(dialogView)
+               .setPositiveButton("Add", (d, which) -> {
+                   String tag = inputEt.getText().toString().trim();
                    if (!tag.isEmpty() && !tags.contains(tag)) {
                        addTagChip(tag);
                    }
                })
                .setNegativeButton("Cancel", null)
-               .show();
+               .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
+        dialog.show();
     }
 
     private void addTagChip(String tag) {
@@ -275,13 +291,36 @@ public class CreateEventDialogFragment extends DialogFragment {
         chip.setChipBackgroundColorResource(R.color.input_background);
         chip.setTextColor(Color.WHITE);
         chip.setCloseIconTintResource(R.color.text_hint);
+        chip.setChipStrokeWidth(0);
         
         chip.setOnCloseIconClickListener(v -> {
-            cgTags.removeView(chip);
-            tags.remove(tag);
+            AlphaAnimation anim = new AlphaAnimation(1f, 0f);
+            anim.setDuration(200);
+            chip.startAnimation(anim);
+            cgTags.postDelayed(() -> {
+                cgTags.removeView(chip);
+                tags.remove(tag);
+            }, 200);
         });
 
         cgTags.addView(chip);
+        
+        // Appear animation
+        AlphaAnimation anim = new AlphaAnimation(0f, 1f);
+        anim.setDuration(300);
+        chip.startAnimation(anim);
+    }
+
+    private void dismissWithAnimation() {
+        if (getView() != null) {
+            getView().animate()
+                    .alpha(0f)
+                    .setDuration(200)
+                    .withEndAction(this::dismiss)
+                    .start();
+        } else {
+            dismiss();
+        }
     }
 
     @Override
@@ -291,6 +330,7 @@ public class CreateEventDialogFragment extends DialogFragment {
         if (dialog != null && dialog.getWindow() != null) {
             int width = (int) (getResources().getDisplayMetrics().widthPixels * 0.95);
             dialog.getWindow().setLayout(width, ViewGroup.LayoutParams.WRAP_CONTENT);
+            dialog.getWindow().setWindowAnimations(R.style.DialogAnimation);
         }
     }
 }
