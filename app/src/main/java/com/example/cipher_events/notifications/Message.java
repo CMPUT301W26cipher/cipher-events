@@ -13,12 +13,18 @@ public class Message {
     private String title;
     private String body;
     private Organizer organizer;
+    private String recipientID; // Added for user-specific messaging
 
     public Message(String title, String body, Organizer organizer) {
+        this(title, body, organizer, null);
+    }
+
+    public Message(String title, String body, Organizer organizer, String recipientID) {
         this.date = new Date();
         this.title = title;
         this.body = body;
         this.organizer = organizer;
+        this.recipientID = recipientID;
     }
 
     public Message(){}
@@ -39,6 +45,10 @@ public class Message {
         return organizer;
     }
 
+    public String getRecipientID() {
+        return recipientID;
+    }
+
     public void setDate(Date date) {
         this.date = date;
     }
@@ -54,5 +64,9 @@ public class Message {
 
     public void setOrganizer(Organizer organizer) {
         this.organizer = organizer;
+    }
+
+    public void setRecipientID(String recipientID) {
+        this.recipientID = recipientID;
     }
 }

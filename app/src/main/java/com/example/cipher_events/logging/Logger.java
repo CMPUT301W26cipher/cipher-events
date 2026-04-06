@@ -8,6 +8,7 @@ import androidx.annotation.Nullable;
 import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.notifications.Message;
 import com.google.firebase.firestore.CollectionReference;
+import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -18,6 +19,7 @@ import com.google.firebase.firestore.QuerySnapshot;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 public class Logger {
     private static Logger instance = null;
@@ -87,9 +89,9 @@ public class Logger {
     }
 
     public void logNotification(Message message) {
-        logRef
-                .document(message.getDate().toString())
-                .set(message);
+        // Use a random UUID or Firestore auto-ID to avoid collisions during bulk sending
+        DocumentReference newDoc = logRef.document();
+        newDoc.set(message);
         notificationLog.add(message);
     }
 

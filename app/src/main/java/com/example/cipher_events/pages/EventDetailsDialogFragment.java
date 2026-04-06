@@ -48,7 +48,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
@@ -654,36 +656,30 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         Event e = db.getEvent(eventId);
         if (e == null) return;
         Message m = new Message(title, body, e.getOrganizer());
-        ArrayList<User> entrants = e.getInvitedEntrants();
-        if (entrants != null) {
-            for (User user : entrants) {
-                notifier.sendMessage(user.getDeviceID(), m);
-            }
-        }
+        List<String> deviceIDs = e.getInvitedEntrants().stream()
+                .map(User::getDeviceID)
+                .collect(Collectors.toList());
+        notifier.sendBulkMessages(deviceIDs, m);
     }
 
     private void notifyCancelledEntrants(String title, String body) {
         Event e = db.getEvent(eventId);
         if (e == null) return;
         Message m = new Message(title, body, e.getOrganizer());
-        ArrayList<User> entrants = e.getCancelledEntrants();
-        if (entrants != null) {
-            for (User user : entrants) {
-                notifier.sendMessage(user.getDeviceID(), m);
-            }
-        }
+        List<String> deviceIDs = e.getCancelledEntrants().stream()
+                .map(User::getDeviceID)
+                .collect(Collectors.toList());
+        notifier.sendBulkMessages(deviceIDs, m);
     }
 
     private void notifyEnrolledEntrants(String title, String body) {
         Event e = db.getEvent(eventId);
         if (e == null) return;
         Message m = new Message(title, body, e.getOrganizer());
-        ArrayList<User> entrants = e.getEnrolledEntrants();
-        if (entrants != null) {
-            for (User user : entrants) {
-                notifier.sendMessage(user.getDeviceID(), m);
-            }
-        }
+        List<String> deviceIDs = e.getEnrolledEntrants().stream()
+                .map(User::getDeviceID)
+                .collect(Collectors.toList());
+        notifier.sendBulkMessages(deviceIDs, m);
     }
 
     private void refreshUI() {
