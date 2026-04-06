@@ -101,7 +101,8 @@
             android:textColorHint="@color/text_hint"
             android:textSize="14sp"
             android:layout_marginBottom="16dp"
-            android:inputType="textUri"/>
+            android:inputType="textUri"
+            android:visibility="gone"/>
 
         <!-- Event Title -->
         <TextView

@@ -1,8 +1,11 @@
 package com.example.cipher_events.pages;
 
+import android.app.Activity;
 import android.app.Dialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextUtils;
@@ -16,9 +19,10 @@ import android.view.animation.AlphaAnimation;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
@@ -60,6 +64,25 @@ public class CreateEventDialogFragment extends DialogFragment {
     private MaterialSwitch swPrivate;
     private ChipGroup cgTags;
     private List<String> tags = new ArrayList<>();
+
+    private final ActivityResultLauncher<Intent> pickImageLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    Uri selectedImageUri = result.getData().getData();
+                    if (selectedImageUri != null) {
+                        bannerUrl = selectedImageUri.toString();
+                        Glide.with(this)
+                             .load(selectedImageUri)
+                             .transition(DrawableTransitionOptions.withCrossFade())
+                             .placeholder(R.drawable.gray_placeholder)
+                             .centerCrop()
+                             .into(ivBannerPreview);
+                        ivBannerPreview.animate().alpha(1.0f).setDuration(500).start();
+                    }
+                }
+            }
+    );
 
     public void setCreateEventListener(CreateEventListener listener) {
         this.listener = listener;
@@ -109,7 +132,11 @@ public class CreateEventDialogFragment extends DialogFragment {
         Button btnAddEvent = view.findViewById(R.id.btn_add_event);
         Button btnCancel = view.findViewById(R.id.btn_cancel);
 
-        btnAddBanner.setOnClickListener(v -> showAddBannerDialog());
+        btnAddBanner.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            pickImageLauncher.launch(intent);
+        });
         btnAddTag.setOnClickListener(v -> showAddTagDialog());
         btnCancel.setOnClickListener(v -> dismissWithAnimation());
 
@@ -219,41 +246,6 @@ public class CreateEventDialogFragment extends DialogFragment {
         }
 
         return isValid;
-    }
-
-    private void showAddBannerDialog() {
-        View dialogView = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_input_simple, null);
-        TextView titleTv = dialogView.findViewById(R.id.dialog_input_title);
-        TextView messageTv = dialogView.findViewById(R.id.dialog_input_message);
-        EditText inputEt = dialogView.findViewById(R.id.dialog_input_edittext);
-        
-        titleTv.setText("Event Cover");
-        messageTv.setText("Paste an image URL for your event banner");
-        inputEt.setHint("https://...");
-        if (bannerUrl != null) inputEt.setText(bannerUrl);
-
-        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.CustomAlertDialog)
-               .setView(dialogView)
-               .setPositiveButton("Apply", (d, which) -> {
-                   String url = inputEt.getText().toString().trim();
-                   if (!url.isEmpty()) {
-                       bannerUrl = url;
-                       Glide.with(this)
-                            .load(bannerUrl)
-                            .transition(DrawableTransitionOptions.withCrossFade())
-                            .placeholder(R.drawable.gray_placeholder)
-                            .centerCrop()
-                            .into(ivBannerPreview);
-                       ivBannerPreview.animate().alpha(1.0f).setDuration(500).start();
-                   }
-               })
-               .setNegativeButton("Cancel", null)
-               .create();
-        
-        if (dialog.getWindow() != null) {
-            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
-        }
-        dialog.show();
     }
 
     private void showAddTagDialog() {

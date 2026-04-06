@@ -1,14 +1,16 @@
 package com.example.cipher_events.pages;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,11 +19,11 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
@@ -80,7 +82,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private Button deleteButton;
     private Button editButton;
     private View lotteryContainer;
-    private TextView lotteryHeader;
     private TextView lotteryText;
     private ChipGroup tagContainer;
 
@@ -95,6 +96,21 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private View entrantActionContainer;
     private View organizerActionContainer;
     private Button organizerViewWaitlistButton;
+
+    // For Image Upload in Edit Dialog
+    private Uri selectedEditImageUri;
+    private ImageView ivEditDialogBanner;
+    private final ActivityResultLauncher<Intent> pickEditImageLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    selectedEditImageUri = result.getData().getData();
+                    if (ivEditDialogBanner != null) {
+                        Glide.with(this).load(selectedEditImageUri).placeholder(R.drawable.gray_placeholder).into(ivEditDialogBanner);
+                    }
+                }
+            }
+    );
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -169,7 +185,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         closeButton = view.findViewById(R.id.btn_close);
         closeButtonBottom = view.findViewById(R.id.btn_close_bottom);
         lotteryContainer = view.findViewById(R.id.lottery_container);
-        lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
@@ -371,8 +386,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
-        ImageView ivBanner = dialogView.findViewById(R.id.iv_edit_event_banner);
-        EditText etBannerUrl = dialogView.findViewById(R.id.et_edit_event_banner_url);
+        ivEditDialogBanner = dialogView.findViewById(R.id.iv_edit_event_banner);
+        View btnChangeImage = dialogView.findViewById(R.id.btn_edit_event_change_image);
         EditText etTitle = dialogView.findViewById(R.id.et_edit_event_title);
         EditText etDescription = dialogView.findViewById(R.id.et_edit_event_description);
         EditText etLocation = dialogView.findViewById(R.id.et_edit_event_location);
@@ -415,30 +430,15 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
         // Banner loading
         String currentBannerUrl = event.getPosterPictureURL();
-        etBannerUrl.setText(currentBannerUrl != null ? currentBannerUrl : "");
         if (currentBannerUrl != null && !currentBannerUrl.isEmpty()) {
-            Glide.with(this).load(currentBannerUrl).placeholder(R.drawable.gray_placeholder).into(ivBanner);
+            Glide.with(this).load(currentBannerUrl).placeholder(R.drawable.gray_placeholder).into(ivEditDialogBanner);
         }
 
-        // Update banner preview when URL changes
-        etBannerUrl.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override
-            public void onTextChanged(CharSequence s, int start, int before, int count) {
-                String url = s.toString().trim();
-                if (!url.isEmpty()) {
-                    Glide.with(EventDetailsDialogFragment.this)
-                            .load(url)
-                            .placeholder(R.drawable.gray_placeholder)
-                            .error(R.drawable.gray_placeholder)
-                            .into(ivBanner);
-                } else {
-                    ivBanner.setImageResource(R.drawable.gray_placeholder);
-                }
-            }
-            @Override
-            public void afterTextChanged(Editable s) {}
+        selectedEditImageUri = null;
+        btnChangeImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            pickEditImageLauncher.launch(intent);
         });
 
         etDate.setOnClickListener(v -> showDatePicker(etDate));
@@ -454,7 +454,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             String newTimeStr = etTime.getText().toString().trim();
             String capStr = etCapacity.getText().toString().trim();
             String tagsStr = etTags.getText().toString().trim();
-            String newBannerUrl = etBannerUrl.getText().toString().trim();
 
             if (newTitle.isEmpty()) {
                 Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
@@ -465,7 +464,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             event.setDescription(newDesc);
             event.setLocation(newLoc);
             event.setTime(newDateStr + " " + newTimeStr);
-            event.setPosterPictureURL(newBannerUrl.isEmpty() ? null : newBannerUrl);
+            
+            if (selectedEditImageUri != null) {
+                event.setPosterPictureURL(selectedEditImageUri.toString());
+            }
             
             if (!capStr.isEmpty()) {
                 try {
