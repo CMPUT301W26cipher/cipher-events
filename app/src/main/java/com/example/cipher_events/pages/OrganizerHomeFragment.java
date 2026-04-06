@@ -2,7 +2,6 @@ package com.example.cipher_events.pages;
 
 import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +16,7 @@ import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.User;
 import com.google.android.material.button.MaterialButton;
 
 import java.text.SimpleDateFormat;
@@ -35,15 +35,12 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
     private String currentFilter = "ALL"; // ALL, UPCOMING, PAST
 
     private final DBProxy db = DBProxy.getInstance();
-    private String deviceId;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_organizer_home, container, false);
-
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
 
         initializeViews(view);
         setupRecyclerView();
@@ -74,11 +71,13 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
                     event.getLocation(),
                     event.getEntrants() != null ? event.getEntrants().size() : 0,
                     tags,
-                    true // Set as organizer view
+                    true, // Set as organizer view
+                    db.getCurrentUser() != null ? db.getCurrentUser().getDeviceID() : null
             );
 
             dialog.show(getParentFragmentManager(), "EventDetailsDialog");
         });
+
         recyclerView.setAdapter(adapter);
     }
 
@@ -95,9 +94,14 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
 
     private void loadEvents() {
         allEvents.clear();
+        User currentUser = db.getCurrentUser();
+        if (currentUser == null) return;
+        
+        String currentOrganizerID = currentUser.getDeviceID();
+        
         // Only load events organized by this user
         for (Event event : db.getAllEvents()) {
-            if (deviceId.equals(event.getOrganizerID())) {
+            if (currentOrganizerID != null && currentOrganizerID.equals(event.getOrganizerID())) {
                 allEvents.add(event);
             }
         }

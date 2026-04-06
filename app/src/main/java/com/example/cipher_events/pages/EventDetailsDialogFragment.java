@@ -1,10 +1,11 @@
 package com.example.cipher_events.pages;
 
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.Gravity;
@@ -43,6 +44,7 @@ import com.google.android.material.chip.ChipGroup;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
 
@@ -70,6 +72,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private Button actionButton;
     private Button notifyButton;
     private Button messageButton;
+    private Button deleteButton;
+    private Button editButton;
     private View lotteryContainer;
     private TextView lotteryHeader;
     private TextView lotteryText;
@@ -157,6 +161,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
         messageButton = view.findViewById(R.id.message_button);
+        deleteButton = view.findViewById(R.id.delete_event_button);
+        editButton = view.findViewById(R.id.edit_event_button);
         tagContainer = view.findViewById(R.id.detail_tags_container);
 
         organizerContainer = view.findViewById(R.id.organizer_container);
@@ -172,17 +178,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         commentAdapter = new EventCommentAdapter();
         rvComments.setAdapter(commentAdapter);
 
-        String currentDeviceId = android.provider.Settings.Secure.getString(
-                requireContext().getContentResolver(),
-                android.provider.Settings.Secure.ANDROID_ID
-        );
-        boolean isAdmin = DBProxy.getInstance().getAdmin(currentDeviceId) != null;
-        commentAdapter.setup(currentDeviceId, isAdmin, comment -> {
-            new com.example.cipher_events.comment.EntrantCommentService()
-                    .deleteComment(eventId, comment.getCommentID());
-            refreshUI();
-        });
-
         Bundle args = getArguments();
         ArrayList<String> tagsFromArgs = null;
         if (args != null) {
@@ -191,6 +186,20 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             currentDeviceID = args.getString("currentDeviceID");
             tagsFromArgs = args.getStringArrayList("tags");
         }
+
+        if (currentDeviceID == null) {
+            currentDeviceID = android.provider.Settings.Secure.getString(
+                    requireContext().getContentResolver(),
+                    android.provider.Settings.Secure.ANDROID_ID
+            );
+        }
+
+        boolean isAdmin = DBProxy.getInstance().getAdmin(currentDeviceID) != null;
+        commentAdapter.setup(currentDeviceID, isAdmin, comment -> {
+            new com.example.cipher_events.comment.EntrantCommentService()
+                    .deleteComment(eventId, comment.getCommentID());
+            refreshUI();
+        });
 
         if (closeButton != null) {
             closeButton.setOnClickListener(v -> dismiss());
@@ -274,6 +283,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             messageButton.setText("Messages");
             messageButton.setVisibility(View.VISIBLE);
             messageButton.setOnClickListener(v -> openOrganizerMessages());
+
+            deleteButton.setVisibility(View.VISIBLE);
+            deleteButton.setOnClickListener(v -> showDeleteConfirmationDialog());
+
+            editButton.setVisibility(View.VISIBLE);
+            editButton.setOnClickListener(v -> showEditEventDialog());
             
             favoriteButton.setVisibility(View.GONE);
             if (organizerContainer != null) organizerContainer.setVisibility(View.GONE);
@@ -301,9 +316,151 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                             "This system helps keep things fair and avoids first-come-first-served pressure."
             );
 
+            messageButton.setText("Message Organizer");
+            messageButton.setVisibility(View.VISIBLE);
+            messageButton.setOnClickListener(v -> openEntrantChat());
+
+            deleteButton.setVisibility(View.GONE);
+            editButton.setVisibility(View.GONE);
+
             favoriteButton.setVisibility(View.VISIBLE);
             if (organizerContainer != null) organizerContainer.setVisibility(View.VISIBLE);
         }
+    }
+
+    private void showEditEventDialog() {
+        Event event = db.getEvent(eventId);
+        if (event == null) return;
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Edit Event Details");
+
+        LinearLayout layout = new LinearLayout(requireContext());
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setPadding(50, 40, 50, 10);
+
+        final EditText etTitle = new EditText(requireContext());
+        etTitle.setHint("Event Title");
+        etTitle.setText(event.getName());
+        layout.addView(etTitle);
+
+        final EditText etDescription = new EditText(requireContext());
+        etDescription.setHint("Description");
+        etDescription.setText(event.getDescription());
+        etDescription.setMinLines(2);
+        layout.addView(etDescription);
+
+        final EditText etLocation = new EditText(requireContext());
+        etLocation.setHint("Location");
+        etLocation.setText(event.getLocation());
+        layout.addView(etLocation);
+
+        final EditText etDate = new EditText(requireContext());
+        etDate.setHint("Date (YYYY-MM-DD)");
+        etDate.setFocusable(false);
+        String currentDateTime = event.getTime() != null ? event.getTime() : "";
+        String currentDate = "";
+        String currentTime = "";
+        if (currentDateTime.contains(" ")) {
+            String[] parts = currentDateTime.split(" ");
+            if (parts.length > 0) currentDate = parts[0];
+            if (parts.length > 1) currentTime = parts[1];
+        } else {
+            currentDate = currentDateTime;
+        }
+        etDate.setText(currentDate);
+        etDate.setOnClickListener(v -> showDatePicker(etDate));
+        layout.addView(etDate);
+
+        final EditText etTime = new EditText(requireContext());
+        etTime.setHint("Time (HH:MM)");
+        etTime.setFocusable(false);
+        etTime.setText(currentTime);
+        etTime.setOnClickListener(v -> showTimePicker(etTime));
+        layout.addView(etTime);
+
+        final EditText etCapacity = new EditText(requireContext());
+        etCapacity.setHint("Waitlist Capacity (leave empty for unlimited)");
+        etCapacity.setText(event.getWaitingListCapacity() != null ? String.valueOf(event.getWaitingListCapacity()) : "");
+        etCapacity.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+        layout.addView(etCapacity);
+
+        builder.setView(layout);
+
+        builder.setPositiveButton("Save Changes", (dialog, which) -> {
+            String newTitle = etTitle.getText().toString().trim();
+            String newDesc = etDescription.getText().toString().trim();
+            String newLoc = etLocation.getText().toString().trim();
+            String newDateStr = etDate.getText().toString().trim();
+            String newTimeStr = etTime.getText().toString().trim();
+            String capStr = etCapacity.getText().toString().trim();
+
+            if (newTitle.isEmpty()) {
+                Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            event.setName(newTitle);
+            event.setDescription(newDesc);
+            event.setLocation(newLoc);
+            event.setTime(newDateStr + " " + newTimeStr);
+            
+            if (!capStr.isEmpty()) {
+                try {
+                    event.setWaitingListCapacity(Integer.parseInt(capStr));
+                } catch (NumberFormatException ignored) {}
+            } else {
+                event.setWaitingListCapacity(null);
+            }
+
+            db.updateEvent(event);
+            Toast.makeText(getContext(), "Event updated!", Toast.LENGTH_SHORT).show();
+            refreshUI();
+        });
+
+        builder.setNegativeButton("Cancel", null);
+        builder.show();
+    }
+
+    private void showDatePicker(EditText etDate) {
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+
+        DatePickerDialog datePickerDialog = new DatePickerDialog(requireContext(), (view, year1, month1, dayOfMonth) -> {
+            String date = String.format(Locale.getDefault(), "%04d-%02d-%02d", year1, month1 + 1, dayOfMonth);
+            etDate.setText(date);
+        }, year, month, day);
+        datePickerDialog.show();
+    }
+
+    private void showTimePicker(EditText etTime) {
+        Calendar calendar = Calendar.getInstance();
+        int hour = calendar.get(Calendar.HOUR_OF_DAY);
+        int minute = calendar.get(Calendar.MINUTE);
+
+        TimePickerDialog timePickerDialog = new TimePickerDialog(requireContext(), (view, hourOfDay, minute1) -> {
+            String time = String.format(Locale.getDefault(), "%02d:%02d", hourOfDay, minute1);
+            etTime.setText(time);
+        }, hour, minute, false);
+        timePickerDialog.show();
+    }
+
+    private void showDeleteConfirmationDialog() {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Delete Event")
+                .setMessage("Are you sure you want to delete this event? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    Event event = db.getEvent(eventId);
+                    if (event != null) {
+                        db.deleteEvent(event);
+                        Toast.makeText(getContext(), "Event deleted", Toast.LENGTH_SHORT).show();
+                        dismiss();
+                    }
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void openOrganizerMessages() {
@@ -315,6 +472,28 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 .replace(R.id.fragment_container, fragment)
                 .addToBackStack(null)
                 .commit();
+    }
+
+    private void openEntrantChat() {
+        if (eventId == null || currentDeviceID == null) return;
+
+        try {
+            MessageThread thread = messagingService.openThread(eventId, currentDeviceID);
+            dismiss();
+            DirectChatFragment fragment = DirectChatFragment.newInstance(
+                    eventId,
+                    thread.getThreadID(),
+                    currentDeviceID,
+                    false
+            );
+            getParentFragmentManager()
+                    .beginTransaction()
+                    .replace(R.id.fragment_container, fragment)
+                    .addToBackStack(null)
+                    .commit();
+        } catch (IllegalArgumentException e) {
+            Toast.makeText(getContext(), e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private void loadComments() {

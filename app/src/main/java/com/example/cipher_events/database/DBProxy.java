@@ -118,7 +118,12 @@ public class DBProxy {
     }
 
     // --- Events ---
-    public void addEvent(Event event) { eventDB.add(event); }
+    public void addEvent(Event event) {
+        if (event.getOrganizer() == null && currentUser instanceof Organizer) {
+            event.setOrganizer((Organizer) currentUser);
+        }
+        eventDB.add(event);
+    }
     public Event getEvent(String eventID) { return eventDB.get(eventID); }
     public ArrayList<Event> getAllEvents() { return eventDB.getAll(); }
     public void updateEvent(Event event) { eventDB.update(event); }

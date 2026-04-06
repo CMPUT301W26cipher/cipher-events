@@ -340,6 +340,34 @@
             app:cornerRadius="12dp" />
 
         <Button
+            android:id="@+id/edit_event_button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="Edit Event Details"
+            android:backgroundTint="@color/button_purple"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <Button
+            android:id="@+id/delete_event_button"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:layout_marginTop="12dp"
+            android:text="Delete Event"
+            android:backgroundTint="@color/remove_red"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            android:visibility="gone"
+            tools:visibility="visible" />
+
+        <Button
             android:id="@+id/btn_close_bottom"
             android:layout_width="match_parent"
             android:layout_height="52dp"

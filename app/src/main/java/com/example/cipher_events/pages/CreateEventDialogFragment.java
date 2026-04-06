@@ -19,7 +19,12 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
+import com.example.cipher_events.database.User;
 
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Locale;
 
@@ -70,6 +75,8 @@ public class CreateEventDialogFragment extends DialogFragment {
                 } catch (NumberFormatException ignored) {}
             }
 
+            // We only notify the listener here. The actual event creation and DBProxy.addEvent()
+            // call is handled by the listener in MainActivity to avoid duplicate entries.
             if (listener != null) {
                 listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl);
             }
