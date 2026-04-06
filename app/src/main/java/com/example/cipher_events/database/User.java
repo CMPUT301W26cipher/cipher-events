@@ -22,6 +22,9 @@ public class User {
     private ArrayList<String> favoriteEventIds = new ArrayList<>();
     private ArrayList<String> hiddenThreadIds = new ArrayList<>();
 
+    private boolean organizerRole;
+    private boolean entrantRole;
+
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
         this.deviceID = UUID.randomUUID().toString();
@@ -143,6 +146,22 @@ public class User {
 
     public boolean isThreadHidden(String threadId) {
         return getHiddenThreadIds().contains(threadId);
+    }
+
+    public boolean hasOrganizerRole() {
+        return organizerRole;
+    }
+
+    public void setOrganizerRole(boolean organizerRole) {
+        this.organizerRole = organizerRole;
+    }
+
+    public boolean hasEntrantRole() {
+        return entrantRole;
+    }
+
+    public void setEntrantRole(boolean entrantRole) {
+        this.entrantRole = entrantRole;
     }
 
     // String representation for debugging purposes
