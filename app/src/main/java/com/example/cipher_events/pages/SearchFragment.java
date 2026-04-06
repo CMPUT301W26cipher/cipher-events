@@ -7,7 +7,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -19,6 +18,7 @@ import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.chip.Chip;
 
 import java.util.ArrayList;
@@ -33,7 +33,8 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
     private Chip chipPublicOnly;
     private RecyclerView rvSearchResults;
     private View emptyStateContainer;
-    
+    private MaterialButton btnNotifications, btnMessages, btnCalendar;
+
     private EventAdapter adapter;
     private final List<Event> filteredEvents = new ArrayList<>();
     private final DBProxy db = DBProxy.getInstance();
@@ -65,6 +66,9 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
         chipPublicOnly = view.findViewById(R.id.chip_public_only);
         rvSearchResults = view.findViewById(R.id.rv_search_results);
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
+        btnNotifications = view.findViewById(R.id.btn_notifications);
+        btnMessages = view.findViewById(R.id.btn_messages);
+        btnCalendar = view.findViewById(R.id.btn_calendar);
     }
 
     private void setupRecyclerView() {
@@ -99,6 +103,19 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
         });
 
         chipPublicOnly.setOnCheckedChangeListener((buttonView, isChecked) -> performSearch());
+
+        btnNotifications.setOnClickListener(v -> navigateTo(new NotificationsFragment()));
+        btnMessages.setOnClickListener(v -> navigateTo(new UserInboxFragment()));
+        btnCalendar.setOnClickListener(v -> navigateTo(new CalendarFragment()));
+    }
+
+    private void navigateTo(Fragment fragment) {
+        getParentFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void performSearch() {
