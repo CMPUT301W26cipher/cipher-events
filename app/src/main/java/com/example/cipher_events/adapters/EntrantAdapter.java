@@ -21,13 +21,21 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
 
     public enum ListType { WAITLIST, INVITED, CANCELLED, ENROLLED }
 
+    // Listener for removing enrolled users
     public interface OnEnrolledRemoveListener {
         void onRemoveFromEnrolled(User user);
     }
 
+    // Listener for marking no-show
+    public interface OnMarkNoShowListener {
+        void onMarkNoShow(User user);
+    }
+
     private List<User> users;
     private ListType listType;
+
     private OnEnrolledRemoveListener removeListener;
+    private OnMarkNoShowListener noShowListener;
 
     public EntrantAdapter(List<User> users, ListType listType) {
         if (users != null) {
@@ -38,6 +46,10 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
 
     public void setOnEnrolledRemoveListener(OnEnrolledRemoveListener listener) {
         this.removeListener = listener;
+    }
+
+    public void setOnMarkNoShowListener(OnMarkNoShowListener listener) {
+        this.noShowListener = listener;
     }
 
     @NonNull
@@ -87,24 +99,40 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
                 break;
         }
 
-        // Only enrolled entrants are clickable for removal
-        if (listType == ListType.ENROLLED && removeListener != null) {
+        // Invited: tap to mark no-show
+        if (listType == ListType.INVITED && noShowListener != null) {
             holder.itemView.setOnClickListener(v -> {
                 new AlertDialog.Builder(holder.itemView.getContext())
-                        .setTitle("Remove Participant")
-                        .setMessage("Do you want to remove " + user.getName() + " from enrolled and move them back to waitlist?")
-                        .setPositiveButton("Yes", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
-                        .setNegativeButton("No", null)
+                        .setTitle("Mark No-Show")
+                        .setMessage("Mark " + user.getName() + " as no-show?")
+                        .setPositiveButton("Yes", (dialog, which) -> noShowListener.onMarkNoShow(user))
+                        .setNegativeButton("Cancel", null)
                         .show();
             });
-        } else {
+        }
+
+        else if (listType == ListType.ENROLLED) {
+            holder.itemView.setOnClickListener(v -> {
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setTitle("Participant Options")
+                        .setMessage("Are you sure you want to remove " + user.getName() + "?")
+                        .setPositiveButton("Remove", (dialog, which) -> {
+                            if (removeListener != null) removeListener.onRemoveFromEnrolled(user);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+
+
+    } else {
+            // IMPORTANT: prevent recycled click bugs
             holder.itemView.setOnClickListener(null);
         }
     }
 
     @Override
     public int getItemCount() {
-        return users.size();
+        return users != null ? users.size() : 0;
     }
 
     public void updateList(List<User> newUsers) {
