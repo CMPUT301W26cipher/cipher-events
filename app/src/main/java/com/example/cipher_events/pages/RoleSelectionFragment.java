@@ -41,7 +41,7 @@ public class RoleSelectionFragment extends Fragment {
     private void selectRole(String role) {
         if (getActivity() instanceof MainActivity) {
             String accountID = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
-            ((MainActivity) getActivity()).onRoleSelected(role, accountID);
+            ((MainActivity) getActivity()).loginSuccess(role, accountID);
         }
     }
 }
