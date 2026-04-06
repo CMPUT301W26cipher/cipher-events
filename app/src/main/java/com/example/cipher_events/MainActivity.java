@@ -116,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         if (isLoggedIn) {
             currentRole = prefs.getString(KEY_ROLE, "");
             String accountID = prefs.getString(KEY_DEVICE_ID, "");
-            
+
             User found = DB.getAnyUser(accountID);
             if (found != null) {
                 DB.setCurrentUser(found);
@@ -127,7 +127,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
                 if ("ADMIN".equals(currentRole)) placeholder = new Admin();
                 else if ("ORGANIZER".equals(currentRole)) placeholder = new Organizer();
                 else placeholder = new User();
-                
+
                 placeholder.setDeviceID(accountID);
                 DB.setCurrentUser(placeholder);
             }
@@ -142,7 +142,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
         fragmentTransaction.replace(R.id.fragment_container, fragment);
         fragmentTransaction.commit();
-        
+
         if (fragment instanceof LoginFragment || fragment instanceof SignupFragment) {
             bottomNavigationView.setVisibility(View.GONE);
         } else {
@@ -167,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.apply();
-        
+
         currentRole = "";
         DB.setCurrentUser(null);
         bottomNavigationView.setVisibility(View.GONE);
@@ -176,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
 
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate, lat, lon) -> {
+        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate) -> {
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
             Organizer organizer = DB.getOrganizer(deviceId);
 
@@ -194,13 +194,10 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
                     !isPrivate
             );
 
-            event.setLatitude(lat);
-            event.setLongitude(lon);
-
             if (capacity != null) {
                 event.setWaitingListCapacity(capacity);
             }
-            
+
             if (tags != null) {
                 event.setTags(new ArrayList<>(tags));
             }

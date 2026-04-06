@@ -5,26 +5,33 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/dialog_background"
     tools:context=".MainActivity">
+
+    <TextView
+        android:id="@+id/tv_current_role"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#33000000"
+        android:padding="8dp"
+        android:text="Role: None"
+        android:textAlignment="center"
+        android:textColor="#000000"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:visibility="gone" />
 
     <FrameLayout
         android:id="@+id/fragment_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_above="@+id/bottom_nav" />
+        android:layout_above="@+id/bottom_nav"
+        android:layout_below="@+id/tv_current_role" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottom_nav"
-        style="@style/Widget.Design.BottomNavigationView"
         android:layout_width="match_parent"
-        android:layout_height="72dp"
+        android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="@drawable/bottom_nav_bg"
-        app:elevation="8dp"
-        app:itemIconSize="26dp"
-        app:itemIconTint="@color/nav_item_color"
-        app:itemTextColor="@color/nav_item_color"
         app:labelVisibilityMode="unlabeled"
         app:menu="@menu/menu_bottom_nav" />
 
