@@ -1,28 +1,43 @@
 package com.example.cipher_events.adapters;
 
+import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.User;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantViewHolder> {
 
-    public enum ListType { INVITED, CANCELLED, ENROLLED }
+    public enum ListType { WAITLIST, INVITED, CANCELLED, ENROLLED }
+
+    public interface OnEnrolledRemoveListener {
+        void onRemoveFromEnrolled(User user);
+    }
 
     private List<User> users;
     private ListType listType;
+    private OnEnrolledRemoveListener removeListener;
 
     public EntrantAdapter(List<User> users, ListType listType) {
-        this.users = users;
+        if (users != null) {
+            this.users = users;
+        }
         this.listType = listType;
+    }
+
+    public void setOnEnrolledRemoveListener(OnEnrolledRemoveListener listener) {
+        this.removeListener = listener;
     }
 
     @NonNull
@@ -36,19 +51,54 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
     @Override
     public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
         User user = users.get(position);
-
         holder.name.setText(user.getName());
 
+        // Load Avatar
+        if (user.getProfilePictureURL() != null && !user.getProfilePictureURL().isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(user.getProfilePictureURL())
+                    .placeholder(R.drawable.gray_placeholder)
+                    .into(holder.avatar);
+        } else {
+            holder.avatar.setImageResource(R.drawable.gray_placeholder);
+        }
+
+        // Style status and indicator
         switch (listType) {
+            case WAITLIST:
+                holder.status.setText("Waitlisted");
+                holder.status.setTextColor(holder.itemView.getContext().getColor(R.color.text_hint));
+                holder.actionIndicator.setVisibility(View.GONE);
+                break;
             case INVITED:
                 holder.status.setText("Invited");
+                holder.status.setTextColor(holder.itemView.getContext().getColor(R.color.button_purple));
+                holder.actionIndicator.setVisibility(View.GONE);
                 break;
             case CANCELLED:
                 holder.status.setText("Cancelled");
+                holder.status.setTextColor(holder.itemView.getContext().getColor(R.color.remove_red));
+                holder.actionIndicator.setVisibility(View.GONE);
                 break;
             case ENROLLED:
                 holder.status.setText("Enrolled");
+                holder.status.setTextColor(holder.itemView.getContext().getColor(R.color.role_organizer));
+                holder.actionIndicator.setVisibility(removeListener != null ? View.VISIBLE : View.GONE);
                 break;
+        }
+
+        // Only enrolled entrants are clickable for removal
+        if (listType == ListType.ENROLLED && removeListener != null) {
+            holder.itemView.setOnClickListener(v -> {
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setTitle("Remove Participant")
+                        .setMessage("Do you want to remove " + user.getName() + " from enrolled and move them back to waitlist?")
+                        .setPositiveButton("Yes", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
+                        .setNegativeButton("No", null)
+                        .show();
+            });
+        } else {
+            holder.itemView.setOnClickListener(null);
         }
     }
 
@@ -58,17 +108,20 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
     }
 
     public void updateList(List<User> newUsers) {
-        this.users = newUsers;
+        this.users = (newUsers != null) ? newUsers : new ArrayList<>();
         notifyDataSetChanged();
     }
 
     static class EntrantViewHolder extends RecyclerView.ViewHolder {
         TextView name, status;
+        ImageView avatar, actionIndicator;
 
         public EntrantViewHolder(@NonNull View itemView) {
             super(itemView);
             name = itemView.findViewById(R.id.entrant_name);
             status = itemView.findViewById(R.id.entrant_status);
+            avatar = itemView.findViewById(R.id.iv_entrant_avatar);
+            actionIndicator = itemView.findViewById(R.id.iv_action_indicator);
         }
     }
 }

@@ -43,6 +43,16 @@
             android:name="com.google.firebase.messaging.default_notification_color"
             android:resource="@color/button_purple"/>
 
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="com.example.cipher_events.provider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/file_paths" />
+        </provider>
+
     </application>
 
 </manifest>

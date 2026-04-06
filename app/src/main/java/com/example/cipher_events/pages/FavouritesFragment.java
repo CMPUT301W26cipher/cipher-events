@@ -1,10 +1,10 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -18,61 +18,95 @@ import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * FavouritesFragment displays events the user has joined (Waitlist) or marked as favourite.
+ */
 public class FavouritesFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private RecyclerView recyclerView;
     private EventAdapter adapter;
-    private List<Event> filteredEvents = new ArrayList<>();
-    private DBProxy db = DBProxy.getInstance();
-    private String deviceId;
+    private final List<Event> filteredEvents = new ArrayList<>();
+    private final DBProxy db = DBProxy.getInstance();
     
     private TextView tabWaitlist, tabFavourite;
+    private View emptyStateContainer;
+    private TextView tvEmptyMsg;
+    private ImageView emptyIcon;
+    private MaterialButton btnNotifications, btnMessages, btnCalendar;
+    
     private boolean isWaitlistTab = true;
 
-    public FavouritesFragment() {}
-
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+    public FavouritesFragment() {
+        // Required empty public constructor
     }
 
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
         View view = inflater.inflate(R.layout.fragment_favourites, container, false);
 
-        recyclerView = view.findViewById(R.id.favouritesRecycler);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+        initializeViews(view);
+        setupRecyclerView();
+        setupListeners();
 
+        return view;
+    }
+
+    private void initializeViews(View view) {
+        recyclerView = view.findViewById(R.id.favouritesRecycler);
         tabWaitlist = view.findViewById(R.id.tab_attending);
         tabFavourite = view.findViewById(R.id.tab_favourite);
+        emptyStateContainer = view.findViewById(R.id.empty_state_container);
+        tvEmptyMsg = view.findViewById(R.id.tv_empty_msg);
+        emptyIcon = view.findViewById(R.id.empty_icon);
+        btnNotifications = view.findViewById(R.id.btn_notifications);
+        btnMessages = view.findViewById(R.id.btn_messages);
+        btnCalendar = view.findViewById(R.id.btn_calendar);
+    }
 
+    private void setupRecyclerView() {
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(filteredEvents, event -> {
-            // When user clicks an event in the Waitlist tab, show the management dialog (join/leave toggle)
-            // instead of the scan dialog.
+            // Consistent with other fragments, showing detailed event view
             ScannedEventDetailsDialogFragment dialog = ScannedEventDetailsDialogFragment.newInstance(event.getEventID());
             dialog.show(getParentFragmentManager(), "ScannedEventDetailsDialog");
         });
-
         recyclerView.setAdapter(adapter);
+    }
 
+    private void setupListeners() {
         tabWaitlist.setOnClickListener(v -> {
-            isWaitlistTab = true;
-            refreshUI();
+            if (!isWaitlistTab) {
+                isWaitlistTab = true;
+                refreshUI();
+            }
         });
 
         tabFavourite.setOnClickListener(v -> {
-            isWaitlistTab = false;
-            refreshUI();
+            if (isWaitlistTab) {
+                isWaitlistTab = false;
+                refreshUI();
+            }
         });
 
-        return view;
+        btnNotifications.setOnClickListener(v -> navigateTo(new NotificationsFragment()));
+        btnMessages.setOnClickListener(v -> navigateTo(new UserInboxFragment()));
+        btnCalendar.setOnClickListener(v -> navigateTo(new CalendarFragment()));
+    }
+
+    private void navigateTo(Fragment fragment) {
+        getParentFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override
@@ -98,29 +132,47 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
     private void refreshUI() {
         filteredEvents.clear();
         ArrayList<Event> allEvents = db.getAllEvents();
+        User currentUser = db.getCurrentUser();
 
         if (isWaitlistTab) {
-            // Filter events where the user is in the entrants (waitlist) list
             for (Event event : allEvents) {
-                if (isUserInWaitlist(event)) {
+                if (isUserInWaitlist(event, currentUser)) {
                     filteredEvents.add(event);
                 }
             }
+            tvEmptyMsg.setText("You haven't joined any waitlists yet.");
+            emptyIcon.setImageResource(R.drawable.baseline_notifications_none_24);
         } else {
-            // Placeholder for "Favourite" logic
+            if (currentUser != null) {
+                ArrayList<String> favorites = currentUser.getFavoriteEventIds();
+                for (Event event : allEvents) {
+                    if (favorites.contains(event.getEventID())) {
+                        filteredEvents.add(event);
+                    }
+                }
+            }
+            tvEmptyMsg.setText("No favourite events yet.");
+            emptyIcon.setImageResource(R.drawable.baseline_star_border_24);
         }
 
-        if (adapter != null) {
-            adapter.notifyDataSetChanged();
+        adapter.notifyDataSetChanged();
+        
+        if (filteredEvents.isEmpty()) {
+            emptyStateContainer.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyStateContainer.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
         }
         
         updateTabStyles();
     }
 
-    private boolean isUserInWaitlist(Event event) {
-        if (event.getEntrants() == null) return false;
+    private boolean isUserInWaitlist(Event event, User currentUser) {
+        if (event.getEntrants() == null || currentUser == null) return false;
+        String currentId = currentUser.getDeviceID();
         for (User u : event.getEntrants()) {
-            if (u.getDeviceID() != null && u.getDeviceID().equals(deviceId)) {
+            if (u.getDeviceID() != null && u.getDeviceID().equals(currentId)) {
                 return true;
             }
         }
@@ -129,10 +181,14 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
 
     private void updateTabStyles() {
         if (isWaitlistTab) {
+            tabWaitlist.setBackgroundResource(R.drawable.filter_button_bg);
             tabWaitlist.setAlpha(1.0f);
+            tabFavourite.setBackground(null);
             tabFavourite.setAlpha(0.5f);
         } else {
+            tabWaitlist.setBackground(null);
             tabWaitlist.setAlpha(0.5f);
+            tabFavourite.setBackgroundResource(R.drawable.filter_button_bg);
             tabFavourite.setAlpha(1.0f);
         }
     }

@@ -1,6 +1,7 @@
 package com.example.cipher_events.pages;
 
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -28,24 +29,19 @@ public class RoleSelectionFragment extends Fragment {
         Button btnOrganizer = view.findViewById(R.id.btn_organizer);
         Button btnAdmin = view.findViewById(R.id.btn_admin);
 
-        btnEntrant.setOnClickListener(v -> navigateToLogin("ENTRANT"));
+        btnEntrant.setOnClickListener(v -> selectRole("ENTRANT"));
 
-        btnOrganizer.setOnClickListener(v -> navigateToLogin("ORGANIZER"));
+        btnOrganizer.setOnClickListener(v -> selectRole("ORGANIZER"));
 
-        btnAdmin.setOnClickListener(v -> {
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).onRoleSelected("ADMIN");
-            }
-        });
+        btnAdmin.setOnClickListener(v -> selectRole("ADMIN"));
 
         return view;
     }
 
-    private void navigateToLogin(String role) {
-        LoginFragment fragment = LoginFragment.newInstance(role);
-        getParentFragmentManager().beginTransaction()
-                .replace(R.id.fragment_container, fragment)
-                .addToBackStack(null)
-                .commit();
+    private void selectRole(String role) {
+        if (getActivity() instanceof MainActivity) {
+            String accountID = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
+            ((MainActivity) getActivity()).loginSuccess(role, accountID);
+        }
     }
 }

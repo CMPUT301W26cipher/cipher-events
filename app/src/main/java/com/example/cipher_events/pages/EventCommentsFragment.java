@@ -19,6 +19,7 @@ import com.example.cipher_events.R;
 import com.example.cipher_events.comment.EntrantCommentService;
 import com.example.cipher_events.comment.EventComment;
 import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 
 import java.util.ArrayList;
@@ -75,6 +76,21 @@ public class EventCommentsFragment extends Fragment {
         rvComments.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvComments.setAdapter(adapter);
 
+        // Check if admin
+        boolean isAdmin = DBProxy.getInstance().getAdmin(deviceID) != null;
+        
+        // Check if organizer
+        boolean isOrganizer = false;
+        Event event = DBProxy.getInstance().getEvent(eventID);
+        if (event != null && deviceID != null && deviceID.equals(event.getOrganizerID())) {
+            isOrganizer = true;
+        }
+
+        adapter.setup(deviceID, isAdmin, isOrganizer, comment -> {
+            commentService.deleteComment(eventID, comment.getCommentID());
+            loadComments();
+        });
+
         commentService = new EntrantCommentService();
 
         loadComments();
@@ -98,7 +114,12 @@ public class EventCommentsFragment extends Fragment {
         String message = etCommentInput.getText().toString();
 
         if (TextUtils.isEmpty(message.trim())) {
-            etCommentInput.setError("Enter a comment");
+            etCommentInput.setError("Comment cannot be empty");
+            return;
+        }
+
+        if (message.trim().length() > 500) {
+            etCommentInput.setError("Comment is too long (max 500 characters)");
             return;
         }
 

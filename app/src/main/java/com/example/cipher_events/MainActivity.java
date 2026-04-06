@@ -1,23 +1,23 @@
 package com.example.cipher_events;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
-import android.widget.TextView;
-import android.widget.Toast;
-import androidx.activity.EdgeToEdge;
+
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.graphics.Insets;
-import androidx.core.view.ViewCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
+
+import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
-import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
-import com.example.cipher_events.notifications.Notifier;
-import com.example.cipher_events.organizer.OrganizerEventService;
+import com.example.cipher_events.database.User;
+import com.example.cipher_events.databinding.ActivityMainBinding;
 import com.example.cipher_events.pages.AdminBrowseEventsFragment;
+import com.example.cipher_events.pages.AdminBrowseImagesFragment;
 import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
 import com.example.cipher_events.pages.AdminNotificationsFragment;
@@ -30,176 +30,205 @@ import com.example.cipher_events.pages.OrganizerHistoryFragment;
 import com.example.cipher_events.pages.OrganizerHomeFragment;
 import com.example.cipher_events.pages.OrganizerProfileFragment;
 import com.example.cipher_events.pages.ProfileFragment;
-import com.example.cipher_events.pages.RoleSelectionFragment;
 import com.example.cipher_events.pages.SearchFragment;
-import com.example.cipher_events.user.EntrantEventService;
-import com.example.cipher_events.user.UserEventHistoryRepository;
-import com.example.cipher_events.user.UserProfileService;
-import com.example.cipher_events.waitinglist.WaitingListService;
+import com.example.cipher_events.pages.SignupFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity {
-    //
-    DBProxy DB = DBProxy.getInstance();
-    Notifier notifier;
-    FragmentManager fragmentManager = getSupportFragmentManager();
-    BottomNavigationView bottomNavigationView;
-    TextView tvCurrentRole;
+public class MainActivity extends AppCompatActivity implements DBProxy.OnDataChangedListener {
 
+    private ActivityMainBinding binding;
+    private BottomNavigationView bottomNavigationView;
+    private static final String PREFS_NAME = "CipherEventsPrefs";
+    private static final String KEY_LOGGED_IN = "isLoggedIn";
+    private static final String KEY_ROLE = "userRole";
+    private static final String KEY_DEVICE_ID = "deviceID";
     private String currentRole = "";
-
-    // Firestore-backed services
-    private UserProfileService userProfileService;
-    private OrganizerEventService organizerEventService;
-    private EntrantEventService entrantEventService;
-    private WaitingListService waitingListService;
+    private DBProxy DB = DBProxy.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        EdgeToEdge.enable(this);
-        setContentView(R.layout.activity_main);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
 
-        notifier = Notifier.getInstance();
-        fragmentManager = getSupportFragmentManager();
-
-        // User-related services
-        UserEventHistoryRepository historyRepository = new UserEventHistoryRepository();
-        userProfileService = new UserProfileService();
-
-        // QR / Event-related services
-        organizerEventService = new OrganizerEventService();
-        entrantEventService = new EntrantEventService();
-
-        waitingListService = new WaitingListService(historyRepository);
-
-        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-            return insets;
-        });
-
-        bottomNavigationView = findViewById(R.id.bottom_nav);
-        bottomNavigationView.setVisibility(View.GONE); // Hide by default
-        
-        tvCurrentRole = findViewById(R.id.tv_current_role);
-
-        // Show role selection first
-        replaceFragment(new RoleSelectionFragment());
-
-        bottomNavigationView.setOnItemSelectedListener(menuItem -> {
-            Fragment selectedFragment = null;
-            int id = menuItem.getItemId();
-
-            if ("ENTRANT".equals(currentRole)) {
+        bottomNavigationView = binding.bottomNav;
+        bottomNavigationView.setOnItemSelectedListener(item -> {
+            int id = item.getItemId();
+            if ("ORGANIZER".equals(currentRole)) {
                 if (id == R.id.menu_home) {
-                    selectedFragment = new HomeFragment();
-                } else if (id == R.id.menu_search) {
-                    selectedFragment = new SearchFragment();
-                } else if (id == R.id.menu_favourites) {
-                    selectedFragment = new FavouritesFragment();
-                } else if (id == R.id.menu_profile) {
-                    selectedFragment = new ProfileFragment();
-                }
-            } else if ("ORGANIZER".equals(currentRole)) {
-                if (id == R.id.menu_home) {
-                    selectedFragment = new OrganizerHomeFragment();
+                    replaceFragment(new OrganizerHomeFragment());
                 } else if (id == R.id.menu_create) {
                     showCreateEventDialog();
-                    return false;
                 } else if (id == R.id.menu_history) {
-                    selectedFragment = new OrganizerHistoryFragment();
+                    replaceFragment(new OrganizerHistoryFragment());
                 } else if (id == R.id.menu_profile) {
-                    selectedFragment = new OrganizerProfileFragment();
+                    replaceFragment(new OrganizerProfileFragment());
                 }
             } else if ("ADMIN".equals(currentRole)) {
-                if (id == R.id.menu_admin_events) {
-                    selectedFragment = new AdminBrowseEventsFragment();
-                } else if (id == R.id.menu_admin_profiles) {
-                    selectedFragment = new AdminBrowseProfilesFragment();
-                } else if (id == R.id.menu_admin_notifications) {
-                    selectedFragment = new AdminNotificationsFragment();
+                if (id == R.id.menu_admin_home) {
+                    replaceFragment(new AdminHomeFragment());
                 } else if (id == R.id.menu_admin_profile) {
-                    selectedFragment = new AdminProfileFragment();
+                    replaceFragment(new AdminProfileFragment());
+                }
+            } else {
+                if (id == R.id.menu_home) {
+                    replaceFragment(new HomeFragment());
+                } else if (id == R.id.menu_search) {
+                    replaceFragment(new SearchFragment());
+                } else if (id == R.id.menu_favourites) {
+                    replaceFragment(new FavouritesFragment());
+                } else if (id == R.id.menu_profile) {
+                    replaceFragment(new ProfileFragment());
                 }
             }
-
-            replaceFragment(selectedFragment);
             return true;
         });
+
+        DB.addListener(this);
+        checkPersistentLogin();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        DB.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+        if (isLoggedIn) {
+            String role = prefs.getString(KEY_ROLE, "");
+            if (!this.currentRole.equals(role)) {
+                this.currentRole = role;
+                updateNavigationMenu();
+            }
+        }
+    }
+
+    private void checkPersistentLogin() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+
+        if (isLoggedIn) {
+            currentRole = prefs.getString(KEY_ROLE, "");
+            String accountID = prefs.getString(KEY_DEVICE_ID, "");
+            
+            User found = DB.getAnyUser(accountID);
+            if (found != null) {
+                DB.setCurrentUser(found);
+            } else {
+                // Not found in local lists yet. Set a placeholder with the ID.
+                // DBProxy will swap this for the real user once Firestore data arrives.
+                User placeholder;
+                if ("ADMIN".equals(currentRole)) placeholder = new Admin();
+                else if ("ORGANIZER".equals(currentRole)) placeholder = new Organizer();
+                else placeholder = new User();
+                
+                placeholder.setDeviceID(accountID);
+                DB.setCurrentUser(placeholder);
+            }
+            updateNavigationMenu();
+        } else {
+            replaceFragment(LoginFragment.newInstance());
+        }
+    }
+
+    private void replaceFragment(Fragment fragment) {
+        FragmentManager fragmentManager = getSupportFragmentManager();
+        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+        fragmentTransaction.replace(R.id.fragment_container, fragment);
+        fragmentTransaction.commit();
+        
+        if (fragment instanceof LoginFragment || fragment instanceof SignupFragment) {
+            bottomNavigationView.setVisibility(View.GONE);
+        } else {
+            bottomNavigationView.setVisibility(View.VISIBLE);
+        }
+    }
+
+    public void loginSuccess(String role, String accountID) {
+        currentRole = role;
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putBoolean(KEY_LOGGED_IN, true);
+        editor.putString(KEY_ROLE, role);
+        editor.putString(KEY_DEVICE_ID, accountID);
+        editor.apply();
+
+        updateNavigationMenu();
+    }
+
+    public void logout() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.apply();
+        
+        currentRole = "";
+        DB.setCurrentUser(null);
+        bottomNavigationView.setVisibility(View.GONE);
+        replaceFragment(LoginFragment.newInstance());
     }
 
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl) -> {
-            // Get current organizer from DB
+        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate) -> {
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-            Organizer currentOrganizer = DB.getOrganizer(deviceId);
-            
-            if (currentOrganizer == null) {
-                currentOrganizer = new Organizer("Unknown Organizer", "", "", "", null);
-                currentOrganizer.setDeviceID(deviceId);
-            }
+            Organizer organizer = DB.getOrganizer(deviceId);
 
-            Event newEvent = new Event(
+            String timeStr = date + " " + time;
+
+            com.example.cipher_events.database.Event event = new com.example.cipher_events.database.Event(
                     title,
                     description,
-                    date + " " + time,
+                    timeStr,
                     location,
-                    currentOrganizer,
-                    new ArrayList<>(), // entrants
-                    new ArrayList<>(), // attendees
-                    bannerUrl,         // posterPictureURL from dialog
-                    true               // publicEvent
+                    organizer,
+                    new ArrayList<>(),
+                    new ArrayList<>(),
+                    bannerUrl,
+                    !isPrivate
             );
-            
+
             if (capacity != null) {
-                newEvent.setWaitingListCapacity(capacity);
+                event.setWaitingListCapacity(capacity);
             }
             
-            // Explicitly add to DB
-            DB.addEvent(newEvent);
-            
-            Toast.makeText(this, "Event Created and Added to DB", Toast.LENGTH_SHORT).show();
+            if (tags != null) {
+                event.setTags(new ArrayList<>(tags));
+            }
+
+            event.setInvitedEntrants(new ArrayList<>());
+            event.setCancelledEntrants(new ArrayList<>());
+            event.setEnrolledEntrants(new ArrayList<>());
+
+            DB.addEvent(event);
+            android.widget.Toast.makeText(this, "Event created!", android.widget.Toast.LENGTH_SHORT).show();
         });
-        dialog.show(getSupportFragmentManager(), "CreateEventDialog");
+        dialog.show(getSupportFragmentManager(), "CREATE_EVENT");
     }
 
-    public void onRoleSelected(String role) {
-        currentRole = role;
-        
-        // Update Role UI
-        if (tvCurrentRole != null) {
-            tvCurrentRole.setText("Role: " + role);
-            tvCurrentRole.setVisibility(View.VISIBLE);
+    private void updateNavigationMenu() {
+        if (bottomNavigationView == null) return;
+
+        bottomNavigationView.setVisibility(View.VISIBLE);
+
+        if ("ORGANIZER".equals(currentRole)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_organizer_nav);
+            replaceFragment(new OrganizerHomeFragment());
+        } else if ("ADMIN".equals(currentRole)) {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_admin_nav);
+            replaceFragment(new AdminHomeFragment());
+        } else {
+            bottomNavigationView.getMenu().clear();
+            bottomNavigationView.inflateMenu(R.menu.menu_bottom_nav);
+            replaceFragment(new HomeFragment());
         }
-
-//        isLoggedIn = false;
-        bottomNavigationView.setVisibility(View.GONE);
-        replaceFragment(new LoginFragment());
-//        onLoginSuccess();
-    }
-
-    private void replaceFragment(Fragment fragment) {
-        if (fragment != null) {
-            fragmentManager.beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .commit();
-
-            // Hide role banner if we go back to role selection
-            if (fragment instanceof RoleSelectionFragment) {
-                if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
-                currentRole = "";
-            }
-        }
-    }
-
-    @Override
-    protected void onDestroy () {
-        DB.shutdown();
-        if (notifier != null) notifier.stopListener();
-        super.onDestroy();
     }
 }

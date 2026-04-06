@@ -176,6 +176,10 @@ public class OrganizerInteractionService {
         Event event = requireEvent(eventID);
         User entrant = requireUser(entrantDeviceID);
 
+        if (!isUserAssociatedWithEvent(event, entrantDeviceID)) {
+            throw new IllegalArgumentException("User is not an entrant for this event.");
+        }
+
         ArrayList<String> coOrganizerIds = event.getCoOrganizerIds();
         if (coOrganizerIds.contains(entrantDeviceID)) {
             throw new IllegalArgumentException("User is already a co-organizer.");
@@ -191,6 +195,24 @@ public class OrganizerInteractionService {
     public boolean isCoOrganizer(String eventID, String userDeviceID) {
         Event event = requireEvent(eventID);
         return event.getCoOrganizerIds().contains(userDeviceID);
+    }
+
+    private boolean isUserAssociatedWithEvent(Event event, String deviceID) {
+        return containsUser(event.getEntrants(), deviceID)
+                || containsUser(event.getInvitedEntrants(), deviceID)
+                || containsUser(event.getCancelledEntrants(), deviceID)
+                || containsUser(event.getEnrolledEntrants(), deviceID)
+                || containsUser(event.getAttendees(), deviceID);
+    }
+
+    private boolean containsUser(List<User> users, String deviceID) {
+        if (users == null) return false;
+        for (User user : users) {
+            if (user != null && deviceID.equals(user.getDeviceID())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

@@ -1,42 +1,35 @@
 package com.example.cipher_events.pages;
 
+import android.content.res.ColorStateList;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
-import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import com.bumptech.glide.Glide;
+import com.example.cipher_events.MainActivity;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.google.android.material.button.MaterialButton;
 
-/**
- * Displays the user's profile information (name, email, location)
- * Displays profile photo as well (upon click, user is able to change)
- * when clicking profile, email, or location, user is able to edit the text
- *
- * Navigation buttons are included below
- * - Waitlist: navigates to a waitlist fragment to view events that user has joined the waitlist for
- * - History: displays past events of user
- * - Edit Profile: allows user to edit their profile (navigates to UserProfileFragment)
- * - Sign Out: signs user out of their account, navigates back to sign up/login screen
- */
-
-public class ProfileFragment extends Fragment {
+public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private TextView nameText, emailText, locationText;
     private EditText nameEdit, emailEdit, locationEdit;
+    private ImageView profileImage;
     private DBProxy dbProxy;
-    private String deviceId;
     private User currentUser;
 
     public ProfileFragment() {}
@@ -45,7 +38,6 @@ public class ProfileFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         dbProxy = DBProxy.getInstance();
-        deviceId = Settings.Secure.getString(requireContext().getContentResolver(), Settings.Secure.ANDROID_ID);
     }
 
     @Nullable
@@ -53,61 +45,115 @@ public class ProfileFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater,
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
+        return inflater.inflate(R.layout.fragment_profile, container, false);
+    }
 
-        View view = inflater.inflate(R.layout.fragment_profile, container, false);
+    @Override
+    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
 
-        // Bind views
         nameText = view.findViewById(R.id.profile_name);
         emailText = view.findViewById(R.id.profile_email);
         locationText = view.findViewById(R.id.profile_location);
-
         nameEdit = view.findViewById(R.id.profile_name_edit);
         emailEdit = view.findViewById(R.id.profile_email_edit);
         locationEdit = view.findViewById(R.id.profile_location_edit);
+        profileImage = view.findViewById(R.id.profile_image);
 
-        // Load real user data from database
-        currentUser = dbProxy.getUser(deviceId);
-        if (currentUser != null) {
-            nameText.setText(currentUser.getName());
-            emailText.setText(currentUser.getEmail());
-            // locationText.setText("Edmonton, AB"); // Or from user if added
-        } else {
-            // Default values if user doesn't exist (e.g. after deletion)
-            nameText.setText("Name");
-            emailText.setText("Email");
-            locationText.setText("Location");
-        }
-
-        // Make fields editable
+        loadUserData();
+        setupButtons(view);
+        
         setupEditableField(nameText, nameEdit, "name");
         setupEditableField(emailText, emailEdit, "email");
         setupEditableField(locationText, locationEdit, "location");
+    }
 
-        //Button waitlistBtn = view.findViewById(R.id.waitlist_btn);
-        //waitlistBtn.setOnClickListener(v -> {
-        //    WaitingListFragment fragment = new WaitingListFragment();
-        //    getParentFragmentManager()
-        //           .beginTransaction()
-        //            .replace(R.id.fragment_container, fragment)
-        //            .addToBackStack(null)
-        //            .commit();
-        //});
+    @Override
+    public void onStart() {
+        super.onStart();
+        dbProxy.addListener(this);
+        loadUserData();
+    }
 
-        // edit profile button
-        Button editProfileBtn = view.findViewById(R.id.edit_profile_btn);
-        editProfileBtn.setOnClickListener(v -> {
-            UserProfileFragment fragment = new UserProfileFragment();
-            getParentFragmentManager()
-                    .beginTransaction()
-                    .replace(R.id.fragment_container, fragment)
-                    .addToBackStack(null)
-                    .commit();
-        });
+    @Override
+    public void onStop() {
+        super.onStop();
+        dbProxy.removeListener(this);
+    }
 
-        return view;
+    @Override
+    public void onDataChanged() {
+        loadUserData();
+    }
+
+    private void loadUserData() {
+        currentUser = dbProxy.getCurrentUser();
+
+        if (currentUser != null) {
+            nameText.setText(currentUser.getName() != null && !currentUser.getName().isEmpty() ? currentUser.getName() : "Set Name");
+            emailText.setText(currentUser.getEmail() != null && !currentUser.getEmail().isEmpty() ? currentUser.getEmail() : "Set Email");
+            // Location isn't in User model yet, keeping placeholder
+            locationText.setText("Set Location");
+
+            String picUrl = currentUser.getProfilePictureURL();
+            if (picUrl != null && !picUrl.isEmpty()) {
+                Glide.with(this)
+                        .load(picUrl)
+                        .placeholder(R.drawable.outline_account_circle_24)
+                        .circleCrop()
+                        .into(profileImage);
+                profileImage.setPadding(0, 0, 0, 0);
+                profileImage.setImageTintList(null);
+            } else {
+                // If no URL, show default icon with proper padding and tint
+                profileImage.setImageResource(R.drawable.outline_account_circle_24);
+                int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
+                profileImage.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
+                profileImage.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.white)));
+            }
+        }
+    }
+
+    private void setupButtons(View view) {
+        MaterialButton notificationsBtn = view.findViewById(R.id.notifications_btn);
+        if (notificationsBtn != null) {
+            notificationsBtn.setOnClickListener(v -> {
+                // Route to personal NotificationsFragment
+                navigateTo(new NotificationsFragment());
+            });
+        }
+
+        MaterialButton historyBtn = view.findViewById(R.id.history_btn);
+        if (historyBtn != null) {
+            historyBtn.setOnClickListener(v -> navigateTo(new OrganizerHistoryFragment()));
+        }
+
+        MaterialButton editProfileBtn = view.findViewById(R.id.edit_profile_btn);
+        if (editProfileBtn != null) {
+            editProfileBtn.setOnClickListener(v -> navigateTo(new UserProfileFragment()));
+        }
+
+        MaterialButton signOutBtn = view.findViewById(R.id.signout_btn);
+        if (signOutBtn != null) {
+            signOutBtn.setOnClickListener(v -> {
+                if (getActivity() instanceof MainActivity) {
+                    ((MainActivity) getActivity()).logout();
+                }
+            });
+        }
+    }
+
+    private void navigateTo(Fragment fragment) {
+        getParentFragmentManager()
+                .beginTransaction()
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     private void setupEditableField(TextView textView, EditText editText, String fieldType) {
+        if (textView == null || editText == null) return;
+        
         textView.setOnClickListener(v -> {
             editText.setText(textView.getText());
             textView.setVisibility(View.GONE);
@@ -119,29 +165,11 @@ public class ProfileFragment extends Fragment {
             if (actionId == EditorInfo.IME_ACTION_DONE ||
                     (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
 
-                String newValue = editText.getText().toString();
-                textView.setText(newValue);
-
-                if (currentUser == null) {
-                    currentUser = new User(newValue, "Email", "", "", null);
-                    currentUser.setDeviceID(deviceId);
-                    dbProxy.addUser(currentUser);
+                String newValue = editText.getText().toString().trim();
+                if (!newValue.isEmpty()) {
+                    textView.setText(newValue);
+                    updateUserField(fieldType, newValue);
                 }
-
-                // Update the User object
-                switch (fieldType) {
-                    case "name":
-                        currentUser.setName(newValue);
-                        break;
-                    case "email":
-                        currentUser.setEmail(newValue);
-                        break;
-                    case "location":
-                        // You can add a location field to User class later
-                        break;
-                }
-                
-                dbProxy.updateUser(currentUser);
 
                 editText.setVisibility(View.GONE);
                 textView.setVisibility(View.VISIBLE);
@@ -149,5 +177,15 @@ public class ProfileFragment extends Fragment {
             }
             return false;
         });
+    }
+
+    private void updateUserField(String fieldType, String value) {
+        if (currentUser != null) {
+            switch (fieldType) {
+                case "name": currentUser.setName(value); break;
+                case "email": currentUser.setEmail(value); break;
+            }
+            dbProxy.updateUser(currentUser);
+        }
     }
 }

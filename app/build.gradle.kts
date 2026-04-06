@@ -31,6 +31,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/DEPENDENCIES"
@@ -55,6 +59,9 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.github.bumptech.glide:glide:4.16.0")
     implementation(libs.firebase.functions)
+    implementation(libs.swiperefreshlayout)
+    implementation(libs.material.calendarview)
+    implementation("com.jakewharton.threetenabp:threetenabp:1.4.9")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation(libs.junit)
     testImplementation("org.mockito:mockito-core:5.12.0")

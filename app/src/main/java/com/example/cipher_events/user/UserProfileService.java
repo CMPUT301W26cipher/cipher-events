@@ -55,6 +55,24 @@ public class UserProfileService {
     }
 
     /**
+     * US 01.04.03
+     * Opt in or out of notifications.
+     */
+    public void setNotificationsEnabled(String deviceId, boolean enabled) {
+        if (deviceId == null || deviceId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Device ID is required.");
+        }
+
+        User user = db.getUser(deviceId);
+        if (user == null) {
+            throw new IllegalArgumentException("User not found.");
+        }
+
+        user.setNotificationsEnabled(enabled);
+        db.updateUser(user);
+    }
+
+    /**
      * US 01.02.02
      * Update existing user profile fields.
      */
