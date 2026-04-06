@@ -1,6 +1,5 @@
 package com.example.cipher_events.pages;
 
-import android.app.AlertDialog;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
@@ -14,6 +13,7 @@ import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -21,9 +21,12 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,7 +72,7 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         
         List<AdminImage> imageList = new ArrayList<>();
 
-        // Collect event posters
+        // 1. Collect event posters
         List<Event> events = db.getAllEvents();
         for (Event event : events) {
             String url = event.getPosterPictureURL();
@@ -78,12 +81,30 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
             }
         }
 
-        // Collect user profile pictures
+        // 2. Collect entrant profile pictures
         List<User> users = db.getAllUsers();
         for (User user : users) {
             String url = user.getProfilePictureURL();
             if (url != null && !url.isEmpty()) {
-                imageList.add(new AdminImage(url, "Profile Picture", user));
+                imageList.add(new AdminImage(url, "Profile (Entrant)", user));
+            }
+        }
+
+        // 3. Collect organizer profile pictures
+        List<Organizer> organizers = db.getAllOrganizers();
+        for (Organizer organizer : organizers) {
+            String url = organizer.getProfilePictureURL();
+            if (url != null && !url.isEmpty()) {
+                imageList.add(new AdminImage(url, "Profile (Organizer)", organizer));
+            }
+        }
+
+        // 4. Collect admin profile pictures
+        List<Admin> admins = db.getAllAdmins();
+        for (Admin admin : admins) {
+            String url = admin.getProfilePictureURL();
+            if (url != null && !url.isEmpty()) {
+                imageList.add(new AdminImage(url, "Profile (Admin)", admin));
             }
         }
 
@@ -107,7 +128,7 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
                 .load(image.url)
                 .into(ivPreview);
 
-        AlertDialog dialog = new AlertDialog.Builder(getContext())
+        AlertDialog dialog = new MaterialAlertDialogBuilder(requireContext())
                 .setView(dialogView)
                 .create();
 
@@ -120,7 +141,7 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
     }
 
     private void onDeleteClick(AdminImage image) {
-        new AlertDialog.Builder(getContext())
+        new MaterialAlertDialogBuilder(requireContext(), R.style.CustomAlertDialog)
                 .setTitle("Remove Image")
                 .setMessage("Are you sure you want to remove this image? This action cannot be undone.")
                 .setPositiveButton("Remove", (dialog, which) -> {

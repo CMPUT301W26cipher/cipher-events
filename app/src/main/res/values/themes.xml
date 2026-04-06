@@ -14,4 +14,23 @@
     <style name="ShapeAppearance.Material3.Carousel.Medium" parent="ShapeAppearance.Material3.MediumComponent">
         <item name="cornerSize">24dp</item>
     </style>
+
+    <!-- Aesthetic Dialog Styles -->
+    <style name="CustomMaterialCalendar" parent="ThemeOverlay.Material3.MaterialCalendar">
+        <!-- Add theme overrides here if needed, e.g. colorPrimary -->
+    </style>
+
+    <style name="CustomMaterialTimePicker" parent="ThemeOverlay.Material3.MaterialTimePicker">
+        <!-- Add theme overrides here if needed -->
+    </style>
+
+    <style name="CustomAlertDialog" parent="ThemeOverlay.Material3.Dialog.Alert">
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:backgroundDimEnabled">true</item>
+    </style>
+
+    <style name="DialogAnimation">
+        <item name="android:windowEnterAnimation">@android:anim/fade_in</item>
+        <item name="android:windowExitAnimation">@android:anim/fade_out</item>
+    </style>
 </resources>

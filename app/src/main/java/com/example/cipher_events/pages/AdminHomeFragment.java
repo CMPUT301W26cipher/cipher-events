@@ -29,6 +29,7 @@ public class AdminHomeFragment extends Fragment {
         CardView btnBrowseImages = view.findViewById(R.id.btn_manage_images);
         CardView btnNotificationLogs = view.findViewById(R.id.btn_notification_logs);
         CardView btnAdminProfile = view.findViewById(R.id.btn_admin_profile);
+        CardView btnManageComments = view.findViewById(R.id.btn_manage_comments);
 
         if (btnBrowseProfiles != null) {
             btnBrowseProfiles.setOnClickListener(v -> replaceFragment(new AdminBrowseProfilesFragment()));
@@ -48,6 +49,10 @@ public class AdminHomeFragment extends Fragment {
 
         if (btnAdminProfile != null) {
             btnAdminProfile.setOnClickListener(v -> replaceFragment(new AdminProfileFragment()));
+        }
+
+        if (btnManageComments != null) {
+            btnManageComments.setOnClickListener(v -> replaceFragment(new AdminBrowseCommentsFragment()));
         }
 
         return view;

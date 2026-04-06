@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Event Details"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="4dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Update your event information"
+            android:textColor="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp"/>
+
+        <!-- Event Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Event Title"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <EditText
+            android:id="@+id/et_edit_event_title"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/input_bg"
+            android:hint="Enter event title"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"
+            android:inputType="textCapWords"/>
+
+        <!-- Description -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Description"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <EditText
+            android:id="@+id/et_edit_event_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/input_bg"
+            android:hint="Tell people about your event..."
+            android:padding="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp"
+            android:minLines="3"
+            android:maxLines="6"
+            android:gravity="top"
+            android:layout_marginBottom="16dp"
+            android:inputType="textMultiLine|textCapSentences"/>
+
+        <!-- Location -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Location"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <EditText
+            android:id="@+id/et_edit_event_location"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/input_bg"
+            android:hint="Where is it happening?"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"
+            android:inputType="textPostalAddress"/>
+
+        <!-- Date & Time Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="6dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Date"
+                    android:textColor="@color/text_label"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:layout_marginBottom="8dp"
+                    android:alpha="0.7"/>
+
+                <EditText
+                    android:id="@+id/et_edit_event_date"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:background="@drawable/input_bg"
+                    android:hint="YYYY-MM-DD"
+                    android:paddingHorizontal="16dp"
+                    android:textColor="@color/white"
+                    android:textColorHint="@color/text_hint"
+                    android:textSize="14sp"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:inputType="none"/>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="6dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Time"
+                    android:textColor="@color/text_label"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textAllCaps="true"
+                    android:layout_marginBottom="8dp"
+                    android:alpha="0.7"/>
+
+                <EditText
+                    android:id="@+id/et_edit_event_time"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:background="@drawable/input_bg"
+                    android:hint="HH:MM"
+                    android:paddingHorizontal="16dp"
+                    android:textColor="@color/white"
+                    android:textColorHint="@color/text_hint"
+                    android:textSize="14sp"
+                    android:focusable="false"
+                    android:clickable="true"
+                    android:inputType="none"/>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Capacity -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Waitlist Capacity"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <EditText
+            android:id="@+id/et_edit_event_capacity"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/input_bg"
+            android:hint="Unlimited (leave empty)"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"
+            android:inputType="number"/>
+
+        <!-- Tags -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tags (comma separated)"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <EditText
+            android:id="@+id/et_edit_event_tags"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/input_bg"
+            android:hint="Music, Tech, Workshop..."
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"
+            android:inputType="textCapWords"/>
+
+        <!-- Public/Private -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_edit_event_public"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Public Event"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp"
+            app:useMaterialThemeColors="false"
+            app:thumbTint="@color/role_organizer"
+            app:trackTint="@color/input_background"/>
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_edit_event_cancel"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:textColor="@color/text_hint"
+                android:layout_marginEnd="8dp"
+                app:rippleColor="#22FFFFFF"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_edit_event_save"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:text="Save Changes"
+                android:backgroundTint="@color/role_organizer"
+                android:textColor="@color/black"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/ic_edit_24"
+                app:iconGravity="textStart"
+                app:iconPadding="8dp"
+                app:iconTint="@color/black"/>
+        </LinearLayout>
+
+    </LinearLayout>
+</ScrollView>

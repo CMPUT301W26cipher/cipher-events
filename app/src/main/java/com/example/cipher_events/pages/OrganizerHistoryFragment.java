@@ -17,15 +17,11 @@ import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
-import java.util.Locale;
 
 /**
- * Fragment that displays the history of events organized by the user.
- * Shows only past events that the current organizer has managed.
+ * Fragment that displays all events managed by the current organizer.
  */
 public class OrganizerHistoryFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
@@ -33,8 +29,8 @@ public class OrganizerHistoryFragment extends Fragment implements DBProxy.OnData
     private EventAdapter adapter;
     private View emptyStateContainer;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private final ArrayList<Event> pastEvents = new ArrayList<>();
-    
+    private final ArrayList<Event> managedEvents = new ArrayList<>();
+
     private final DBProxy db = DBProxy.getInstance();
     private String deviceId;
 
@@ -49,7 +45,7 @@ public class OrganizerHistoryFragment extends Fragment implements DBProxy.OnData
         recyclerView = view.findViewById(R.id.organizerHistoryRecycler);
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
-        
+
         setupSwipeRefresh();
         setupRecyclerView();
         loadHistory();
@@ -65,10 +61,9 @@ public class OrganizerHistoryFragment extends Fragment implements DBProxy.OnData
 
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        adapter = new EventAdapter(pastEvents, event -> {
+        adapter = new EventAdapter(managedEvents, event -> {
             ArrayList<String> tags = new ArrayList<>();
-            tags.add("Past Event");
-            tags.add("Organizer View");
+            tags.add("Organizer Mode");
 
             EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
                     event.getEventID(),
@@ -87,26 +82,36 @@ public class OrganizerHistoryFragment extends Fragment implements DBProxy.OnData
     }
 
     private void loadHistory() {
-        pastEvents.clear();
-        Date now = new Date();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
+        managedEvents.clear();
+
+        String currentId = deviceId;
+        if (db.getCurrentUser() != null) {
+            currentId = db.getCurrentUser().getDeviceID();
+        }
 
         for (Event event : db.getAllEvents()) {
-            // Check if user is the organizer AND if the event is in the past
-            if (deviceId.equals(event.getOrganizerID()) && isPastEvent(event, now, sdf)) {
-                pastEvents.add(event);
+            // Fetch all events where the current user is the organizer
+            if (currentId != null && currentId.equals(event.getOrganizerID())) {
+                managedEvents.add(event);
             }
         }
-        
+
         // Sort by date (most recent first)
-        Collections.sort(pastEvents, (e1, e2) -> e2.getTime().compareTo(e1.getTime()));
-        
+        Collections.sort(managedEvents, (e1, e2) -> {
+            String t1 = e1.getTime();
+            String t2 = e2.getTime();
+            if (t1 == null && t2 == null) return 0;
+            if (t1 == null) return 1;
+            if (t2 == null) return -1;
+            return t2.compareTo(t1);
+        });
+
         updateUI();
         swipeRefreshLayout.setRefreshing(false);
     }
 
     private void updateUI() {
-        if (pastEvents.isEmpty()) {
+        if (managedEvents.isEmpty()) {
             recyclerView.setVisibility(View.GONE);
             emptyStateContainer.setVisibility(View.VISIBLE);
         } else {
@@ -114,17 +119,6 @@ public class OrganizerHistoryFragment extends Fragment implements DBProxy.OnData
             emptyStateContainer.setVisibility(View.GONE);
         }
         adapter.notifyDataSetChanged();
-    }
-
-    private boolean isPastEvent(Event event, Date now, SimpleDateFormat sdf) {
-        try {
-            if (event.getTime() == null || event.getTime().length() < 10) return false;
-            String eventDateStr = event.getTime().substring(0, 10);
-            Date eventDate = sdf.parse(eventDateStr);
-            return eventDate != null && eventDate.before(now);
-        } catch (Exception e) {
-            return false;
-        }
     }
 
     @Override

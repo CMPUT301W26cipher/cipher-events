@@ -2,6 +2,8 @@ package com.example.cipher_events.pages;
 
 import android.app.AlertDialog;
 import android.content.Intent;
+import android.graphics.Color;
+import android.graphics.drawable.ColorDrawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -9,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -42,11 +45,16 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
     private RecyclerView recyclerView;
     private EntrantAdapter adapter;
     private TabLayout tabLayout;
+    private TextView titleView;
+    private TextView listHeaderView;
+    private TextView emptyStateView;
+    private View organizerToolsCard;
+    private ImageButton btnBack;
+    
     private DBProxy db = DBProxy.getInstance();
 
     public WaitingListFragment() {}
 
-    // UPDATED: pass role
     public static WaitingListFragment newInstance(String eventId, String role) {
         WaitingListFragment fragment = new WaitingListFragment();
         Bundle args = new Bundle();
@@ -70,9 +78,16 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
         waitingListService = new WaitingListService(new UserEventHistoryRepository());
 
+        // Initialize Views
         recyclerView = view.findViewById(R.id.entrants_recycler_view);
-        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         tabLayout = view.findViewById(R.id.tab_layout);
+        titleView = view.findViewById(R.id.title_events);
+        listHeaderView = view.findViewById(R.id.list_header_text);
+        emptyStateView = view.findViewById(R.id.tv_empty_state);
+        organizerToolsCard = view.findViewById(R.id.organizer_tools_card);
+        btnBack = view.findViewById(R.id.btn_back_waitinglist);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
         Button btnDrawLottery = view.findViewById(R.id.btn_draw_lottery);
         Button btnDrawReplacement = view.findViewById(R.id.btn_draw_replacement);
@@ -81,9 +96,16 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         // HIDE ORGANIZER FEATURES FOR ATTENDEE
         if ("attendee".equals(role)) {
             tabLayout.setVisibility(View.GONE);
-            btnDrawLottery.setVisibility(View.GONE);
-            btnDrawReplacement.setVisibility(View.GONE);
-            btnExportCsv.setVisibility(View.GONE);
+            if (organizerToolsCard != null) organizerToolsCard.setVisibility(View.GONE);
+            if (listHeaderView != null) listHeaderView.setText("My Status");
+        }
+
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getActivity() != null) {
+                    getActivity().getSupportFragmentManager().popBackStack();
+                }
+            });
         }
 
         tabLayout.addOnTabSelectedListener(new TabLayout.OnTabSelectedListener() {
@@ -95,10 +117,8 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
             @Override public void onTabReselected(TabLayout.Tab tab) {}
         });
 
-        // Draw Lottery
         btnDrawLottery.setOnClickListener(v -> showDrawLotteryDialog());
 
-        // Draw Replacement
         btnDrawReplacement.setOnClickListener(v -> {
             Event event = db.getEvent(eventId);
             if (event == null) {
@@ -106,7 +126,6 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
                 return;
             }
 
-            // Option B: only allow replacement if someone cancelled
             ArrayList<User> cancelled = event.getCancelledEntrants();
             if (cancelled == null || cancelled.isEmpty()) {
                 Toast.makeText(getContext(),
@@ -117,7 +136,6 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
             User replacement = waitingListService.drawReplacementEntrant(event);
             if (replacement != null) {
-                // Consume one cancelled spot
                 event.getCancelledEntrants().remove(0);
                 db.updateEvent(event);
                 Toast.makeText(getContext(),
@@ -130,7 +148,7 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
                         Toast.LENGTH_SHORT).show();
             }
         });
-        // Export CSV
+
         btnExportCsv.setOnClickListener(v -> exportCsv());
 
         refreshUI(view);
@@ -138,36 +156,40 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
     }
 
     private void showDrawLotteryDialog() {
-        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
-        builder.setTitle("Draw Lottery Winners");
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_draw_lottery, null);
+        AlertDialog dialog = new AlertDialog.Builder(requireContext())
+                .setView(dialogView)
+                .create();
 
-        final EditText input = new EditText(requireContext());
-        input.setHint("Enter number of winners (N)");
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
-        builder.setView(input);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
+        }
 
-        builder.setPositiveButton("Draw", (dialog, which) -> {
-            String nStr = input.getText().toString().trim();
+        EditText etCount = dialogView.findViewById(R.id.et_lottery_count);
+        Button btnCancel = dialogView.findViewById(R.id.btn_lottery_cancel);
+        Button btnConfirm = dialogView.findViewById(R.id.btn_lottery_confirm);
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+        btnConfirm.setOnClickListener(v -> {
+            String nStr = etCount.getText().toString().trim();
             if (nStr.isEmpty()) {
                 Toast.makeText(getContext(), "Please enter a number", Toast.LENGTH_SHORT).show();
                 return;
             }
+            
             int n = Integer.parseInt(nStr);
             Event event = db.getEvent(eventId);
-            if (event == null) {
-                Toast.makeText(getContext(), "Event not found", Toast.LENGTH_SHORT).show();
-                return;
-            }
+            if (event == null) return;
+            
             List<User> winners = waitingListService.drawLotteryWinners(event, n);
             db.updateEvent(event);
-            Toast.makeText(getContext(),
-                    winners.size() + " winners selected!",
-                    Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), winners.size() + " winners selected!", Toast.LENGTH_SHORT).show();
+            dialog.dismiss();
             refreshUI(getView());
         });
 
-        builder.setNegativeButton("Cancel", null);
-        builder.show();
+        dialog.show();
     }
 
     private void exportCsv() {
@@ -228,50 +250,63 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         Event event = db.getEvent(eventId);
         if (event == null) return;
 
-        TextView titleView = rootView.findViewById(R.id.title_events);
         if (titleView != null) {
-            titleView.setText(event.getName() + " Waitlist");
+            titleView.setText(event.getName());
         }
 
-        // ATTENDEE VIEW (NO FULL WAITLIST)
         if ("attendee".equals(role)) {
             showAttendeeView(event);
             return;
         }
 
-        // Organizer flow
         int selectedTab = tabLayout.getSelectedTabPosition();
         EntrantAdapter.ListType listType;
+        String headerText;
 
         switch (selectedTab) {
-            case 1: listType = EntrantAdapter.ListType.INVITED; break;
-            case 2: listType = EntrantAdapter.ListType.CANCELLED; break;
-            case 3: listType = EntrantAdapter.ListType.ENROLLED; break;
-            default: listType = EntrantAdapter.ListType.WAITLIST; break;
+            case 1: 
+                listType = EntrantAdapter.ListType.INVITED; 
+                headerText = "Invited Entrants";
+                break;
+            case 2: 
+                listType = EntrantAdapter.ListType.CANCELLED; 
+                headerText = "Cancelled Entries";
+                break;
+            case 3: 
+                listType = EntrantAdapter.ListType.ENROLLED; 
+                headerText = "Confirmed Enrolments";
+                break;
+            default: 
+                listType = EntrantAdapter.ListType.WAITLIST; 
+                headerText = "Waitlist Participants";
+                break;
         }
 
+        if (listHeaderView != null) {
+            listHeaderView.setText(headerText);
+        }
+        
         showList(listType);
     }
 
-    // ONLY SHOW CURRENT USER STATUS
     private void showAttendeeView(Event event) {
         User currentUser = db.getCurrentUser();
+        if (currentUser == null) return;
 
-        List<User> waiting = waitingListService.getWaitingList(event);
-        List<User> enrolled = waitingListService.getEnrolledEntrants(event);
-
-        List<User> result;
-
-        if (enrolled.contains(currentUser)) {
-            result = List.of(currentUser);
-        } else if (waiting.contains(currentUser)) {
-            result = List.of(currentUser);
-        } else {
-            result = List.of();
+        List<User> result = new ArrayList<>();
+        
+        // Find user status
+        if (waitingListService.getEnrolledEntrants(event).contains(currentUser)) {
+            result.add(currentUser);
+        } else if (waitingListService.getInvitedEntrants(event).contains(currentUser)) {
+            result.add(currentUser);
+        } else if (waitingListService.getCancelledEntrants(event).contains(currentUser)) {
+            result.add(currentUser);
+        } else if (waitingListService.getWaitingList(event).contains(currentUser)) {
+            result.add(currentUser);
         }
 
-        adapter = new EntrantAdapter(result, EntrantAdapter.ListType.INVITED);
-        recyclerView.setAdapter(adapter);
+        updateRecycler(result, EntrantAdapter.ListType.WAITLIST);
     }
 
     private void showList(EntrantAdapter.ListType listType) {
@@ -284,6 +319,18 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
             case CANCELLED: users = waitingListService.getCancelledEntrants(event); break;
             case ENROLLED:  users = waitingListService.getEnrolledEntrants(event); break;
             default:        users = waitingListService.getWaitingList(event); break;
+        }
+
+        updateRecycler(users, listType);
+    }
+    
+    private void updateRecycler(List<User> users, EntrantAdapter.ListType listType) {
+        if (users == null || users.isEmpty()) {
+            emptyStateView.setVisibility(View.VISIBLE);
+            recyclerView.setVisibility(View.GONE);
+        } else {
+            emptyStateView.setVisibility(View.GONE);
+            recyclerView.setVisibility(View.VISIBLE);
         }
 
         adapter = new EntrantAdapter(users, listType);

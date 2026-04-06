@@ -96,7 +96,7 @@ public class SignupFragment extends Fragment {
             Toast.makeText(getContext(), "Welcome to Cipher Events!", Toast.LENGTH_SHORT).show();
 
             if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).onRoleSelected(role, accountID);
+                ((MainActivity) getActivity()).loginSuccess(role, accountID);
             }
         });
 

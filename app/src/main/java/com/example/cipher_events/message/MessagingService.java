@@ -176,7 +176,8 @@ public class MessagingService {
                 entrant.getName(),
                 "entrant",
                 message,
-                nowString()
+                nowString(),
+                entrant.getProfilePictureURL()
         );
 
         thread.getMessages().add(directMessage);
@@ -213,7 +214,8 @@ public class MessagingService {
                 organizer.getName(),
                 "organizer",
                 message,
-                nowString()
+                nowString(),
+                organizer.getProfilePictureURL()
         );
 
         thread.getMessages().add(directMessage);

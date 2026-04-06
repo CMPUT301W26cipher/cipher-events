@@ -122,6 +122,7 @@ public class OrganizerProfileFragment extends Fragment implements DBProxy.OnData
         MaterialButton myEventsBtn = view.findViewById(R.id.my_events_btn);
         MaterialButton createEventBtn = view.findViewById(R.id.create_event_btn);
         MaterialButton signoutBtn = view.findViewById(R.id.organizer_signout_btn);
+        MaterialButton editProfileBtn = view.findViewById(R.id.edit_profile_btn);
 
         if (myEventsBtn != null) {
             myEventsBtn.setOnClickListener(v -> navigateTo(new OrganizerHomeFragment()));
@@ -141,6 +142,10 @@ public class OrganizerProfileFragment extends Fragment implements DBProxy.OnData
                     ((MainActivity) getActivity()).logout();
                 }
             });
+        }
+
+        if (editProfileBtn != null) {
+            editProfileBtn.setOnClickListener(v -> navigateTo(new OrganizerProfileEditFragment()));
         }
     }
 

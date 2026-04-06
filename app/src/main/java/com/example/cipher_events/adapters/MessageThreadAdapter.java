@@ -3,12 +3,13 @@ package com.example.cipher_events.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.User;
@@ -53,25 +54,50 @@ public class MessageThreadAdapter extends RecyclerView.Adapter<MessageThreadAdap
     public void onBindViewHolder(@NonNull ThreadViewHolder holder, int position) {
         MessageThread thread = threads.get(position);
 
-        String entrantName = thread.getEntrantDeviceID();
         User entrant = db.getUser(thread.getEntrantDeviceID());
-        if (entrant != null && entrant.getName() != null) {
-            entrantName = entrant.getName();
+        String entrantName = thread.getEntrantDeviceID();
+        String avatarUrl = null;
+
+        if (entrant != null) {
+            if (entrant.getName() != null) {
+                entrantName = entrant.getName();
+            }
+            avatarUrl = entrant.getProfilePictureURL();
         }
 
         holder.tvParticipantName.setText(entrantName);
+
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.gray_placeholder)
+                    .into(holder.ivParticipantAvatar);
+        } else {
+            holder.ivParticipantAvatar.setImageResource(R.drawable.gray_placeholder);
+        }
 
         List<DirectMessage> messages = thread.getMessages();
         if (messages != null && !messages.isEmpty()) {
             DirectMessage lastMessage = messages.get(messages.size() - 1);
             holder.tvLastMessage.setText(lastMessage.getContent());
-            holder.tvLastMessageTime.setText(lastMessage.getTimestamp());
+            
+            // Format time if possible, otherwise use full timestamp
+            String time = lastMessage.getTimestamp();
+            if (time != null && time.contains(" ")) {
+                String[] parts = time.split(" ");
+                if (parts.length > 1) {
+                    holder.tvLastMessageTime.setText(parts[1]); // Just show time
+                } else {
+                    holder.tvLastMessageTime.setText(time);
+                }
+            } else {
+                holder.tvLastMessageTime.setText(time);
+            }
         } else {
             holder.tvLastMessage.setText("No messages yet");
             holder.tvLastMessageTime.setText("");
         }
 
-        holder.btnOpenThread.setOnClickListener(v -> listener.onOpenThread(thread));
         holder.itemView.setOnClickListener(v -> listener.onOpenThread(thread));
     }
 
@@ -84,14 +110,14 @@ public class MessageThreadAdapter extends RecyclerView.Adapter<MessageThreadAdap
         TextView tvParticipantName;
         TextView tvLastMessage;
         TextView tvLastMessageTime;
-        Button btnOpenThread;
+        ImageView ivParticipantAvatar;
 
         ThreadViewHolder(@NonNull View itemView) {
             super(itemView);
             tvParticipantName = itemView.findViewById(R.id.tvParticipantName);
             tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
             tvLastMessageTime = itemView.findViewById(R.id.tvLastMessageTime);
-            btnOpenThread = itemView.findViewById(R.id.btnOpenThread);
+            ivParticipantAvatar = itemView.findViewById(R.id.ivParticipantAvatar);
         }
     }
 }

@@ -3,12 +3,16 @@ package com.example.cipher_events.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.User;
 import com.example.cipher_events.message.DirectMessage;
 
 import java.util.ArrayList;
@@ -21,6 +25,7 @@ public class DirectMessageAdapter extends RecyclerView.Adapter<RecyclerView.View
 
     private final List<DirectMessage> messages = new ArrayList<>();
     private final String currentDeviceID;
+    private final DBProxy db = DBProxy.getInstance();
 
     public DirectMessageAdapter(String currentDeviceID) {
         this.currentDeviceID = currentDeviceID;
@@ -63,9 +68,9 @@ public class DirectMessageAdapter extends RecyclerView.Adapter<RecyclerView.View
         DirectMessage message = messages.get(position);
 
         if (holder instanceof SentMessageViewHolder) {
-            ((SentMessageViewHolder) holder).bind(message);
+            ((SentMessageViewHolder) holder).bind(message, db);
         } else if (holder instanceof ReceivedMessageViewHolder) {
-            ((ReceivedMessageViewHolder) holder).bind(message);
+            ((ReceivedMessageViewHolder) holder).bind(message, db);
         }
     }
 
@@ -77,35 +82,66 @@ public class DirectMessageAdapter extends RecyclerView.Adapter<RecyclerView.View
     static class SentMessageViewHolder extends RecyclerView.ViewHolder {
         private final TextView tvMessageContent;
         private final TextView tvMessageTime;
+        private final ImageView ivSenderProfile;
 
         SentMessageViewHolder(@NonNull View itemView) {
             super(itemView);
             tvMessageContent = itemView.findViewById(R.id.tvMessageContent);
             tvMessageTime = itemView.findViewById(R.id.tvMessageTime);
+            ivSenderProfile = itemView.findViewById(R.id.ivSenderProfile);
         }
 
-        void bind(DirectMessage message) {
+        void bind(DirectMessage message, DBProxy db) {
             tvMessageContent.setText(message.getContent());
             tvMessageTime.setText(message.getTimestamp());
+            
+            // Fetch latest profile picture from DB
+            User sender = db.getAnyUser(message.getSenderDeviceID());
+            String photoUrl = (sender != null) ? sender.getProfilePictureURL() : message.getSenderProfilePictureURL();
+
+            if (ivSenderProfile != null) {
+                if (photoUrl != null && !photoUrl.isEmpty()) {
+                    Glide.with(itemView.getContext())
+                            .load(photoUrl)
+                            .placeholder(R.drawable.gray_placeholder)
+                            .into(ivSenderProfile);
+                } else {
+                    ivSenderProfile.setImageResource(R.drawable.gray_placeholder);
+                }
+            }
         }
     }
 
     static class ReceivedMessageViewHolder extends RecyclerView.ViewHolder {
-        private final TextView tvSenderName;
         private final TextView tvMessageContent;
         private final TextView tvMessageTime;
+        private final ImageView ivSenderProfile;
 
         ReceivedMessageViewHolder(@NonNull View itemView) {
             super(itemView);
-            tvSenderName = itemView.findViewById(R.id.tvSenderName);
             tvMessageContent = itemView.findViewById(R.id.tvMessageContent);
             tvMessageTime = itemView.findViewById(R.id.tvMessageTime);
+            ivSenderProfile = itemView.findViewById(R.id.ivSenderProfile);
         }
 
-        void bind(DirectMessage message) {
-            tvSenderName.setText(message.getSenderName());
+        void bind(DirectMessage message, DBProxy db) {
             tvMessageContent.setText(message.getContent());
             tvMessageTime.setText(message.getTimestamp());
+
+            // Fetch latest profile picture from DB
+            User sender = db.getAnyUser(message.getSenderDeviceID());
+            String photoUrl = (sender != null) ? sender.getProfilePictureURL() : message.getSenderProfilePictureURL();
+
+            if (ivSenderProfile != null) {
+                if (photoUrl != null && !photoUrl.isEmpty()) {
+                    Glide.with(itemView.getContext())
+                            .load(photoUrl)
+                            .placeholder(R.drawable.gray_placeholder)
+                            .into(ivSenderProfile);
+                } else {
+                    ivSenderProfile.setImageResource(R.drawable.gray_placeholder);
+                }
+            }
         }
     }
 }

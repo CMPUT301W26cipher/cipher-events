@@ -31,6 +31,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        viewBinding = true
+    }
+
     packaging {
         resources {
             excludes += "/META-INF/DEPENDENCIES"
