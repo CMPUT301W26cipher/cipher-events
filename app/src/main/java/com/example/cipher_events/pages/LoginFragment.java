@@ -48,7 +48,7 @@ public class LoginFragment extends Fragment {
             }
 
             DBProxy db = DBProxy.getInstance();
-            
+
             // 1. Check Admin
             ArrayList<Admin> admins = db.getAllAdmins();
             for (Admin admin : admins) {
