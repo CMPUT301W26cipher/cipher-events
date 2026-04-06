@@ -21,8 +21,10 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 
 import java.util.ArrayList;
@@ -69,7 +71,7 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         
         List<AdminImage> imageList = new ArrayList<>();
 
-        // Collect event posters
+        // 1. Collect event posters
         List<Event> events = db.getAllEvents();
         for (Event event : events) {
             String url = event.getPosterPictureURL();
@@ -78,12 +80,30 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
             }
         }
 
-        // Collect user profile pictures
+        // 2. Collect entrant profile pictures
         List<User> users = db.getAllUsers();
         for (User user : users) {
             String url = user.getProfilePictureURL();
             if (url != null && !url.isEmpty()) {
-                imageList.add(new AdminImage(url, "Profile Picture", user));
+                imageList.add(new AdminImage(url, "Profile (Entrant)", user));
+            }
+        }
+
+        // 3. Collect organizer profile pictures
+        List<Organizer> organizers = db.getAllOrganizers();
+        for (Organizer organizer : organizers) {
+            String url = organizer.getProfilePictureURL();
+            if (url != null && !url.isEmpty()) {
+                imageList.add(new AdminImage(url, "Profile (Organizer)", organizer));
+            }
+        }
+
+        // 4. Collect admin profile pictures
+        List<Admin> admins = db.getAllAdmins();
+        for (Admin admin : admins) {
+            String url = admin.getProfilePictureURL();
+            if (url != null && !url.isEmpty()) {
+                imageList.add(new AdminImage(url, "Profile (Admin)", admin));
             }
         }
 

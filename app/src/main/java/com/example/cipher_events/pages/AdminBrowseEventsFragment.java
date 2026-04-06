@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -29,6 +30,7 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
     private ProgressBar progressBar;
     private View emptyStateContainer;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private TextView tvTitle;
     private DBProxy dbProxy;
 
     public AdminBrowseEventsFragment() {
@@ -44,6 +46,7 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
         progressBar = view.findViewById(R.id.progress_bar);
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
+        tvTitle = view.findViewById(R.id.tv_title);
 
         dbProxy = DBProxy.getInstance();
 
@@ -76,7 +79,6 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
             progressBar.setVisibility(View.VISIBLE);
         }
         
-        // Data is fetched synchronously from DBProxy in this architecture
         updateUI();
     }
 
@@ -89,6 +91,10 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
 
             progressBar.setVisibility(View.GONE);
             swipeRefreshLayout.setRefreshing(false);
+
+            if (tvTitle != null) {
+                tvTitle.setText("Events (" + eventList.size() + ")");
+            }
 
             if (eventList.isEmpty()) {
                 emptyStateContainer.setVisibility(View.VISIBLE);

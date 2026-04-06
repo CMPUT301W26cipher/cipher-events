@@ -82,7 +82,7 @@ public class AdminBrowseProfilesFragment extends Fragment implements DBProxy.OnD
 
     private void updateUI() {
         if (getActivity() == null) return;
-        
+
         getActivity().runOnUiThread(() -> {
             progressBar.setVisibility(View.GONE);
             swipeRefreshLayout.setRefreshing(false);
