@@ -367,12 +367,23 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
                 Event currentEvent = db.getEvent(eventId);
                 if (currentEvent == null) return;
                 currentEvent.getEnrolledEntrants().remove(user);
-                if (currentEvent.getEntrants() == null) currentEvent.setEntrants(new java.util.ArrayList<>());
+                if (currentEvent.getEntrants() == null) currentEvent.setEntrants(new ArrayList<>());
                 currentEvent.getEntrants().add(user);
                 db.updateEvent(currentEvent);
                 refreshUI(getView());
             });
         }
+
+        if (listType == EntrantAdapter.ListType.INVITED || listType == EntrantAdapter.ListType.ENROLLED) {
+            adapter.setOnMarkNoShowListener(user -> {
+                Event currentEvent = db.getEvent(eventId);
+                if (currentEvent == null) return;
+                waitingListService.markAsNoShow(user, currentEvent);
+                db.updateEvent(currentEvent);
+                refreshUI(getView());
+            });
+        }
+
         recyclerView.setAdapter(adapter);
     }
 }
