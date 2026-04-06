@@ -42,6 +42,7 @@ import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
+import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -198,12 +199,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         rvComments.setAdapter(commentAdapter);
 
         Bundle args = getArguments();
-        ArrayList<String> tagsFromArgs = null;
         if (args != null) {
             eventId = args.getString("eventId");
             isOrganizerView = args.getBoolean("isOrganizerView", false);
             currentDeviceID = args.getString("currentDeviceID");
-            tagsFromArgs = args.getStringArrayList("tags");
         }
 
         if (currentDeviceID == null && db.getCurrentUser() != null) {
@@ -218,7 +217,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
 
         boolean isAdmin = DBProxy.getInstance().getAdmin(currentDeviceID) != null;
-        commentAdapter.setup(currentDeviceID, isAdmin, comment -> {
+        commentAdapter.setup(currentDeviceID, isAdmin, isOrganizerView, comment -> {
             new com.example.cipher_events.comment.EntrantCommentService()
                     .deleteComment(eventId, comment.getCommentID());
             refreshUI();
@@ -232,7 +231,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
 
         setupViewMode();
-        displayTags(tagsFromArgs);
 
         btnPostComment.setOnClickListener(v -> {
             String commentText = etCommentInput.getText().toString().trim();
@@ -278,10 +276,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 tagContainer.addView(chip);
             }
             tagContainer.setVisibility(View.VISIBLE);
-            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.VISIBLE);
+            if (getView() != null && getView().findViewById(R.id.detail_tags_label) != null) {
+                getView().findViewById(R.id.detail_tags_label).setVisibility(View.VISIBLE);
+            }
         } else {
             tagContainer.setVisibility(View.GONE);
-            if (getView() != null) getView().findViewById(R.id.detail_tags_label).setVisibility(View.GONE);
+            if (getView() != null && getView().findViewById(R.id.detail_tags_label) != null) {
+                getView().findViewById(R.id.detail_tags_label).setVisibility(View.GONE);
+            }
         }
     }
 
@@ -373,6 +375,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         EditText etDate = dialogView.findViewById(R.id.et_edit_event_date);
         EditText etTime = dialogView.findViewById(R.id.et_edit_event_time);
         EditText etCapacity = dialogView.findViewById(R.id.et_edit_event_capacity);
+        EditText etTags = dialogView.findViewById(R.id.et_edit_event_tags);
+        SwitchMaterial swPublic = dialogView.findViewById(R.id.switch_edit_event_public);
         Button btnCancel = dialogView.findViewById(R.id.btn_edit_event_cancel);
         Button btnSave = dialogView.findViewById(R.id.btn_edit_event_save);
 
@@ -393,6 +397,16 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         etDate.setText(currentDate);
         etTime.setText(currentTime);
         etCapacity.setText(event.getWaitingListCapacity() != null ? String.valueOf(event.getWaitingListCapacity()) : "");
+        
+        if (event.getTags() != null) {
+            StringBuilder tagsBuilder = new StringBuilder();
+            for (int i = 0; i < event.getTags().size(); i++) {
+                tagsBuilder.append(event.getTags().get(i));
+                if (i < event.getTags().size() - 1) tagsBuilder.append(", ");
+            }
+            etTags.setText(tagsBuilder.toString());
+        }
+        swPublic.setChecked(event.isPublicEvent());
 
         etDate.setOnClickListener(v -> showDatePicker(etDate));
         etTime.setOnClickListener(v -> showTimePicker(etTime));
@@ -406,6 +420,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             String newDateStr = etDate.getText().toString().trim();
             String newTimeStr = etTime.getText().toString().trim();
             String capStr = etCapacity.getText().toString().trim();
+            String tagsStr = etTags.getText().toString().trim();
 
             if (newTitle.isEmpty()) {
                 Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
@@ -424,6 +439,17 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             } else {
                 event.setWaitingListCapacity(null);
             }
+
+            ArrayList<String> tagsList = new ArrayList<>();
+            if (!tagsStr.isEmpty()) {
+                String[] parts = tagsStr.split(",");
+                for (String part : parts) {
+                    String tag = part.trim();
+                    if (!tag.isEmpty()) tagsList.add(tag);
+                }
+            }
+            event.setTags(tagsList);
+            event.setPublicEvent(swPublic.isChecked());
 
             db.updateEvent(event);
             Toast.makeText(getContext(), "Event updated!", Toast.LENGTH_SHORT).show();
@@ -696,6 +722,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 favoriteButton.setVisibility(View.GONE);
             }
 
+            displayTags(event.getTags());
             loadComments();
         }
     }

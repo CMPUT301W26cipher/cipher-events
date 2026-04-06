@@ -202,8 +202,46 @@
             android:textColor="@color/white"
             android:textColorHint="@color/text_hint"
             android:textSize="14sp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="16dp"
             android:inputType="number"/>
+
+        <!-- Tags -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Tags (comma separated)"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <EditText
+            android:id="@+id/et_edit_event_tags"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/input_bg"
+            android:hint="Music, Tech, Workshop..."
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginBottom="16dp"
+            android:inputType="textCapWords"/>
+
+        <!-- Public/Private -->
+        <com.google.android.material.switchmaterial.SwitchMaterial
+            android:id="@+id/switch_edit_event_public"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Public Event"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:layout_marginBottom="24dp"
+            app:useMaterialThemeColors="false"
+            app:thumbTint="@color/role_organizer"
+            app:trackTint="@color/input_background"/>
 
         <!-- Buttons -->
         <LinearLayout

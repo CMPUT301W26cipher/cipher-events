@@ -112,6 +112,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.capacity.setVisibility(View.GONE);
         }
 
+        // Privacy Badge
+        if (holder.privacyBadge != null) {
+            holder.privacyBadge.setVisibility(event.isPublicEvent() ? View.GONE : View.VISIBLE);
+        }
+
         String url = event.getPosterPictureURL();
 
         if (url != null && !url.isEmpty()) {
@@ -174,7 +179,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     }
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
-        TextView title, date, location, organizerName, waitlistCount, capacity, description;
+        TextView title, date, location, organizerName, waitlistCount, capacity, description, privacyBadge;
         ImageView image, favorite, organizerImage;
 
         public EventViewHolder(@NonNull View itemView) {
@@ -189,6 +194,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             waitlistCount = itemView.findViewById(R.id.event_waitlist_count);
             capacity = itemView.findViewById(R.id.event_capacity);
             description = itemView.findViewById(R.id.event_description);
+            privacyBadge = itemView.findViewById(R.id.event_privacy_badge);
         }
     }
 }
