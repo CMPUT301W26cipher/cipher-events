@@ -1,5 +1,7 @@
 package com.example.cipher_events.pages;
 
+import android.content.res.ColorStateList;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -317,9 +319,26 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
             }
         }
 
+        updateFilterButtonStyles();
         adapter.notifyDataSetChanged();
         
         tvResetFilters.setVisibility((!currentFilter.equals("ALL") || selectedTag != null) ? View.VISIBLE : View.GONE);
+    }
+
+    private void updateFilterButtonStyles() {
+        int activeColor = ContextCompat.getColor(requireContext(), R.color.button_purple);
+        int inactiveColor = Color.parseColor("#22FFFFFF");
+
+        btnToday.setBackgroundTintList(ColorStateList.valueOf(currentFilter.equals("TODAY") ? activeColor : inactiveColor));
+        btnThisWeek.setBackgroundTintList(ColorStateList.valueOf(currentFilter.equals("THIS_WEEK") ? activeColor : inactiveColor));
+        btnCapacity.setBackgroundTintList(ColorStateList.valueOf(currentFilter.equals("CAPACITY") ? activeColor : inactiveColor));
+        btnTags.setBackgroundTintList(ColorStateList.valueOf(selectedTag != null ? activeColor : inactiveColor));
+        
+        if (selectedTag != null) {
+            btnTags.setText(selectedTag);
+        } else {
+            btnTags.setText("Tags");
+        }
     }
 
     private boolean matchesFilter(Event event, String todayStr, Date today, Date nextWeek) {

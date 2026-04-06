@@ -1,6 +1,7 @@
 package com.example.cipher_events.adapters;
 
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -128,24 +129,26 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 for (int i = 0; i < tags.size(); i++) {
                     String tag = tags.get(i);
                     TextView tagView = new TextView(holder.itemView.getContext());
-                    tagView.setText(tag);
-                    tagView.setTextSize(10);
-                    tagView.setTextColor(holder.itemView.getContext().getResources().getColor(R.color.white));
-                    tagView.setPadding(20, 10, 20, 10);
+                    tagView.setText(tag.toUpperCase());
+                    tagView.setTextSize(9);
+                    tagView.setTextColor(Color.WHITE);
+                    tagView.setPadding(24, 8, 24, 8);
+                    tagView.setTypeface(Typeface.create("sans-serif-black", Typeface.NORMAL));
+                    tagView.setLetterSpacing(0.06f);
                     
                     LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
                             LinearLayout.LayoutParams.WRAP_CONTENT,
                             LinearLayout.LayoutParams.WRAP_CONTENT
                     );
-                    params.setMargins(0, 0, 12, 0);
+                    params.setMargins(0, 0, 10, 0);
                     tagView.setLayoutParams(params);
                     
-                    tagView.setBackgroundResource(R.drawable.button_background_purple);
+                    tagView.setBackgroundResource(R.drawable.bg_tag);
                     Drawable background = tagView.getBackground().mutate();
-                    float hue = (i * 137.5f) % 360; // Use golden angle for distinct colors
-                    int color = Color.HSVToColor(new float[]{hue, 0.65f, 0.75f});
+                    float hue = (i * 137.5f) % 360; 
+                    int color = Color.HSVToColor(new float[]{hue, 0.65f, 0.65f});
                     background.setTint(color);
-                    background.setAlpha(220);
+                    background.setAlpha(210);
                     
                     holder.tagsContainer.addView(tagView);
                 }
