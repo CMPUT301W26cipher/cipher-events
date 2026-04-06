@@ -1,5 +1,7 @@
 package com.example.cipher_events.adapters;
 
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -114,7 +116,8 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
                 tagsContainer.removeAllViews();
                 List<String> tags = event.getTags();
                 if (tags != null && !tags.isEmpty()) {
-                    for (String tag : tags) {
+                    for (int i = 0; i < tags.size(); i++) {
+                        String tag = tags.get(i);
                         TextView tagView = new TextView(itemView.getContext());
                         tagView.setText(tag);
                         tagView.setTextSize(10);
@@ -129,7 +132,11 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
                         tagView.setLayoutParams(params);
                         
                         tagView.setBackgroundResource(R.drawable.button_background_purple);
-                        tagView.getBackground().setAlpha(180); // Slightly more transparent for carousel
+                        Drawable background = tagView.getBackground().mutate();
+                        float hue = (i * 137.5f) % 360; // Use golden angle for distinct colors
+                        int color = Color.HSVToColor(new float[]{hue, 0.65f, 0.75f});
+                        background.setTint(color);
+                        background.setAlpha(200);
                         
                         tagsContainer.addView(tagView);
                     }

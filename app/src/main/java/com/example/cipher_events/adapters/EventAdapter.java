@@ -1,5 +1,7 @@
 package com.example.cipher_events.adapters;
 
+import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -123,7 +125,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.tagsContainer.removeAllViews();
             List<String> tags = event.getTags();
             if (tags != null && !tags.isEmpty()) {
-                for (String tag : tags) {
+                for (int i = 0; i < tags.size(); i++) {
+                    String tag = tags.get(i);
                     TextView tagView = new TextView(holder.itemView.getContext());
                     tagView.setText(tag);
                     tagView.setTextSize(10);
@@ -138,7 +141,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                     tagView.setLayoutParams(params);
                     
                     tagView.setBackgroundResource(R.drawable.button_background_purple);
-                    tagView.getBackground().setAlpha(200); // Semi-transparent
+                    Drawable background = tagView.getBackground().mutate();
+                    float hue = (i * 137.5f) % 360; // Use golden angle for distinct colors
+                    int color = Color.HSVToColor(new float[]{hue, 0.65f, 0.75f});
+                    background.setTint(color);
+                    background.setAlpha(220);
                     
                     holder.tagsContainer.addView(tagView);
                 }
