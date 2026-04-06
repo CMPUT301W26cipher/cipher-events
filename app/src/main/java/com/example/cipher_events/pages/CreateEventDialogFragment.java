@@ -53,7 +53,7 @@ import java.util.TimeZone;
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
-        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl, List<String> tags, boolean isPrivate);
+        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl, List<String> tags, boolean isPrivate, Long registrationOpenTime, Long registrationCloseTime);
     }
 
     private CreateEventListener listener;
@@ -64,6 +64,10 @@ public class CreateEventDialogFragment extends DialogFragment {
     private MaterialSwitch swPrivate;
     private ChipGroup cgTags;
     private List<String> tags = new ArrayList<>();
+    private Long registrationOpenTime = null;
+    private Long registrationCloseTime = null;
+    private TextInputLayout tilRegOpen, tilRegClose;
+    private EditText etRegOpen, etRegClose;
 
     private final ActivityResultLauncher<Intent> pickImageLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
@@ -124,6 +128,10 @@ public class CreateEventDialogFragment extends DialogFragment {
         etDescription = view.findViewById(R.id.et_event_description);
         etCapacity = view.findViewById(R.id.et_waiting_list_capacity);
         swPrivate = view.findViewById(R.id.switch_private_event);
+        tilRegOpen = view.findViewById(R.id.til_reg_open);
+        tilRegClose = view.findViewById(R.id.til_reg_close);
+        etRegOpen = view.findViewById(R.id.et_reg_open);
+        etRegClose = view.findViewById(R.id.et_reg_close);
         
         cgTags = view.findViewById(R.id.cg_event_tags);
         View btnAddTag = view.findViewById(R.id.btn_add_tag);
@@ -158,7 +166,7 @@ public class CreateEventDialogFragment extends DialogFragment {
                 }
 
                 if (listener != null) {
-                    listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl, new ArrayList<>(tags), isPrivate);
+                    listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl, new ArrayList<>(tags), isPrivate, registrationOpenTime, registrationCloseTime);
                 }
                 dismiss();
             }
@@ -203,6 +211,42 @@ public class CreateEventDialogFragment extends DialogFragment {
             });
 
             timePicker.show(getParentFragmentManager(), "TIME_PICKER");
+        });
+
+        etRegOpen.setOnClickListener(v -> {
+            MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                    .setTitleText("Registration Opens")
+                    .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                    .setTheme(R.style.CustomMaterialCalendar)
+                    .build();
+
+            picker.addOnPositiveButtonClickListener(selection -> {
+                registrationOpenTime = selection;
+                Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                cal.setTimeInMillis(selection);
+                SimpleDateFormat fmt = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                etRegOpen.setText(fmt.format(cal.getTime()));
+            });
+
+            picker.show(getParentFragmentManager(), "REG_OPEN_PICKER");
+        });
+
+        etRegClose.setOnClickListener(v -> {
+            MaterialDatePicker<Long> picker = MaterialDatePicker.Builder.datePicker()
+                    .setTitleText("Registration Closes")
+                    .setSelection(MaterialDatePicker.todayInUtcMilliseconds())
+                    .setTheme(R.style.CustomMaterialCalendar)
+                    .build();
+
+            picker.addOnPositiveButtonClickListener(selection -> {
+                registrationCloseTime = selection;
+                Calendar cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
+                cal.setTimeInMillis(selection);
+                SimpleDateFormat fmt = new SimpleDateFormat("MMM dd, yyyy", Locale.getDefault());
+                etRegClose.setText(fmt.format(cal.getTime()));
+            });
+
+            picker.show(getParentFragmentManager(), "REG_CLOSE_PICKER");
         });
     }
 
