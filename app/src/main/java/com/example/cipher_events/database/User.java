@@ -1,8 +1,6 @@
 package com.example.cipher_events.database;
 
 import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Set;
 import java.util.UUID;
 
 
@@ -22,7 +20,7 @@ public class User {
 
     private boolean notificationsEnabled = true;
     private ArrayList<String> favoriteEventIds = new ArrayList<>();
-    private Set<String> hiddenThreadIds = new HashSet<>();
+    private ArrayList<String> hiddenThreadIds = new ArrayList<>();
 
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
@@ -122,19 +120,21 @@ public class User {
         return favoriteEventIds != null && favoriteEventIds.contains(eventId);
     }
 
-    public Set<String> getHiddenThreadIds() {
+    public ArrayList<String> getHiddenThreadIds() {
         if (hiddenThreadIds == null) {
-            hiddenThreadIds = new HashSet<>();
+            hiddenThreadIds = new ArrayList<>();
         }
         return hiddenThreadIds;
     }
 
-    public void setHiddenThreadIds(Set<String> hiddenThreadIds) {
+    public void setHiddenThreadIds(ArrayList<String> hiddenThreadIds) {
         this.hiddenThreadIds = hiddenThreadIds;
     }
 
     public void hideThread(String threadId) {
-        getHiddenThreadIds().add(threadId);
+        if (!getHiddenThreadIds().contains(threadId)) {
+            getHiddenThreadIds().add(threadId);
+        }
     }
 
     public void showThread(String threadId) {

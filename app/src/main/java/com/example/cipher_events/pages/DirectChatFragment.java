@@ -101,6 +101,7 @@ public class DirectChatFragment extends Fragment implements DBProxy.OnDataChange
         rvMessages.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvMessages.setAdapter(adapter);
 
+        unhideThreadIfNecessary();
         loadHeader();
         loadMessages();
 
@@ -114,10 +115,21 @@ public class DirectChatFragment extends Fragment implements DBProxy.OnDataChange
         });
     }
 
+    private void unhideThreadIfNecessary() {
+        if (!isOrganizer) {
+            User currentUser = db.getCurrentUser();
+            if (currentUser != null && currentUser.isThreadHidden(threadID)) {
+                currentUser.showThread(threadID);
+                db.updateUser(currentUser);
+            }
+        }
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         db.addListener(this);
+        unhideThreadIfNecessary();
         loadHeader();
         loadMessages();
     }
