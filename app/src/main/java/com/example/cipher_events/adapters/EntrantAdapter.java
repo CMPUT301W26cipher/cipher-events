@@ -64,7 +64,7 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
     public void onBindViewHolder(@NonNull EntrantViewHolder holder, int position) {
         User user = users.get(position);
         holder.name.setText(user.getName());
-        
+
         // Load Avatar
         if (user.getProfilePictureURL() != null && !user.getProfilePictureURL().isEmpty()) {
             Glide.with(holder.itemView.getContext())
@@ -103,6 +103,10 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
         if (listType == ListType.ENROLLED) {
             holder.itemView.setOnClickListener(v -> {
                 new AlertDialog.Builder(holder.itemView.getContext())
+                        .setTitle("Remove Participant")
+                        .setMessage("Do you want to remove " + user.getName() + " from enrolled and move them back to waitlist?")
+                        .setPositiveButton("Yes", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
+                        .setNegativeButton("No", null)
                         .setTitle("Participant Options")
                         .setMessage("What do you want to do with " + user.getName() + "?")
 
