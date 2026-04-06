@@ -28,19 +28,18 @@
         <com.google.android.material.card.MaterialCardView
             android:id="@+id/btn_add_banner"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeColor="#1AFFFFFF"
-            app:strokeWidth="1dp"
-            android:layout_marginBottom="20dp"
+            android:layout_height="160dp"
+            app:cardCornerRadius="20dp"
+            app:cardElevation="4dp"
+            app:strokeColor="#33FFFFFF"
+            app:strokeWidth="2dp"
+            android:layout_marginBottom="24dp"
             android:clickable="true"
             android:focusable="true">
 
             <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="#0DFFFFFF">
+                android:layout_height="match_parent">
 
                 <ImageView
                     android:id="@+id/iv_banner_preview"
@@ -48,34 +47,42 @@
                     android:layout_height="match_parent"
                     android:scaleType="centerCrop"
                     android:src="@drawable/gray_placeholder"
-                    android:alpha="0.3"/>
+                    android:alpha="0.4"/>
 
                 <LinearLayout
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center"
-                    android:orientation="vertical">
+                    android:orientation="vertical"
+                    android:background="@drawable/button_background_purple"
+                    android:backgroundTint="#AA454261"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="12dp"
+                    android:elevation="8dp">
 
                     <com.google.android.material.imageview.ShapeableImageView
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:padding="12dp"
+                        android:layout_width="40dp"
+                        android:layout_height="40dp"
+                        android:padding="8dp"
                         android:src="@drawable/plus_icon"
                         android:background="#4DFFFFFF"
                         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
-                        app:tint="@color/white" />
+                        app:tint="@color/white"
+                        android:layout_marginBottom="8dp"/>
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="10dp"
                         android:text="Add Cover Image"
                         android:textColor="@color/white"
-                        android:textSize="15sp"
+                        android:textSize="14sp"
                         android:fontFamily="sans-serif-medium"
-                        android:alpha="1.0"
-                        android:textStyle="bold"/>
+                        android:textStyle="bold"
+                        android:shadowColor="#80000000"
+                        android:shadowDx="1"
+                        android:shadowDy="1"
+                        android:shadowRadius="2"/>
                 </LinearLayout>
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>

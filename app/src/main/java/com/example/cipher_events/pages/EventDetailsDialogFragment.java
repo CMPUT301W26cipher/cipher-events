@@ -387,6 +387,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
 
         ivEditDialogBanner = dialogView.findViewById(R.id.iv_edit_event_banner);
+        View btnClose = dialogView.findViewById(R.id.btn_edit_event_close);
         View btnChangeImage = dialogView.findViewById(R.id.btn_edit_event_change_image);
         EditText etTitle = dialogView.findViewById(R.id.et_edit_event_title);
         EditText etDescription = dialogView.findViewById(R.id.et_edit_event_description);
@@ -440,6 +441,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             intent.setType("image/*");
             pickEditImageLauncher.launch(intent);
         });
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
 
         etDate.setOnClickListener(v -> showDatePicker(etDate));
         etTime.setOnClickListener(v -> showTimePicker(etTime));
