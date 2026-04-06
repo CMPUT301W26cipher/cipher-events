@@ -87,6 +87,46 @@
             </FrameLayout>
         </com.google.android.material.card.MaterialCardView>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="8dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Co-Organizers"
+                android:textColor="@color/white"
+                android:textSize="15sp"
+                android:fontFamily="sans-serif-medium" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btn_add_co_organizer"
+                style="@style/Widget.Material3.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Invite"
+                android:textColor="@color/role_organizer"
+                android:textSize="12sp"
+                android:textAllCaps="false"
+                app:icon="@drawable/plus_icon"
+                app:iconSize="12dp"
+                app:iconPadding="4dp"
+                android:minHeight="0dp"
+                android:padding="4dp"/>
+        </LinearLayout>
+
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/cg_co_organizers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="0dp"
+            app:chipSpacingHorizontal="6dp"
+            app:chipSpacingVertical="2dp" />
+
         <!-- Form Section -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_title"
