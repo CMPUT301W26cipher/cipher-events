@@ -36,6 +36,10 @@ public class Event {
 
     private ArrayList<MessageThread> messageThreads;
 
+    // Map fields
+    private double latitude;
+    private double longitude;
+
     public Event() {
     }
 
@@ -136,6 +140,7 @@ public class Event {
     }
 
     public ArrayList<User> getEntrants() {
+        if (entrants == null) entrants = new ArrayList<>();
         return entrants;
     }
 
@@ -183,6 +188,7 @@ public class Event {
     }
 
     public ArrayList<User> getInvitedEntrants() {
+        if (invitedEntrants == null) invitedEntrants = new ArrayList<>();
         return invitedEntrants;
     }
 
@@ -191,6 +197,7 @@ public class Event {
     }
 
     public ArrayList<User> getCancelledEntrants() {
+        if (cancelledEntrants == null) cancelledEntrants = new ArrayList<>();
         return cancelledEntrants;
     }
 
@@ -199,6 +206,7 @@ public class Event {
     }
 
     public ArrayList<User> getEnrolledEntrants() {
+        if (enrolledEntrants == null) enrolledEntrants = new ArrayList<>();
         return enrolledEntrants;
     }
 
@@ -254,6 +262,22 @@ public class Event {
         this.messageThreads = messageThreads;
     }
 
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
     // String representation for debugging purposes
     @Override
     public String toString() {
@@ -267,6 +291,8 @@ public class Event {
                 ", attendees=" + attendees +
                 ", posterPictureURL='" + posterPictureURL + '\'' +
                 ", tags=" + tags +
+                ", lat=" + latitude +
+                ", lon=" + longitude +
                 '}';
     }
 }

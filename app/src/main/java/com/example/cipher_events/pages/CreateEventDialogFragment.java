@@ -53,11 +53,14 @@ import java.util.TimeZone;
 public class CreateEventDialogFragment extends DialogFragment {
 
     public interface CreateEventListener {
-        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl, List<String> tags, boolean isPrivate);
+        void onEventCreated(String title, String date, String time, String location, String description, Integer capacity, String bannerUrl, List<String> tags, boolean isPrivate, double lat, double lon);
     }
 
     private CreateEventListener listener;
     private String bannerUrl = null;
+    private double selectedLat = 0.0;
+    private double selectedLon = 0.0;
+    
     private ImageView ivBannerPreview;
     private TextInputLayout tilTitle, tilDate, tilTime, tilLocation, tilDescription;
     private EditText etTitle, etDate, etTime, etLocation, etDescription, etCapacity;
@@ -157,8 +160,12 @@ public class CreateEventDialogFragment extends DialogFragment {
                     } catch (NumberFormatException ignored) {}
                 }
 
+                // Default coordinates for demo if not picked (e.g. Edmonton)
+                if (selectedLat == 0.0) selectedLat = 53.5461;
+                if (selectedLon == 0.0) selectedLon = -113.4938;
+
                 if (listener != null) {
-                    listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl, new ArrayList<>(tags), isPrivate);
+                    listener.onEventCreated(title, date, time, location, description, capacity, bannerUrl, new ArrayList<>(tags), isPrivate, selectedLat, selectedLon);
                 }
                 dismiss();
             }

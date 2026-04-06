@@ -180,6 +180,22 @@
                     </LinearLayout>
 
                     <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_view_map"
+                        style="@style/Widget.Material3.Button.TonalButton"
+                        android:layout_width="match_parent"
+                        android:layout_height="52dp"
+                        android:layout_marginTop="8dp"
+                        android:text="View Entrant Map"
+                        android:textColor="@color/white"
+                        app:backgroundTint="#1AFFFFFF"
+                        app:cornerRadius="12dp"
+                        android:textSize="12sp"
+                        app:icon="@drawable/baseline_home_24"
+                        app:iconPadding="8dp"
+                        app:iconTint="@color/white"
+                        android:textAllCaps="false"/>
+
+                    <com.google.android.material.button.MaterialButton
                         android:id="@+id/btn_export_csv"
                         style="@style/Widget.Material3.Button.TextButton"
                         android:layout_width="match_parent"

@@ -22,6 +22,10 @@ public class User {
     private ArrayList<String> favoriteEventIds = new ArrayList<>();
     private ArrayList<String> hiddenThreadIds = new ArrayList<>();
 
+    // Location fields for map functionality
+    private double latitude;
+    private double longitude;
+
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
         this.deviceID = UUID.randomUUID().toString();
@@ -145,6 +149,22 @@ public class User {
         return getHiddenThreadIds().contains(threadId);
     }
 
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
     // String representation for debugging purposes
     @Override
     public String toString() {
@@ -155,6 +175,8 @@ public class User {
                 ", password='" + password + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", profilePictureURL='" + profilePictureURL + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
                 '}';
     }
 }

@@ -92,6 +92,7 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         Button btnDrawLottery = view.findViewById(R.id.btn_draw_lottery);
         Button btnDrawReplacement = view.findViewById(R.id.btn_draw_replacement);
         Button btnExportCsv = view.findViewById(R.id.btn_export_csv);
+        Button btnViewMap = view.findViewById(R.id.btn_view_map);
 
         // HIDE ORGANIZER FEATURES FOR ATTENDEE
         if ("attendee".equals(role)) {
@@ -121,42 +122,24 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
         btnDrawReplacement.setOnClickListener(v -> {
             Event event = db.getEvent(eventId);
-            if (event == null) {
-                Toast.makeText(getContext(), "Event not found", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Check if open spot exists
-            Integer capacity = event.getWaitingListCapacity();
-            if (capacity == null) {
-                Toast.makeText(getContext(), "Event has no capacity set", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            int enrolled = event.getEnrolledEntrants() != null ? event.getEnrolledEntrants().size() : 0;
-            int invited = event.getInvitedEntrants() != null ? event.getInvitedEntrants().size() : 0;
-
-            if (enrolled + invited >= capacity) {
-                Toast.makeText(getContext(), "No open spots available", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
+            if (event == null) return;
             User replacement = waitingListService.drawReplacementEntrant(event);
             if (replacement != null) {
-                event.getCancelledEntrants().remove(0);
                 db.updateEvent(event);
-                Toast.makeText(getContext(),
-                        "Replacement selected: " + replacement.getName(),
-                        Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Replacement selected!", Toast.LENGTH_SHORT).show();
                 refreshUI(getView());
-            } else {
-                Toast.makeText(getContext(),
-                        "No eligible entrants for replacement",
-                        Toast.LENGTH_SHORT).show();
             }
         });
-        // Export CSV
+
         btnExportCsv.setOnClickListener(v -> exportCsv());
+        
+        btnViewMap.setOnClickListener(v -> {
+            EventMapFragment mapFragment = EventMapFragment.newInstance(eventId);
+            getParentFragmentManager().beginTransaction()
+                    .replace(R.id.fragment_container, mapFragment)
+                    .addToBackStack(null)
+                    .commit();
+        });
 
         refreshUI(view);
         return view;
@@ -180,18 +163,12 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
         btnConfirm.setOnClickListener(v -> {
             String nStr = etCount.getText().toString().trim();
-            if (nStr.isEmpty()) {
-                Toast.makeText(getContext(), "Please enter a number", Toast.LENGTH_SHORT).show();
-                return;
-            }
-            
+            if (nStr.isEmpty()) return;
             int n = Integer.parseInt(nStr);
             Event event = db.getEvent(eventId);
             if (event == null) return;
-            
-            List<User> winners = waitingListService.drawLotteryWinners(event, n);
+            waitingListService.drawLotteryWinners(event, n);
             db.updateEvent(event);
-            Toast.makeText(getContext(), winners.size() + " winners selected!", Toast.LENGTH_SHORT).show();
             dialog.dismiss();
             refreshUI(getView());
         });
@@ -201,31 +178,19 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
     private void exportCsv() {
         Event event = db.getEvent(eventId);
-        if (event == null) {
-            Toast.makeText(getContext(), "Event not found", Toast.LENGTH_SHORT).show();
-            return;
-        }
-
+        if (event == null) return;
         String csv = waitingListService.exportEnrolledListAsCsv(event);
-
         try {
             File file = new File(requireContext().getCacheDir(), "enrolled_entrants.csv");
             FileWriter writer = new FileWriter(file);
             writer.write(csv);
             writer.close();
-
-            Uri uri = FileProvider.getUriForFile(
-                    requireContext(),
-                    requireContext().getPackageName() + ".provider",
-                    file
-            );
-
+            Uri uri = FileProvider.getUriForFile(requireContext(), requireContext().getPackageName() + ".provider", file);
             Intent intent = new Intent(Intent.ACTION_SEND);
             intent.setType("text/csv");
             intent.putExtra(Intent.EXTRA_STREAM, uri);
             intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             startActivity(Intent.createChooser(intent, "Share CSV"));
-
         } catch (IOException e) {
             Toast.makeText(getContext(), "Failed to export CSV", Toast.LENGTH_SHORT).show();
         }
@@ -253,81 +218,45 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
 
     private void refreshUI(View rootView) {
         if (rootView == null) return;
-
         Event event = db.getEvent(eventId);
         if (event == null) return;
-
-        if (titleView != null) {
-            titleView.setText(event.getName());
-        }
-
+        if (titleView != null) titleView.setText(event.getName());
         if ("attendee".equals(role)) {
             showAttendeeView(event);
             return;
         }
-
         int selectedTab = tabLayout.getSelectedTabPosition();
         EntrantAdapter.ListType listType;
-        String headerText;
-
         switch (selectedTab) {
-            case 1: 
-                listType = EntrantAdapter.ListType.INVITED; 
-                headerText = "Invited Entrants";
-                break;
-            case 2: 
-                listType = EntrantAdapter.ListType.CANCELLED; 
-                headerText = "Cancelled Entries";
-                break;
-            case 3: 
-                listType = EntrantAdapter.ListType.ENROLLED; 
-                headerText = "Confirmed Enrolments";
-                break;
-            default: 
-                listType = EntrantAdapter.ListType.WAITLIST; 
-                headerText = "Waitlist Participants";
-                break;
+            case 1: listType = EntrantAdapter.ListType.INVITED; break;
+            case 2: listType = EntrantAdapter.ListType.CANCELLED; break;
+            case 3: listType = EntrantAdapter.ListType.ENROLLED; break;
+            default: listType = EntrantAdapter.ListType.WAITLIST; break;
         }
-
-        if (listHeaderView != null) {
-            listHeaderView.setText(headerText);
-        }
-        
         showList(listType);
     }
 
     private void showAttendeeView(Event event) {
         User currentUser = db.getCurrentUser();
         if (currentUser == null) return;
-
         List<User> result = new ArrayList<>();
-        
-        // Find user status
-        if (waitingListService.getEnrolledEntrants(event).contains(currentUser)) {
-            result.add(currentUser);
-        } else if (waitingListService.getInvitedEntrants(event).contains(currentUser)) {
-            result.add(currentUser);
-        } else if (waitingListService.getCancelledEntrants(event).contains(currentUser)) {
-            result.add(currentUser);
-        } else if (waitingListService.getWaitingList(event).contains(currentUser)) {
-            result.add(currentUser);
-        }
-
+        if (waitingListService.getEnrolledEntrants(event).contains(currentUser)) result.add(currentUser);
+        else if (waitingListService.getInvitedEntrants(event).contains(currentUser)) result.add(currentUser);
+        else if (waitingListService.getCancelledEntrants(event).contains(currentUser)) result.add(currentUser);
+        else if (waitingListService.getWaitingList(event).contains(currentUser)) result.add(currentUser);
         updateRecycler(result, EntrantAdapter.ListType.WAITLIST);
     }
 
     private void showList(EntrantAdapter.ListType listType) {
         Event event = db.getEvent(eventId);
         if (event == null) return;
-
         List<User> users;
         switch (listType) {
-            case INVITED:   users = waitingListService.getInvitedEntrants(event); break;
+            case INVITED: users = waitingListService.getInvitedEntrants(event); break;
             case CANCELLED: users = waitingListService.getCancelledEntrants(event); break;
-            case ENROLLED:  users = waitingListService.getEnrolledEntrants(event); break;
-            default:        users = waitingListService.getWaitingList(event); break;
+            case ENROLLED: users = waitingListService.getEnrolledEntrants(event); break;
+            default: users = waitingListService.getWaitingList(event); break;
         }
-
         updateRecycler(users, listType);
     }
     
@@ -339,20 +268,7 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
             emptyStateView.setVisibility(View.GONE);
             recyclerView.setVisibility(View.VISIBLE);
         }
-
         adapter = new EntrantAdapter(users, listType);
-
-        if (listType == EntrantAdapter.ListType.ENROLLED) {
-            adapter.setOnEnrolledRemoveListener(user -> {
-                Event currentEvent = db.getEvent(eventId);
-                if (currentEvent == null) return;
-                currentEvent.getEnrolledEntrants().remove(user);
-                if (currentEvent.getEntrants() == null) currentEvent.setEntrants(new java.util.ArrayList<>());
-                currentEvent.getEntrants().add(user);
-                db.updateEvent(currentEvent);
-                refreshUI(getView());
-            });
-        }
         recyclerView.setAdapter(adapter);
     }
 }
