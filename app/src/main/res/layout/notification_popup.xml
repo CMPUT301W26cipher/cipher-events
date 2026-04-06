@@ -2,63 +2,98 @@
 <FrameLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:paddingLeft="22dp"
-    android:paddingRight="22dp"
-    android:paddingTop="22dp">
+    android:paddingHorizontal="20dp"
+    android:paddingTop="20dp"
+    android:paddingBottom="10dp"
+    android:clipToPadding="false">
 
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:backgroundTint="#E4C5DB"
-        app:cardBackgroundColor="#E4C5DB"
-        app:cardCornerRadius="22dp">
+        app:cardBackgroundColor="@color/dialog_background"
+        app:cardCornerRadius="24dp"
+        app:cardElevation="12dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#1AFFFFFF">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="15dp">
+            android:gravity="center_vertical"
+            android:padding="16dp">
 
-            <ImageView
-                android:id="@+id/icon"
-                android:layout_width="40dp"
-                android:layout_height="40dp"
-                android:src="@drawable/baseline_notifications_none_24" />
+            <!-- Icon Badge with Circular Tint -->
+            <FrameLayout
+                android:layout_width="48dp"
+                android:layout_height="48dp">
 
+                <com.google.android.material.imageview.ShapeableImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/button_purple"
+                    android:backgroundTint="#155B5891"
+                    app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full" />
+
+                <ImageView
+                    android:id="@+id/icon"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/baseline_notifications_none_24"
+                    app:tint="@color/button_purple" />
+            </FrameLayout>
+
+            <!-- Text Content Section -->
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="12dp"
+                android:layout_marginStart="16dp"
                 android:layout_weight="1"
                 android:orientation="vertical">
 
                 <TextView
                     android:id="@+id/title"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:textSize="15sp"
-                    android:textStyle="bold" />
+                    android:textColor="@color/white"
+                    android:textSize="16sp"
+                    android:fontFamily="sans-serif-black"
+                    android:letterSpacing="0.01"
+                    tools:text="Event Alert" />
 
                 <TextView
                     android:id="@+id/body"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textSize="13sp" />
+                    android:layout_marginTop="2dp"
+                    android:textColor="@color/text_hint"
+                    android:textSize="14sp"
+                    android:fontFamily="sans-serif"
+                    android:alpha="0.9"
+                    android:ellipsize="end"
+                    android:maxLines="2"
+                    tools:text="You have been selected for the upcoming workshop!" />
 
             </LinearLayout>
 
+            <!-- Close Action -->
             <ImageButton
                 android:id="@+id/close"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginStart="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:src="@drawable/baseline_close_24" />
+                android:src="@drawable/baseline_close_24"
+                android:padding="8dp"
+                android:scaleType="fitCenter"
+                app:tint="#4DFFFFFF" />
 
         </LinearLayout>
 
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
 </FrameLayout>

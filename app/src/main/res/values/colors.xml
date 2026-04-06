@@ -8,6 +8,7 @@
     <color name="button_purple">#5B5891</color>
     <color name="text_hint">#A09EBC</color>
     <color name="text_label">#E0E0E0</color>
+    <color name="gray_placeholder">#CCCCCC</color>
 
     <!-- Role Colors -->
     <color name="role_attendee">#A09EBC</color>

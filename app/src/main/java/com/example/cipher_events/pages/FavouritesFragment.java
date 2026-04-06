@@ -18,6 +18,7 @@ import com.example.cipher_events.adapters.EventAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
+import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +37,7 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
     private View emptyStateContainer;
     private TextView tvEmptyMsg;
     private ImageView emptyIcon;
+    private MaterialButton btnNotifications, btnMessages, btnCalendar;
     
     private boolean isWaitlistTab = true;
 
@@ -63,6 +65,9 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
         tvEmptyMsg = view.findViewById(R.id.tv_empty_msg);
         emptyIcon = view.findViewById(R.id.empty_icon);
+        btnNotifications = view.findViewById(R.id.btn_notifications);
+        btnMessages = view.findViewById(R.id.btn_messages);
+        btnCalendar = view.findViewById(R.id.btn_calendar);
     }
 
     private void setupRecyclerView() {
@@ -89,6 +94,19 @@ public class FavouritesFragment extends Fragment implements DBProxy.OnDataChange
                 refreshUI();
             }
         });
+
+        btnNotifications.setOnClickListener(v -> navigateTo(new NotificationsFragment()));
+        btnMessages.setOnClickListener(v -> navigateTo(new UserInboxFragment()));
+        btnCalendar.setOnClickListener(v -> navigateTo(new CalendarFragment()));
+    }
+
+    private void navigateTo(Fragment fragment) {
+        getParentFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.fade_in, R.anim.fade_out, R.anim.fade_in, R.anim.fade_out)
+                .replace(R.id.fragment_container, fragment)
+                .addToBackStack(null)
+                .commit();
     }
 
     @Override

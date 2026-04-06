@@ -29,6 +29,7 @@ public class Event {
 
     private ArrayList<EventComment> comments;
     private ArrayList<String> coOrganizerIds;
+    private ArrayList<String> tags;
     private boolean publicEvent;
     private Long registrationOpenTime;
     private Long registrationCloseTime;
@@ -69,6 +70,7 @@ public class Event {
 
         this.comments = new ArrayList<>();
         this.coOrganizerIds = new ArrayList<>();
+        this.tags = new ArrayList<>();
         this.messageThreads = messageThreads;
     }
 
@@ -232,6 +234,15 @@ public class Event {
         this.coOrganizerIds = coOrganizerIds;
     }
 
+    public ArrayList<String> getTags() {
+        if (tags == null) tags = new ArrayList<>();
+        return tags;
+    }
+
+    public void setTags(ArrayList<String> tags) {
+        this.tags = tags;
+    }
+
     public ArrayList<MessageThread> getMessageThreads() {
         if (messageThreads == null) {
             messageThreads = new ArrayList<>();
@@ -255,6 +266,7 @@ public class Event {
                 ", entrants=" + entrants +
                 ", attendees=" + attendees +
                 ", posterPictureURL='" + posterPictureURL + '\'' +
+                ", tags=" + tags +
                 '}';
     }
 }

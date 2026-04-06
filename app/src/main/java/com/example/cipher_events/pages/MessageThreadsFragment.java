@@ -5,6 +5,7 @@ import android.text.TextUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -37,6 +38,7 @@ public class MessageThreadsFragment extends Fragment {
     private TextView tvEventTitle;
     private TextView tvEmptyState;
     private RecyclerView rvThreads;
+    private ImageButton btnBack;
 
     private MessageThreadAdapter adapter;
 
@@ -72,8 +74,27 @@ public class MessageThreadsFragment extends Fragment {
         tvEventTitle = view.findViewById(R.id.tvEventTitle);
         tvEmptyState = view.findViewById(R.id.tvEmptyState);
         rvThreads = view.findViewById(R.id.rvThreads);
+        btnBack = view.findViewById(R.id.btnBack);
 
-        adapter = new MessageThreadAdapter(this::openThread);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getActivity() != null) {
+                    getActivity().getSupportFragmentManager().popBackStack();
+                }
+            });
+        }
+
+        adapter = new MessageThreadAdapter(new MessageThreadAdapter.OnThreadClickListener() {
+            @Override
+            public void onOpenThread(MessageThread thread) {
+                openThread(thread);
+            }
+
+            @Override
+            public void onCloseThread(MessageThread thread) {
+                // Organizers don't currently have hide functionality
+            }
+        });
         rvThreads.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvThreads.setAdapter(adapter);
 

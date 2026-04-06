@@ -115,10 +115,11 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
     }
 
     private void setupButtons(View view) {
-        MaterialButton waitlistBtn = view.findViewById(R.id.waitlist_btn);
-        if (waitlistBtn != null) {
-            waitlistBtn.setOnClickListener(v -> {
-                navigateTo(new FavouritesFragment());
+        MaterialButton notificationsBtn = view.findViewById(R.id.notifications_btn);
+        if (notificationsBtn != null) {
+            notificationsBtn.setOnClickListener(v -> {
+                // Route to personal NotificationsFragment
+                navigateTo(new NotificationsFragment());
             });
         }
 

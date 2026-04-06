@@ -81,15 +81,7 @@ public class DBProxy {
     public void notifyListeners() {
         if (currentUser != null) {
             String deviceID = currentUser.getDeviceID();
-            User updated = null;
-            
-            if (currentUser instanceof Admin) updated = getAdmin(deviceID);
-            else if (currentUser instanceof Organizer) updated = getOrganizer(deviceID);
-            else updated = getUser(deviceID);
-            
-            if (updated == null) updated = getAdmin(deviceID);
-            if (updated == null) updated = getOrganizer(deviceID);
-            if (updated == null) updated = getUser(deviceID);
+            User updated = getAnyUser(deviceID);
             
             if (updated != null) {
                 if (this.currentUser != updated) {
@@ -118,7 +110,12 @@ public class DBProxy {
     }
 
     // --- Events ---
-    public void addEvent(Event event) { eventDB.add(event); }
+    public void addEvent(Event event) {
+        if (event.getOrganizer() == null && currentUser instanceof Organizer) {
+            event.setOrganizer((Organizer) currentUser);
+        }
+        eventDB.add(event);
+    }
     public Event getEvent(String eventID) { return eventDB.get(eventID); }
     public ArrayList<Event> getAllEvents() { return eventDB.getAll(); }
     public void updateEvent(Event event) { eventDB.update(event); }
@@ -130,6 +127,17 @@ public class DBProxy {
     public User getUser(String deviceID) { return userDB.get(deviceID); }
     public ArrayList<User> getAllUsers() { return userDB.getAll(); }
     public List<User> searchUsers(String keyword) { return userDB.search(keyword); }
+
+    /**
+     * Attempts to find a user by deviceID in Admin, Organizer, then User collections.
+     */
+    public User getAnyUser(String deviceID) {
+        if (deviceID == null) return null;
+        User u = getAdmin(deviceID);
+        if (u == null) u = getOrganizer(deviceID);
+        if (u == null) u = getUser(deviceID);
+        return u;
+    }
     
     public void updateUser(User user) {
         if (user instanceof Admin) {

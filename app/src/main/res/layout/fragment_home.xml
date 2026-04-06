@@ -1,118 +1,215 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.swiperefreshlayout.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/swipe_refresh"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/dialog_background">
 
-    <LinearLayout
+    <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:layout_height="match_parent"
+        android:overScrollMode="never">
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Featured Events"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="24dp"
-            android:layout_marginBottom="12dp"/>
-
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_carousel"
-            android:layout_width="match_parent"
-            android:layout_height="200dp"
-            android:clipToPadding="false"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:layout_marginBottom="16dp"/>
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Explore All"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginStart="24dp"
-            android:layout_marginBottom="12dp"/>
-
-        <HorizontalScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:scrollbars="none"
-            android:paddingStart="24dp"
-            android:paddingEnd="24dp"
-            android:clipToPadding="false"
-            android:layout_marginBottom="16dp">
+            android:orientation="vertical"
+            android:paddingBottom="24dp">
 
-            <LinearLayout
-                android:layout_width="wrap_content"
+            <!-- Header Section -->
+            <RelativeLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:layout_marginTop="32dp"
+                android:layout_marginStart="24dp"
+                android:layout_marginEnd="12dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Featured Events"
+                    android:textColor="@color/white"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:layout_alignParentStart="true"
+                    android:layout_centerVertical="true"/>
+
+                <LinearLayout
+                    android:id="@+id/header_icons"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_alignParentEnd="true"
+                    android:layout_centerVertical="true"
+                    android:orientation="horizontal">
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_calendar"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:icon="@drawable/ic_calendar_24"
+                        app:iconTint="@color/white"
+                        android:backgroundTint="@android:color/transparent"
+                        app:rippleColor="#33FFFFFF" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_messages"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:icon="@drawable/ic_message_24"
+                        app:iconTint="@color/white"
+                        android:backgroundTint="@android:color/transparent"
+                        app:rippleColor="#33FFFFFF" />
+
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/btn_notifications"
+                        style="@style/Widget.Material3.Button.IconButton"
+                        android:layout_width="48dp"
+                        android:layout_height="48dp"
+                        app:icon="@drawable/baseline_notifications_none_24"
+                        app:iconTint="@color/white"
+                        android:backgroundTint="@android:color/transparent"
+                        app:rippleColor="#33FFFFFF" />
+                </LinearLayout>
+            </RelativeLayout>
+
+            <!-- Featured Carousel -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_carousel"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:clipToPadding="false"
+                android:paddingHorizontal="12dp"
+                android:layout_marginBottom="16dp"
+                android:overScrollMode="never" />
+
+            <!-- Explore Section Header -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginHorizontal="24dp"
+                android:layout_marginBottom="12dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Explore All"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tv_view_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Reset Filters"
+                    android:textColor="@color/button_purple"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+            </LinearLayout>
+
+            <!-- Modern Pill Filters - Fitted on screen -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginBottom="16dp">
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_filter_today"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Today"
                     android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
                     android:textAllCaps="false"
-                    app:cornerRadius="20dp"
-                    app:backgroundTint="@color/button_purple"
-                    android:layout_marginEnd="8dp"/>
+                    app:cornerRadius="100dp"
+                    app:backgroundTint="#22FFFFFF"
+                    android:layout_marginEnd="4dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingHorizontal="4dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_filter_this_week"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1.4"
                     android:text="This Week"
                     android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
                     android:textAllCaps="false"
-                    app:cornerRadius="20dp"
-                    app:backgroundTint="@color/button_purple"
-                    android:layout_marginEnd="8dp"/>
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/btn_filter_public"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Public"
-                    android:textColor="@color/white"
-                    android:textAllCaps="false"
-                    app:cornerRadius="20dp"
-                    app:backgroundTint="@color/button_purple"
-                    android:layout_marginEnd="8dp"/>
+                    app:cornerRadius="100dp"
+                    app:backgroundTint="#22FFFFFF"
+                    android:layout_marginEnd="4dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingHorizontal="4dp" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_filter_capacity"
-                    style="@style/Widget.MaterialComponents.Button.TextButton"
-                    android:layout_width="wrap_content"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1.2"
                     android:text="Not Full"
                     android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
                     android:textAllCaps="false"
-                    app:cornerRadius="20dp"
-                    app:backgroundTint="@color/button_purple"/>
+                    app:cornerRadius="100dp"
+                    app:backgroundTint="#22FFFFFF"
+                    android:layout_marginEnd="4dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingHorizontal="4dp" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_filter_tags"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Tags"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:fontFamily="sans-serif-medium"
+                    android:textAllCaps="false"
+                    app:cornerRadius="100dp"
+                    app:backgroundTint="#22FFFFFF"
+                    android:layout_marginEnd="0dp"
+                    android:insetTop="0dp"
+                    android:insetBottom="0dp"
+                    android:paddingHorizontal="4dp" />
             </LinearLayout>
-        </HorizontalScrollView>
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recycler_events"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:clipToPadding="false"
-            android:scrollbars="vertical"
-            android:overScrollMode="never"
-            android:nestedScrollingEnabled="false" />
+            <!-- Main Event List -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/recycler_events"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:paddingHorizontal="16dp"
+                android:clipToPadding="false"
+                android:overScrollMode="never"
+                android:nestedScrollingEnabled="false"
+                tools:listitem="@layout/item_event" />
 
-    </LinearLayout>
-</androidx.core.widget.NestedScrollView>
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</androidx.swiperefreshlayout.widget.SwipeRefreshLayout>

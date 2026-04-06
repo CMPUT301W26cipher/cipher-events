@@ -6,7 +6,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
-import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -16,11 +16,11 @@ import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.adapters.DirectMessageAdapter;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
-import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.message.DirectMessage;
 import com.example.cipher_events.message.MessageThread;
@@ -28,7 +28,7 @@ import com.example.cipher_events.message.MessagingService;
 
 import java.util.ArrayList;
 
-public class DirectChatFragment extends Fragment {
+public class DirectChatFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private static final String ARG_EVENT_ID = "event_id";
     private static final String ARG_THREAD_ID = "thread_id";
@@ -45,7 +45,9 @@ public class DirectChatFragment extends Fragment {
 
     private RecyclerView rvMessages;
     private EditText etMessageInput;
-    private ImageButton btnSendMessage;
+    private View btnSendMessage;
+    private ImageView btnBack;
+    private ImageView ivParticipantProfile;
     private TextView tvChatTitle;
     private TextView tvEventName;
 
@@ -92,21 +94,60 @@ public class DirectChatFragment extends Fragment {
         rvMessages = view.findViewById(R.id.rvMessages);
         etMessageInput = view.findViewById(R.id.etMessageInput);
         btnSendMessage = view.findViewById(R.id.btnSendMessage);
+        btnBack = view.findViewById(R.id.btnBack);
+        ivParticipantProfile = view.findViewById(R.id.ivParticipantProfile);
 
         adapter = new DirectMessageAdapter(currentDeviceID);
         rvMessages.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvMessages.setAdapter(adapter);
 
+        unhideThreadIfNecessary();
         loadHeader();
         loadMessages();
 
         btnSendMessage.setOnClickListener(v -> sendMessage());
+        btnBack.setOnClickListener(v -> {
+            if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                getParentFragmentManager().popBackStack();
+            } else {
+                requireActivity().onBackPressed();
+            }
+        });
+    }
+
+    private void unhideThreadIfNecessary() {
+        if (!isOrganizer) {
+            User currentUser = db.getCurrentUser();
+            if (currentUser != null && currentUser.isThreadHidden(threadID)) {
+                currentUser.showThread(threadID);
+                db.updateUser(currentUser);
+            }
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
+        db.addListener(this);
+        unhideThreadIfNecessary();
+        loadHeader();
         loadMessages();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        db.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (getActivity() != null) {
+            getActivity().runOnUiThread(() -> {
+                loadHeader();
+                loadMessages();
+            });
+        }
     }
 
     private void loadHeader() {
@@ -121,12 +162,22 @@ public class DirectChatFragment extends Fragment {
             return;
         }
 
-        if (isOrganizer) {
-            User entrant = db.getUser(thread.getEntrantDeviceID());
-            tvChatTitle.setText(entrant != null ? entrant.getName() : "Entrant");
+        String participantID = isOrganizer ? thread.getEntrantDeviceID() : thread.getOrganizerDeviceID();
+        User participant = db.getAnyUser(participantID);
+
+        if (participant != null) {
+            tvChatTitle.setText(participant.getName());
+            if (participant.getProfilePictureURL() != null && !participant.getProfilePictureURL().isEmpty()) {
+                Glide.with(this)
+                        .load(participant.getProfilePictureURL())
+                        .placeholder(R.drawable.gray_placeholder)
+                        .into(ivParticipantProfile);
+            } else {
+                ivParticipantProfile.setImageResource(R.drawable.gray_placeholder);
+            }
         } else {
-            Organizer organizer = db.getOrganizer(thread.getOrganizerDeviceID());
-            tvChatTitle.setText(organizer != null ? organizer.getName() : "Organizer");
+            tvChatTitle.setText(isOrganizer ? "Entrant" : "Organizer");
+            ivParticipantProfile.setImageResource(R.drawable.gray_placeholder);
         }
     }
 
@@ -140,7 +191,10 @@ public class DirectChatFragment extends Fragment {
                 rvMessages.scrollToPosition(messages.size() - 1);
             }
         } catch (IllegalArgumentException e) {
-            Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+            // Only show toast if the fragment is currently visible/added
+            if (isAdded()) {
+                // Toast.makeText(requireContext(), e.getMessage(), Toast.LENGTH_LONG).show();
+            }
         }
     }
 

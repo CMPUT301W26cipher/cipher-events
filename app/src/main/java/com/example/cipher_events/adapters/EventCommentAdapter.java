@@ -22,6 +22,7 @@ public class EventCommentAdapter extends RecyclerView.Adapter<EventCommentAdapte
     private final List<EventComment> comments = new ArrayList<>();
     private String currentDeviceId;
     private boolean isAdmin;
+    private boolean isOrganizer;
     private OnDeleteClickListener deleteListener;
 
     public interface OnDeleteClickListener {
@@ -30,9 +31,10 @@ public class EventCommentAdapter extends RecyclerView.Adapter<EventCommentAdapte
 
     public EventCommentAdapter() {}
 
-    public void setup(String deviceId, boolean isAdmin, OnDeleteClickListener listener) {
+    public void setup(String deviceId, boolean isAdmin, boolean isOrganizer, OnDeleteClickListener listener) {
         this.currentDeviceId = deviceId;
         this.isAdmin = isAdmin;
+        this.isOrganizer = isOrganizer;
         this.deleteListener = listener;
     }
 
@@ -59,8 +61,8 @@ public class EventCommentAdapter extends RecyclerView.Adapter<EventCommentAdapte
         holder.tvMessage.setText(comment.getMessage());
         holder.tvTime.setText(comment.getCreatedAt());
 
-        // Show delete button if author or admin
-        boolean canDelete = isAdmin ||
+        // Show delete button if author, admin, or organizer
+        boolean canDelete = isAdmin || isOrganizer ||
                 (currentDeviceId != null && currentDeviceId.equals(comment.getAuthorDeviceID()));
 
         if (canDelete) {

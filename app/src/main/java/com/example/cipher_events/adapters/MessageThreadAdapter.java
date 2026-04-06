@@ -3,14 +3,17 @@ package com.example.cipher_events.adapters;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
+import android.widget.ImageButton;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.message.DirectMessage;
 import com.example.cipher_events.message.MessageThread;
@@ -22,6 +25,7 @@ public class MessageThreadAdapter extends RecyclerView.Adapter<MessageThreadAdap
 
     public interface OnThreadClickListener {
         void onOpenThread(MessageThread thread);
+        void onCloseThread(MessageThread thread);
     }
 
     private final List<MessageThread> threads = new ArrayList<>();
@@ -52,27 +56,83 @@ public class MessageThreadAdapter extends RecyclerView.Adapter<MessageThreadAdap
     @Override
     public void onBindViewHolder(@NonNull ThreadViewHolder holder, int position) {
         MessageThread thread = threads.get(position);
+        User currentUser = db.getCurrentUser();
+        
+        String participantName = "Unknown";
+        String avatarUrl = null;
 
-        String entrantName = thread.getEntrantDeviceID();
-        User entrant = db.getUser(thread.getEntrantDeviceID());
-        if (entrant != null && entrant.getName() != null) {
-            entrantName = entrant.getName();
+        if (currentUser != null) {
+            String currentUID = currentUser.getDeviceID();
+            String otherUID;
+            
+            if (currentUID.equals(thread.getEntrantDeviceID())) {
+                // Current user is the entrant, show organizer/event info
+                otherUID = thread.getOrganizerDeviceID();
+                Event event = db.getEvent(thread.getEventID());
+                if (event != null) {
+                    participantName = event.getName() + " (Organizer)";
+                }
+            } else {
+                // Current user is the organizer (or someone else), show entrant info
+                otherUID = thread.getEntrantDeviceID();
+            }
+
+            User otherUser = db.getAnyUser(otherUID);
+            if (otherUser != null) {
+                if (participantName.equals("Unknown") || participantName.endsWith("(Organizer)")) {
+                   if (currentUID.equals(thread.getEntrantDeviceID())) {
+                       // Entrant view: keep event name as primary if possible, or use organizer name
+                       if (otherUser.getName() != null && participantName.equals("Unknown")) {
+                           participantName = otherUser.getName();
+                       }
+                   } else {
+                       // Organizer view: show entrant name
+                       participantName = otherUser.getName() != null ? otherUser.getName() : otherUID;
+                   }
+                }
+                avatarUrl = otherUser.getProfilePictureURL();
+            } else if (participantName.equals("Unknown")) {
+                participantName = otherUID;
+            }
         }
 
-        holder.tvParticipantName.setText(entrantName);
+        holder.tvParticipantName.setText(participantName);
+
+        if (avatarUrl != null && !avatarUrl.isEmpty()) {
+            Glide.with(holder.itemView.getContext())
+                    .load(avatarUrl)
+                    .placeholder(R.drawable.gray_placeholder)
+                    .into(holder.ivParticipantAvatar);
+        } else {
+            holder.ivParticipantAvatar.setImageResource(R.drawable.gray_placeholder);
+        }
 
         List<DirectMessage> messages = thread.getMessages();
         if (messages != null && !messages.isEmpty()) {
             DirectMessage lastMessage = messages.get(messages.size() - 1);
             holder.tvLastMessage.setText(lastMessage.getContent());
-            holder.tvLastMessageTime.setText(lastMessage.getTimestamp());
+            
+            // Format time if possible, otherwise use full timestamp
+            String time = lastMessage.getTimestamp();
+            if (time != null && time.contains(" ")) {
+                String[] parts = time.split(" ");
+                if (parts.length > 1) {
+                    holder.tvLastMessageTime.setText(parts[1]); // Just show time
+                } else {
+                    holder.tvLastMessageTime.setText(time);
+                }
+            } else {
+                holder.tvLastMessageTime.setText(time);
+            }
         } else {
             holder.tvLastMessage.setText("No messages yet");
             holder.tvLastMessageTime.setText("");
         }
 
-        holder.btnOpenThread.setOnClickListener(v -> listener.onOpenThread(thread));
         holder.itemView.setOnClickListener(v -> listener.onOpenThread(thread));
+        if (holder.btnCloseThread != null) {
+            holder.btnCloseThread.setOnClickListener(v -> listener.onCloseThread(thread));
+        }
     }
 
     @Override
@@ -84,14 +144,16 @@ public class MessageThreadAdapter extends RecyclerView.Adapter<MessageThreadAdap
         TextView tvParticipantName;
         TextView tvLastMessage;
         TextView tvLastMessageTime;
-        Button btnOpenThread;
+        ImageView ivParticipantAvatar;
+        ImageButton btnCloseThread;
 
         ThreadViewHolder(@NonNull View itemView) {
             super(itemView);
             tvParticipantName = itemView.findViewById(R.id.tvParticipantName);
             tvLastMessage = itemView.findViewById(R.id.tvLastMessage);
             tvLastMessageTime = itemView.findViewById(R.id.tvLastMessageTime);
-            btnOpenThread = itemView.findViewById(R.id.btnOpenThread);
+            ivParticipantAvatar = itemView.findViewById(R.id.ivParticipantAvatar);
+            btnCloseThread = itemView.findViewById(R.id.btnCloseThread);
         }
     }
 }
