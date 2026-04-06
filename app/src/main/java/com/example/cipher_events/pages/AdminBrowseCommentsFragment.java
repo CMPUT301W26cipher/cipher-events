@@ -50,6 +50,11 @@ public class AdminBrowseCommentsFragment extends Fragment implements DBProxy.OnD
         progressBar = view.findViewById(R.id.progress_bar);
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
 
+        View backBtn = view.findViewById(R.id.btn_back);
+        if (backBtn != null) {
+            backBtn.setOnClickListener(v -> getParentFragmentManager().popBackStack());
+        }
+
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new CommentAdapter(new ArrayList<>(), this::onDeleteClick);
         recyclerView.setAdapter(adapter);

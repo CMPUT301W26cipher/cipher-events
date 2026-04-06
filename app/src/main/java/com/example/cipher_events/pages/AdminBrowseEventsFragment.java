@@ -48,6 +48,11 @@ public class AdminBrowseEventsFragment extends Fragment implements DBProxy.OnDat
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
         tvTitle = view.findViewById(R.id.tv_title);
 
+        View backBtn = view.findViewById(R.id.btn_back);
+        if (backBtn != null) {
+            backBtn.setOnClickListener(v -> getParentFragmentManager().popBackStack());
+        }
+
         dbProxy = DBProxy.getInstance();
 
         setupSwipeRefresh();

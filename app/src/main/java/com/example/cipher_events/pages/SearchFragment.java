@@ -121,15 +121,15 @@ public class SearchFragment extends Fragment implements DBProxy.OnDataChangedLis
     private void performSearch() {
         String keyword = etSearchBar.getText().toString().toLowerCase().trim();
         boolean publicOnly = chipPublicOnly.isChecked();
-        
+
         List<Event> allEvents = db.getAllEvents();
         filteredEvents.clear();
 
         for (Event event : allEvents) {
-            boolean matchesKeyword = keyword.isEmpty() || 
-                    (event.getName() != null && event.getName().toLowerCase().contains(keyword)) || 
+            boolean matchesKeyword = keyword.isEmpty() ||
+                    (event.getName() != null && event.getName().toLowerCase().contains(keyword)) ||
                     (event.getDescription() != null && event.getDescription().toLowerCase().contains(keyword));
-            
+
             boolean matchesPublicFilter = !publicOnly || event.isPublicEvent();
 
             if (matchesKeyword && matchesPublicFilter) {
