@@ -190,9 +190,26 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
             }
         }
 
+        // Check if cancelled
+        boolean isCancelled = false;
+        if (event.getCancelledEntrants() != null) {
+            for (User u : event.getCancelledEntrants()) {
+                if (u.getDeviceID() != null && u.getDeviceID().equals(currentUser.getDeviceID())) {
+                    isCancelled = true;
+                    break;
+                }
+            }
+        }
+
         final User finalUser = currentUser;
 
-        if (isEnrolled) {
+        if (isCancelled) {
+            joinButton.setText("Cancelled");
+            joinButton.setEnabled(false);
+            joinButton.setBackgroundTintList(ColorStateList.valueOf(Color.GRAY));
+            declineButton.setVisibility(View.GONE);
+
+        } else if (isEnrolled) {
             joinButton.setText("Enrolled ✓");
             joinButton.setEnabled(false);
             joinButton.setBackgroundTintList(ColorStateList.valueOf(
@@ -225,10 +242,6 @@ public class ScannedEventDetailsDialogFragment extends DialogFragment implements
                         .setPositiveButton("Decline", (dialog, which) -> {
                             WaitingListService service = new WaitingListService(new UserEventHistoryRepository());
                             service.declineInvitation(finalUser, event);
-                            if (event.getCancelledEntrants() == null)
-                                event.setCancelledEntrants(new ArrayList<>());
-                            event.getCancelledEntrants().add(finalUser);
-                            db.updateEvent(event);
                             Toast.makeText(getContext(), "Invitation declined", Toast.LENGTH_SHORT).show();
                             refreshUI();
                         })

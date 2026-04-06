@@ -98,7 +98,6 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
         // Draw Lottery
         btnDrawLottery.setOnClickListener(v -> showDrawLotteryDialog());
 
-        // Draw Replacement
         btnDrawReplacement.setOnClickListener(v -> {
             Event event = db.getEvent(eventId);
             if (event == null) {
@@ -106,19 +105,23 @@ public class WaitingListFragment extends Fragment implements DBProxy.OnDataChang
                 return;
             }
 
-            // Option B: only allow replacement if someone cancelled
-            ArrayList<User> cancelled = event.getCancelledEntrants();
-            if (cancelled == null || cancelled.isEmpty()) {
-                Toast.makeText(getContext(),
-                        "No cancelled spots available for replacement",
-                        Toast.LENGTH_SHORT).show();
+            // Check if open spot exists
+            Integer capacity = event.getWaitingListCapacity();
+            if (capacity == null) {
+                Toast.makeText(getContext(), "Event has no capacity set", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            int enrolled = event.getEnrolledEntrants() != null ? event.getEnrolledEntrants().size() : 0;
+            int invited = event.getInvitedEntrants() != null ? event.getInvitedEntrants().size() : 0;
+
+            if (enrolled + invited >= capacity) {
+                Toast.makeText(getContext(), "No open spots available", Toast.LENGTH_SHORT).show();
                 return;
             }
 
             User replacement = waitingListService.drawReplacementEntrant(event);
             if (replacement != null) {
-                // Consume one cancelled spot
-                event.getCancelledEntrants().remove(0);
                 db.updateEvent(event);
                 Toast.makeText(getContext(),
                         "Replacement selected: " + replacement.getName(),
