@@ -19,6 +19,7 @@
             android:paddingBottom="8dp"
             android:textSize="22sp"
             android:textStyle="bold"
+            android:textColor="@color/text_label"
             android:text="Event Title" />
 
         <TextView
@@ -27,6 +28,7 @@
             android:layout_height="wrap_content"
             android:paddingBottom="12dp"
             android:textSize="16sp"
+            android:textColor="@color/text_hint"
             android:text="0 people in waitlist" />
 
         <!-- Banner container with delete icon -->
@@ -59,6 +61,7 @@
             android:paddingTop="16dp"
             android:text="Date &amp; Location"
             android:textSize="16sp"
+            android:textColor="@color/text_label"
             android:textStyle="bold" />
 
         <TextView
@@ -67,6 +70,7 @@
             android:layout_height="wrap_content"
             android:paddingBottom="16dp"
             android:textSize="15sp"
+            android:textColor="@color/text_hint"
             android:text="Date, Location" />
 
         <TextView
@@ -75,6 +79,7 @@
             android:paddingTop="16dp"
             android:text="Description"
             android:textSize="16sp"
+            android:textColor="@color/text_label"
             android:textStyle="bold" />
 
         <TextView
@@ -83,6 +88,7 @@
             android:layout_height="wrap_content"
             android:paddingBottom="12dp"
             android:textSize="16sp"
+            android:textColor="@color/text_hint"
             android:text="Event description goes here..." />
 
         <Button
