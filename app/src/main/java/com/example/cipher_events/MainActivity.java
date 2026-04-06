@@ -225,7 +225,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
 
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate) -> {
+        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate, registrationOpenTime, registrationCloseTime) -> {
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
             Organizer organizer = DB.getOrganizer(deviceId);
 
@@ -246,6 +246,9 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
             if (capacity != null) {
                 event.setWaitingListCapacity(capacity);
             }
+            event.setRegistrationOpenTime(registrationOpenTime);
+            event.setRegistrationCloseTime(registrationCloseTime);
+            event.setPublicEvent(!isPrivate);
             
             if (tags != null) {
                 event.setTags(new ArrayList<>(tags));
