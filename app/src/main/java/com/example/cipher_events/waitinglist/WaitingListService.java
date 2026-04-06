@@ -518,4 +518,6 @@ public class WaitingListService {
         }
     }
 
+    public void removeFromEnrolled(Event event, User user) {
+    }
 }

@@ -99,33 +99,32 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
                 break;
         }
 
-        // Only ENROLLED users have actions
-        if (listType == ListType.ENROLLED) {
+        // Invited: tap to mark no-show
+        if (listType == ListType.INVITED && noShowListener != null) {
             holder.itemView.setOnClickListener(v -> {
                 new AlertDialog.Builder(holder.itemView.getContext())
-                        .setTitle("Remove Participant")
-                        .setMessage("Do you want to remove " + user.getName() + " from enrolled and move them back to waitlist?")
-                        .setPositiveButton("Yes", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
-                        .setNegativeButton("No", null)
-                        .setTitle("Participant Options")
-                        .setMessage("What do you want to do with " + user.getName() + "?")
-
-                        .setPositiveButton("Remove", (dialog, which) -> {
-                            if (removeListener != null) {
-                                removeListener.onRemoveFromEnrolled(user);
-                            }
-                        })
-
-                        .setNeutralButton("Mark No-Show", (dialog, which) -> {
-                            if (noShowListener != null) {
-                                noShowListener.onMarkNoShow(user);
-                            }
-                        })
-
+                        .setTitle("Mark No-Show")
+                        .setMessage("Mark " + user.getName() + " as no-show?")
+                        .setPositiveButton("Yes", (dialog, which) -> noShowListener.onMarkNoShow(user))
                         .setNegativeButton("Cancel", null)
                         .show();
             });
-        } else {
+        }
+
+        else if (listType == ListType.ENROLLED) {
+            holder.itemView.setOnClickListener(v -> {
+                new AlertDialog.Builder(holder.itemView.getContext())
+                        .setTitle("Participant Options")
+                        .setMessage("Are you sure you want to remove " + user.getName() + "?")
+                        .setPositiveButton("Remove", (dialog, which) -> {
+                            if (removeListener != null) removeListener.onRemoveFromEnrolled(user);
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
+            });
+
+
+    } else {
             // IMPORTANT: prevent recycled click bugs
             holder.itemView.setOnClickListener(null);
         }
