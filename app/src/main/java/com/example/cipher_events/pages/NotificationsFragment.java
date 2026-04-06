@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -36,6 +37,7 @@ public class NotificationsFragment extends Fragment {
     private ProgressBar progressBar;
     private View emptyStateContainer;
     private SwipeRefreshLayout swipeRefreshLayout;
+    private ImageButton btnBack;
     private NotificationAdapter adapter;
     private final Logger logger = Logger.getInstance();
     private final DBProxy db = DBProxy.getInstance();
@@ -53,6 +55,15 @@ public class NotificationsFragment extends Fragment {
         TextView titleView = view.findViewById(R.id.tv_title);
         if (titleView != null) {
             titleView.setText("My Notifications");
+        }
+
+        btnBack = view.findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                    getParentFragmentManager().popBackStack();
+                }
+            });
         }
 
         recyclerView = view.findViewById(R.id.rv_notifications);

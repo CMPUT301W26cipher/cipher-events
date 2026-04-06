@@ -75,18 +75,19 @@
                 tools:text="Hey, I have a question about the event..." />
         </LinearLayout>
 
-        <ImageView
-            android:layout_width="20dp"
-            android:layout_height="20dp"
-            android:src="@drawable/baseline_home_24"
-            android:rotation="270"
+        <ImageButton
+            android:id="@+id/btnCloseThread"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@drawable/baseline_close_24"
+            android:background="?attr/selectableItemBackgroundBorderless"
             app:tint="@color/text_hint"
             android:layout_marginStart="12dp"
-            android:alpha="0.5"/>
+            android:padding="4dp"
+            android:contentDescription="Close thread" />
 
     </LinearLayout>
 
-    <!-- Hidden Button to maintain compatibility with existing code if needed, but we'll use itemView click -->
     <Button
         android:id="@+id/btnOpenThread"
         android:layout_width="0dp"

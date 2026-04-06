@@ -24,7 +24,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="32dp"
         android:layout_marginStart="8dp"
-        android:text="Notification Logs"
+        android:text="My Messages"
         android:textColor="@color/white"
         android:textSize="28sp"
         android:fontFamily="sans-serif-medium"
@@ -42,14 +42,14 @@
         app:layout_constraintTop_toBottomOf="@id/tv_title">
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rv_notifications"
+            android:id="@+id/rv_inbox"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:paddingHorizontal="12dp"
             android:clipToPadding="false"
             android:scrollbars="vertical"
             android:overScrollMode="always"
-            tools:listitem="@layout/item_notification_log" />
+            tools:listitem="@layout/item_message_thread" />
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
@@ -79,7 +79,7 @@
         <ImageView
             android:layout_width="80dp"
             android:layout_height="80dp"
-            android:src="@drawable/baseline_notifications_none_24"
+            android:src="@drawable/ic_message_24"
             app:tint="@color/text_hint"
             android:alpha="0.5" />
 
@@ -88,7 +88,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="No notifications found"
+            android:text="No messages found"
             android:textColor="@color/text_hint"
             android:textSize="16sp" />
     </LinearLayout>

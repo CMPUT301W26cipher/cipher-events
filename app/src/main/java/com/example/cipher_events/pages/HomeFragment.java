@@ -48,8 +48,8 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
     private final ArrayList<Event> displayedEvents = new ArrayList<>();
     private final ArrayList<Event> featuredEvents = new ArrayList<>();
 
-    private MaterialButton btnToday, btnThisWeek, btnCapacity, btnTags;
-    
+    private MaterialButton btnToday, btnThisWeek, btnCapacity, btnTags, btnNotifications, btnMessages;
+
     private String currentFilter = "ALL";
     private String selectedTag = null;
 
@@ -57,7 +57,7 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
 
     private final Handler carouselHandler = new Handler(Looper.getMainLooper());
     private Runnable carouselRunnable;
-    private static final long CAROUSEL_DELAY = 2000;
+    private static final long CAROUSEL_DELAY = 2000; // Speed reverted back to 2000ms
     private CarouselSnapHelper snapHelper;
     private boolean isFirstLoad = true;
 
@@ -81,6 +81,8 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         btnThisWeek = view.findViewById(R.id.btn_filter_this_week);
         btnCapacity = view.findViewById(R.id.btn_filter_capacity);
         btnTags = view.findViewById(R.id.btn_filter_tags);
+        btnNotifications = view.findViewById(R.id.btn_notifications);
+        btnMessages = view.findViewById(R.id.btn_messages);
         recyclerView = view.findViewById(R.id.recycler_events);
         carouselRecyclerView = view.findViewById(R.id.recycler_carousel);
     }
@@ -97,7 +99,7 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         carouselAdapter = new CarouselEventAdapter(featuredEvents, this::showEventDetails);
         carouselAdapter.setOnFavoriteClickListener(this::toggleFavorite);
         carouselRecyclerView.setAdapter(carouselAdapter);
-        
+
         snapHelper = new CarouselSnapHelper();
         snapHelper.attachToRecyclerView(carouselRecyclerView);
 
@@ -136,17 +138,20 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
                     if (layoutManager != null && snapHelper != null) {
                         View snapView = snapHelper.findSnapView(layoutManager);
                         int currentItem = RecyclerView.NO_POSITION;
-                        
+
                         if (snapView != null) {
                             currentItem = layoutManager.getPosition(snapView);
-                        } else if (layoutManager.getChildCount() > 0) {
-                            // Fallback to first visible child if snapView is null
+                        }
+
+                        // If we couldn't find a snapped view, fallback to the first child's position
+                        if (currentItem == RecyclerView.NO_POSITION && layoutManager.getChildCount() > 0) {
                             View firstChild = layoutManager.getChildAt(0);
                             if (firstChild != null) {
                                 currentItem = layoutManager.getPosition(firstChild);
                             }
                         }
 
+                        // Rotate exactly one item at a time
                         if (currentItem != RecyclerView.NO_POSITION) {
                             carouselRecyclerView.smoothScrollToPosition(currentItem + 1);
                         }
@@ -155,6 +160,15 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
                 carouselHandler.postDelayed(this, CAROUSEL_DELAY);
             }
         };
+    }
+
+    private void startAutoRotation() {
+        stopAutoRotation();
+        carouselHandler.postDelayed(carouselRunnable, CAROUSEL_DELAY);
+    }
+
+    private void stopAutoRotation() {
+        carouselHandler.removeCallbacks(carouselRunnable);
     }
 
     private void showEventDetails(Event event) {
@@ -179,6 +193,24 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         if (btnTags != null) {
             btnTags.setOnClickListener(v -> showTagSelectionDialog());
         }
+        if (btnNotifications != null) {
+            btnNotifications.setOnClickListener(v -> {
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new NotificationsFragment())
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
+        if (btnMessages != null) {
+            btnMessages.setOnClickListener(v -> {
+                getParentFragmentManager()
+                        .beginTransaction()
+                        .replace(R.id.fragment_container, new UserInboxFragment())
+                        .addToBackStack(null)
+                        .commit();
+            });
+        }
     }
 
     private void showTagSelectionDialog() {
@@ -188,10 +220,10 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
                 allTagsSet.addAll(event.getTags());
             }
         }
-        
+
         List<String> sortedTags = new ArrayList<>(allTagsSet);
         Collections.sort(sortedTags);
-        
+
         String[] tagsArray = new String[sortedTags.size() + 1];
         tagsArray[0] = "All Tags";
         for (int i = 0; i < sortedTags.size(); i++) {
@@ -234,14 +266,14 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
                 allEvents.add(event);
             }
         }
-        
+
         featuredEvents.clear();
         for (Event e : allEvents) {
             if (featuredEvents.size() >= 5) break;
             featuredEvents.add(e);
         }
         carouselAdapter.notifyDataSetChanged();
-        
+
         if (isFirstLoad && !featuredEvents.isEmpty()) {
             carouselRecyclerView.scrollToPosition(carouselAdapter.getStartingPosition());
             isFirstLoad = false;
@@ -252,7 +284,7 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
 
     private void applyFilters() {
         displayedEvents.clear();
-        
+
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
         Calendar cal = Calendar.getInstance();
         Date today = cal.getTime();
@@ -284,54 +316,50 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         if (currentFilter.equals("TODAY") || currentFilter.equals("THIS_WEEK")) {
             try {
                 if (event.getTime() == null || event.getTime().length() < 10) return false;
-                
+
                 String eventDateStr = event.getTime().substring(0, 10);
                 SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.getDefault());
                 Date eventDate = sdf.parse(eventDateStr);
-                
+
                 if (currentFilter.equals("TODAY")) {
                     return eventDateStr.equals(todayStr);
                 } else {
-                    return eventDate != null && !eventDate.before(today) && eventDate.before(nextWeek);
+                    return !eventDate.before(today) && eventDate.before(nextWeek);
                 }
             } catch (Exception e) {
-                return false; 
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
     private void updateButtonUI() {
-        setButtonStyle(btnToday, "TODAY".equals(currentFilter));
-        setButtonStyle(btnThisWeek, "THIS_WEEK".equals(currentFilter));
+        int activeColor = ContextCompat.getColor(requireContext(), R.color.button_purple);
+        int inactiveColor = ContextCompat.getColor(requireContext(), R.color.dialog_background);
+        int textColor = ContextCompat.getColor(requireContext(), R.color.white);
+
+        btnToday.setBackgroundTintList(ColorStateList.valueOf(currentFilter.equals("TODAY") ? activeColor : inactiveColor));
+        btnThisWeek.setBackgroundTintList(ColorStateList.valueOf(currentFilter.equals("THIS_WEEK") ? activeColor : inactiveColor));
         if (btnCapacity != null) {
-            setButtonStyle(btnCapacity, "CAPACITY".equals(currentFilter));
+            btnCapacity.setBackgroundTintList(ColorStateList.valueOf(currentFilter.equals("CAPACITY") ? activeColor : inactiveColor));
         }
         if (btnTags != null) {
-            setButtonStyle(btnTags, selectedTag != null);
-            if (selectedTag != null) {
-                btnTags.setText(selectedTag);
-            } else {
-                btnTags.setText("Tags");
-            }
+            btnTags.setBackgroundTintList(ColorStateList.valueOf(selectedTag != null ? activeColor : inactiveColor));
+            btnTags.setText(selectedTag != null ? selectedTag : "Tags");
         }
     }
 
-    private void setButtonStyle(MaterialButton button, boolean isSelected) {
-        int backgroundColor = isSelected ? R.color.button_purple : R.color.input_background;
-        float alpha = isSelected ? 1.0f : 0.7f;
-        
-        button.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), backgroundColor)));
-        button.setAlpha(alpha);
-        button.setStrokeWidth(isSelected ? 0 : 2);
-        button.setStrokeColor(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.button_purple)));
+    @Override
+    public void onDataChanged() {
+        if (isAdded()) {
+            loadEvents();
+        }
     }
 
     @Override
     public void onResume() {
         super.onResume();
         db.addListener(this);
-        loadEvents();
         startAutoRotation();
     }
 
@@ -340,25 +368,5 @@ public class HomeFragment extends Fragment implements DBProxy.OnDataChangedListe
         super.onPause();
         db.removeListener(this);
         stopAutoRotation();
-    }
-
-    private void startAutoRotation() {
-        stopAutoRotation();
-        if (carouselRunnable != null) {
-            carouselHandler.postDelayed(carouselRunnable, CAROUSEL_DELAY);
-        }
-    }
-
-    private void stopAutoRotation() {
-        if (carouselRunnable != null) {
-            carouselHandler.removeCallbacks(carouselRunnable);
-        }
-    }
-
-    @Override
-    public void onDataChanged() {
-        if (getActivity() != null) {
-            getActivity().runOnUiThread(this::loadEvents);
-        }
     }
 }
