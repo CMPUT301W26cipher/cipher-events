@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.View;
-import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -53,7 +52,6 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
     Notifier notifier;
     FragmentManager fragmentManager = getSupportFragmentManager();
     BottomNavigationView bottomNavigationView;
-    TextView tvCurrentRole;
 
     private String currentRole = "";
     private static final String PREFS_NAME = "CipherEventsPrefs";
@@ -96,8 +94,6 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         bottomNavigationView = findViewById(R.id.bottom_nav);
         bottomNavigationView.setVisibility(View.GONE); // Hide by default
         
-        tvCurrentRole = findViewById(R.id.tv_current_role);
-
         // Add listener BEFORE checking persistence
         DB.addListener(this);
 
@@ -232,7 +228,6 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         currentRole = "";
         DB.setCurrentUser(null);
         bottomNavigationView.setVisibility(View.GONE);
-        if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
         replaceFragment(LoginFragment.newInstance());
     }
 
@@ -280,16 +275,6 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         if (bottomNavigationView == null) return;
 
         bottomNavigationView.setVisibility(View.VISIBLE);
-        if (tvCurrentRole != null) {
-            tvCurrentRole.setVisibility(View.VISIBLE);
-            tvCurrentRole.setText("Role: " + currentRole);
-            
-            // Color role tag based on role
-            int roleColorRes = R.color.role_attendee;
-            if ("ORGANIZER".equals(currentRole)) roleColorRes = R.color.role_organizer;
-            else if ("ADMIN".equals(currentRole)) roleColorRes = R.color.role_admin;
-            tvCurrentRole.setBackgroundColor(getResources().getColor(roleColorRes, getTheme()));
-        }
 
         if ("ORGANIZER".equals(currentRole)) {
             bottomNavigationView.getMenu().clear();
@@ -313,7 +298,6 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
                     .commit();
 
             if (fragment instanceof LoginFragment || fragment instanceof SignupFragment) {
-                if (tvCurrentRole != null) tvCurrentRole.setVisibility(View.GONE);
                 bottomNavigationView.setVisibility(View.GONE);
                 currentRole = "";
             }
