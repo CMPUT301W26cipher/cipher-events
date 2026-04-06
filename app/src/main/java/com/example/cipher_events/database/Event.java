@@ -29,6 +29,8 @@ public class Event {
 
     private ArrayList<EventComment> comments;
     private ArrayList<String> coOrganizerIds;
+    private ArrayList<String> pendingCoOrganizerIds;
+    private ArrayList<String> tags;
     private boolean publicEvent;
     private Long registrationOpenTime;
     private Long registrationCloseTime;
@@ -69,6 +71,8 @@ public class Event {
 
         this.comments = new ArrayList<>();
         this.coOrganizerIds = new ArrayList<>();
+        this.pendingCoOrganizerIds = new ArrayList<>();
+        this.tags = new ArrayList<>();
         this.messageThreads = messageThreads;
     }
 
@@ -127,6 +131,10 @@ public class Event {
 
     public void setOrganizer(Organizer organizer) {
         this.organizer = organizer;
+    }
+
+    public String getOrganizerID() {
+        return (organizer != null) ? organizer.getDeviceID() : null;
     }
 
     public ArrayList<User> getEntrants() {
@@ -228,6 +236,26 @@ public class Event {
         this.coOrganizerIds = coOrganizerIds;
     }
 
+    public ArrayList<String> getPendingCoOrganizerIds() {
+        if (pendingCoOrganizerIds == null) {
+            pendingCoOrganizerIds = new ArrayList<>();
+        }
+        return pendingCoOrganizerIds;
+    }
+
+    public void setPendingCoOrganizerIds(ArrayList<String> pendingCoOrganizerIds) {
+        this.pendingCoOrganizerIds = pendingCoOrganizerIds;
+    }
+
+    public ArrayList<String> getTags() {
+        if (tags == null) tags = new ArrayList<>();
+        return tags;
+    }
+
+    public void setTags(ArrayList<String> tags) {
+        this.tags = tags;
+    }
+
     public ArrayList<MessageThread> getMessageThreads() {
         if (messageThreads == null) {
             messageThreads = new ArrayList<>();
@@ -251,6 +279,7 @@ public class Event {
                 ", entrants=" + entrants +
                 ", attendees=" + attendees +
                 ", posterPictureURL='" + posterPictureURL + '\'' +
+                ", tags=" + tags +
                 '}';
     }
 }

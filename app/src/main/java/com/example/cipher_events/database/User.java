@@ -1,16 +1,17 @@
 package com.example.cipher_events.database;
 
-import android.provider.Settings;
-import com.example.cipher_events.App;
+import java.util.ArrayList;
+import java.util.UUID;
 
 
 /*
  * Represents a user.
  * Each user has a name, email, password, phone number, and profile picture URL.
+ * The deviceID field is used as a unique identifier (UID) for the user in the database.
  */
 
 public class User {
-    private String deviceID;
+    private String deviceID; // Unique User ID
     private String name;
     private String email;
     private String password;
@@ -18,13 +19,15 @@ public class User {
     private String profilePictureURL; // optional profile picture
 
     private boolean notificationsEnabled = true;
+    private ArrayList<String> favoriteEventIds = new ArrayList<>();
+    private ArrayList<String> hiddenThreadIds = new ArrayList<>();
+
+    private boolean organizerRole;
+    private boolean entrantRole;
 
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
-        this.deviceID = Settings.Secure.getString(
-                App.getContext().getContentResolver(),
-                Settings.Secure.ANDROID_ID
-        );
+        this.deviceID = UUID.randomUUID().toString();
         this.name = name;
         this.email = email;
         this.password = password;
@@ -88,6 +91,77 @@ public class User {
 
     public void setNotificationsEnabled(boolean enabled) {
         this.notificationsEnabled = enabled;
+    }
+
+    public ArrayList<String> getFavoriteEventIds() {
+        if (favoriteEventIds == null) {
+            favoriteEventIds = new ArrayList<>();
+        }
+        return favoriteEventIds;
+    }
+
+    public void setFavoriteEventIds(ArrayList<String> favoriteEventIds) {
+        this.favoriteEventIds = favoriteEventIds;
+    }
+
+    public void addFavoriteEvent(String eventId) {
+        if (favoriteEventIds == null) {
+            favoriteEventIds = new ArrayList<>();
+        }
+        if (!favoriteEventIds.contains(eventId)) {
+            favoriteEventIds.add(eventId);
+        }
+    }
+
+    public void removeFavoriteEvent(String eventId) {
+        if (favoriteEventIds != null) {
+            favoriteEventIds.remove(eventId);
+        }
+    }
+
+    public boolean isFavorite(String eventId) {
+        return favoriteEventIds != null && favoriteEventIds.contains(eventId);
+    }
+
+    public ArrayList<String> getHiddenThreadIds() {
+        if (hiddenThreadIds == null) {
+            hiddenThreadIds = new ArrayList<>();
+        }
+        return hiddenThreadIds;
+    }
+
+    public void setHiddenThreadIds(ArrayList<String> hiddenThreadIds) {
+        this.hiddenThreadIds = hiddenThreadIds;
+    }
+
+    public void hideThread(String threadId) {
+        if (!getHiddenThreadIds().contains(threadId)) {
+            getHiddenThreadIds().add(threadId);
+        }
+    }
+
+    public void showThread(String threadId) {
+        getHiddenThreadIds().remove(threadId);
+    }
+
+    public boolean isThreadHidden(String threadId) {
+        return getHiddenThreadIds().contains(threadId);
+    }
+
+    public boolean hasOrganizerRole() {
+        return organizerRole;
+    }
+
+    public void setOrganizerRole(boolean organizerRole) {
+        this.organizerRole = organizerRole;
+    }
+
+    public boolean hasEntrantRole() {
+        return entrantRole;
+    }
+
+    public void setEntrantRole(boolean entrantRole) {
+        this.entrantRole = entrantRole;
     }
 
     // String representation for debugging purposes

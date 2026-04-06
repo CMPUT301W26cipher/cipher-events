@@ -1,67 +1,162 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content">
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_bg"
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@drawable/rounded_white_bg"
-        android:gravity="center_horizontal"
-        android:orientation="vertical"
-        android:padding="24dp">
+        android:orientation="vertical">
+
+        <!-- Banner with Rounded Corners and Favorite Button -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            android:layout_marginBottom="16dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/scanned_event_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/gray_placeholder" />
+
+                <ImageView
+                    android:id="@+id/btn_favorite"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="top|start"
+                    android:layout_margin="12dp"
+                    android:padding="8dp"
+                    android:background="@drawable/button_background_purple"
+                    android:backgroundTint="#44454261"
+                    android:alpha="0.6"
+                    android:src="@drawable/baseline_star_border_24"
+                    app:tint="@color/white" />
+
+                <ImageView
+                    android:id="@+id/btn_close"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_gravity="top|end"
+                    android:layout_margin="12dp"
+                    android:padding="8dp"
+                    android:background="@drawable/button_background_purple"
+                    android:backgroundTint="#44454261"
+                    android:alpha="0.6"
+                    android:src="@drawable/baseline_close_24"
+                    app:tint="@color/white" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
 
         <TextView
             android:id="@+id/scanned_event_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Event Title"
-            android:textAlignment="center"
-            android:textSize="22sp"
-            android:textStyle="bold" />
+            android:textColor="@color/white"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            tools:text="Event Title" />
 
         <TextView
             android:id="@+id/scanned_event_waitlist_count"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="0 people in waitlist"
-            android:textSize="16sp" />
+            android:textColor="@color/text_hint"
+            android:textSize="14sp"
+            android:layout_marginTop="4dp"
+            tools:text="120 people in waitlist" />
 
-        <ImageView
-            android:id="@+id/scanned_event_banner"
+        <!-- Date and Location Section -->
+        <LinearLayout
+            android:id="@+id/scanned_event_date_location_container"
             android:layout_width="match_parent"
-            android:layout_height="180dp"
-            android:layout_marginBottom="16dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/gray_placeholder" />
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_marginTop="16dp"
+            android:padding="12dp"
+            android:background="@drawable/input_bg">
 
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Date &amp; Location"
+                android:textColor="@color/text_label"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textAllCaps="true" />
+
+            <TextView
+                android:id="@+id/scanned_event_date_location"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:layout_marginTop="4dp"
+                tools:text="Dec 12, 2023 - Edmonton" />
+        </LinearLayout>
+
+        <!-- Description Section -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:text="Description"
-            android:textSize="16sp"
+            android:layout_marginTop="20dp"
+            android:text="About this Event"
+            android:textColor="@color/white"
+            android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/scanned_event_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="24dp"
-            android:text="Event description"
-            android:textSize="16sp" />
+            android:layout_marginTop="8dp"
+            android:textColor="@color/text_label"
+            android:textSize="15sp"
+            android:lineSpacingExtra="4dp"
+            tools:text="This is a detailed description of the event. It can span multiple lines and should be easy to read." />
 
+        <!-- Action Button -->
+        <!-- Action Button -->
         <Button
             android:id="@+id/btn_join_waitlist"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="12dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="32dp"
             android:text="Join Waitlist"
-            android:textColor="@android:color/white"
+            android:backgroundTint="@color/button_purple"
+            android:textColor="@color/white"
             android:textSize="16sp"
-            android:textStyle="bold" />
+            android:textStyle="bold"
+            app:cornerRadius="12dp" />
+
+        <Button
+            android:id="@+id/btn_decline_invitation"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="Decline Invitation"
+            android:backgroundTint="#F44336"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:visibility="gone"
+            app:cornerRadius="12dp" />
+
+        <!-- Added some bottom padding for better scroll feel -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="24dp" />
 
     </LinearLayout>
 </ScrollView>

@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/dialog_bg"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Send Notification"
+        android:textColor="@color/white"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="8dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Reach out to your event participants"
+        android:textColor="@color/text_hint"
+        android:textSize="14sp"
+        android:layout_marginBottom="24dp"/>
+
+    <!-- Recipient Group -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Recipient Group"
+        android:textColor="@color/text_label"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:layout_marginBottom="8dp"
+        android:alpha="0.7"/>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.Material3.TextInputLayout.FilledBox.ExposedDropdownMenu"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="16dp"
+        app:boxBackgroundColor="@color/input_background"
+        app:boxCornerRadiusBottomEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxStrokeWidth="0dp"
+        app:boxStrokeWidthFocused="0dp"
+        app:hintEnabled="false"
+        app:endIconTint="@color/white">
+
+        <AutoCompleteTextView
+            android:id="@+id/spinner_notification_group"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:inputType="none"
+            android:paddingVertical="12dp"
+            android:textColor="@color/white"
+            android:textSize="14sp"
+            android:text="Invited" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <!-- Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Subject"
+        android:textColor="@color/text_label"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:layout_marginBottom="8dp"
+        android:alpha="0.7"/>
+
+    <EditText
+        android:id="@+id/et_notification_title"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:background="@drawable/input_bg"
+        android:hint="e.g. Important Event Update"
+        android:paddingHorizontal="16dp"
+        android:textColor="@color/white"
+        android:textColorHint="@color/text_hint"
+        android:textSize="14sp"
+        android:layout_marginBottom="16dp"
+        android:inputType="textCapSentences"/>
+
+    <!-- Message Body -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Message"
+        android:textColor="@color/text_label"
+        android:textSize="11sp"
+        android:textStyle="bold"
+        android:textAllCaps="true"
+        android:layout_marginBottom="8dp"
+        android:alpha="0.7"/>
+
+    <EditText
+        android:id="@+id/et_notification_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@drawable/input_bg"
+        android:hint="Type your message here..."
+        android:padding="16dp"
+        android:textColor="@color/white"
+        android:textColorHint="@color/text_hint"
+        android:textSize="14sp"
+        android:minLines="4"
+        android:maxLines="8"
+        android:gravity="top"
+        android:layout_marginBottom="24dp"
+        android:inputType="textMultiLine|textCapSentences"
+        android:lineSpacingExtra="4dp"/>
+
+    <!-- Buttons -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            style="@style/Widget.Material3.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Cancel"
+            android:textColor="@color/text_hint"
+            android:layout_marginEnd="8dp"
+            app:rippleColor="#22FFFFFF"/>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_send"
+            android:layout_width="wrap_content"
+            android:layout_height="52dp"
+            android:text="Send Notification"
+            android:backgroundTint="@color/role_organizer"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/baseline_notifications_24"
+            app:iconGravity="textStart"
+            app:iconPadding="8dp"
+            app:iconTint="@color/black"/>
+    </LinearLayout>
+
+</LinearLayout>

@@ -5,6 +5,7 @@ import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.example.cipher_events.notifications.NotificationService;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -21,14 +22,23 @@ import java.util.Locale;
 public class OrganizerInteractionService {
 
     private final DBProxy db;
+    private final NotificationService notificationService;
 
     public OrganizerInteractionService() {
+
         this.db = DBProxy.getInstance();
+        this.notificationService = null;
     }
 
     // For testing
     public OrganizerInteractionService(DBProxy db) {
         this.db = db;
+        this.notificationService = null;
+    }
+
+    public OrganizerInteractionService(DBProxy db, NotificationService notificationService) {
+        this.db = db;
+        this.notificationService = notificationService;
     }
 
     private String nowString() {
@@ -162,6 +172,46 @@ public class OrganizerInteractionService {
     }
 
     /**
+     * US 01.09.01 + US 02.09.01
+     * Organizer sends a co-organizer invitation to an entrant for an owned event.
+     */
+    public void inviteCoOrganizer(String organizerDeviceID, String eventID, String entrantDeviceID) {
+        requireOwnership(organizerDeviceID, eventID);
+
+        if (entrantDeviceID == null || entrantDeviceID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Entrant ID is required.");
+        }
+
+        Event event = requireEvent(eventID);
+        User entrant = requireUser(entrantDeviceID);
+
+        if (!isUserAssociatedWithEvent(event, entrantDeviceID)) {
+            throw new IllegalArgumentException("User is not an entrant for this event.");
+        }
+
+        if (event.getCoOrganizerIds().contains(entrantDeviceID)) {
+            throw new IllegalArgumentException("User is already a co-organizer.");
+        }
+
+        ArrayList<String> pendingIds = event.getPendingCoOrganizerIds();
+        if (pendingIds.contains(entrantDeviceID)) {
+            throw new IllegalArgumentException("User already has a pending co-organizer invitation.");
+        }
+
+        pendingIds.add(entrantDeviceID);
+        event.setPendingCoOrganizerIds(pendingIds);
+        db.updateEvent(event);
+
+        if (notificationService != null) {
+            notificationService.notifyUser(
+                    entrant,
+                    "Co-organizer Invitation",
+                    "You have been invited to become a co-organizer for event: " + event.getName()
+            );
+        }
+    }
+
+    /**
      * US 02.09.01
      * Organizer assigns an entrant as co-organizer for an event.
      * That entrant cannot remain in the entrant pool for the same event.
@@ -174,7 +224,12 @@ public class OrganizerInteractionService {
         }
 
         Event event = requireEvent(eventID);
-        User entrant = requireUser(entrantDeviceID);
+        requireUser(entrantDeviceID);
+
+        ArrayList<String> pendingIds = event.getPendingCoOrganizerIds();
+        if (!pendingIds.contains(entrantDeviceID)) {
+            throw new IllegalArgumentException("User does not have a pending co-organizer invitation.");
+        }
 
         ArrayList<String> coOrganizerIds = event.getCoOrganizerIds();
         if (coOrganizerIds.contains(entrantDeviceID)) {
@@ -183,14 +238,61 @@ public class OrganizerInteractionService {
 
         removeUserFromEntrantPools(event, entrantDeviceID);
 
+        pendingIds.remove(entrantDeviceID);
+
         coOrganizerIds.add(entrantDeviceID);
+        event.setPendingCoOrganizerIds(pendingIds);
         event.setCoOrganizerIds(coOrganizerIds);
+        db.updateEvent(event);
+    }
+
+    /**
+     * US 01.09.01
+     * Entrant declines a co-organizer invitation.
+     */
+    public void declineCoOrganizerInvitation(String eventID, String entrantDeviceID) {
+        if (entrantDeviceID == null || entrantDeviceID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Entrant ID is required.");
+        }
+
+        Event event = requireEvent(eventID);
+        ArrayList<String> pendingIds = event.getPendingCoOrganizerIds();
+
+        if (!pendingIds.contains(entrantDeviceID)) {
+            throw new IllegalArgumentException("No pending co-organizer invitation found.");
+        }
+
+        pendingIds.remove(entrantDeviceID);
+        event.setPendingCoOrganizerIds(pendingIds);
         db.updateEvent(event);
     }
 
     public boolean isCoOrganizer(String eventID, String userDeviceID) {
         Event event = requireEvent(eventID);
         return event.getCoOrganizerIds().contains(userDeviceID);
+    }
+
+    public boolean hasPendingCoOrganizerInvitation(String eventID, String userDeviceID) {
+        Event event = requireEvent(eventID);
+        return event.getPendingCoOrganizerIds().contains(userDeviceID);
+    }
+
+    private boolean isUserAssociatedWithEvent(Event event, String deviceID) {
+        return containsUser(event.getEntrants(), deviceID)
+                || containsUser(event.getInvitedEntrants(), deviceID)
+                || containsUser(event.getCancelledEntrants(), deviceID)
+                || containsUser(event.getEnrolledEntrants(), deviceID)
+                || containsUser(event.getAttendees(), deviceID);
+    }
+
+    private boolean containsUser(List<User> users, String deviceID) {
+        if (users == null) return false;
+        for (User user : users) {
+            if (user != null && deviceID.equals(user.getDeviceID())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**

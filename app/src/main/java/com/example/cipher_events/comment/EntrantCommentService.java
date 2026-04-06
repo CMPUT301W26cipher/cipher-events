@@ -89,6 +89,29 @@ public class EntrantCommentService {
         return event.getComments();
     }
 
+    /**
+     * Delete a comment from an event by commentID.
+     * Available to comment author and admins.
+     */
+    public void deleteComment(String eventID, String commentID) {
+        if (eventID == null || eventID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Event ID cannot be empty.");
+        }
+        if (commentID == null || commentID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Comment ID cannot be empty.");
+        }
+
+        Event event = db.getEvent(eventID);
+        if (event == null) {
+            throw new IllegalArgumentException("Event not found.");
+        }
+
+        ArrayList<EventComment> comments = event.getComments();
+        comments.removeIf(c -> c.getCommentID().equals(commentID));
+        event.setComments(comments);
+        db.updateEvent(event);
+    }
+
     private String normalizeMessage(String rawMessage) {
         if (rawMessage == null) {
             return "";
