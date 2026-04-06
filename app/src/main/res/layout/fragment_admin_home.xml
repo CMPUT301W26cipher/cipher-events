@@ -30,8 +30,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tv_admin_title" />
 
-    <!-- Grid Layout implemented with ConstraintLayout -->
-
     <!-- Profiles -->
     <androidx.cardview.widget.CardView
         android:id="@+id/btn_manage_users"
@@ -189,7 +187,7 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Profile (New Button) -->
+    <!-- Profile -->
     <androidx.cardview.widget.CardView
         android:id="@+id/btn_admin_profile"
         android:layout_width="0dp"
@@ -201,7 +199,7 @@
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintTop_toBottomOf="@+id/btn_manage_images"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/btn_placeholder"
+        app:layout_constraintEnd_toStartOf="@+id/btn_manage_comments"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
@@ -228,16 +226,43 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Invisible Placeholder for Grid Alignment -->
-    <View
-        android:id="@+id/btn_placeholder"
+    <!-- Comments -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/btn_manage_comments"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="8dp"
-        android:visibility="invisible"
+        app:cardBackgroundColor="@color/input_background"
+        app:cardCornerRadius="20dp"
+        app:cardElevation="4dp"
         app:layout_constraintDimensionRatio="1:1"
         app:layout_constraintTop_toTopOf="@+id/btn_admin_profile"
         app:layout_constraintStart_toEndOf="@+id/btn_admin_profile"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="@+id/btn_admin_profile">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <ImageView
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_message_24"
+                app:tint="@color/white" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Comments"
+                android:textColor="@color/white"
+                android:textSize="16sp"
+                android:fontFamily="sans-serif-medium" />
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

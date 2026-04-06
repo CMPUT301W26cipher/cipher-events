@@ -1,6 +1,5 @@
 package com.example.cipher_events.adapters;
 
-import android.app.AlertDialog;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,7 @@ import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 
 import java.util.List;
 
@@ -105,7 +105,7 @@ public class ProfileAdapter extends RecyclerView.Adapter<ProfileAdapter.ProfileV
             final String finalName = name != null ? name : "this profile";
             final Object finalProfile = profile;
             holder.btnRemove.setOnClickListener(v -> {
-                new AlertDialog.Builder(holder.itemView.getContext(), android.R.style.Theme_DeviceDefault_Dialog_Alert)
+                new MaterialAlertDialogBuilder(holder.itemView.getContext(), R.style.CustomAlertDialog)
                         .setTitle("Remove " + finalRole)
                         .setMessage("Are you sure you want to remove " + finalName + "? This action cannot be undone.")
                         .setPositiveButton("Remove", (dialog, which) -> {

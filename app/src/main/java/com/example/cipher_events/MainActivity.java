@@ -67,14 +67,8 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
                     replaceFragment(new OrganizerProfileFragment());
                 }
             } else if ("ADMIN".equals(currentRole)) {
-                if (id == R.id.menu_admin_events) {
-                    replaceFragment(new AdminBrowseEventsFragment());
-                } else if (id == R.id.menu_admin_profiles) {
-                    replaceFragment(new AdminBrowseProfilesFragment());
-                } else if (id == R.id.menu_admin_images) {
-                    replaceFragment(new AdminBrowseImagesFragment());
-                } else if (id == R.id.menu_admin_logs) {
-                    replaceFragment(new AdminNotificationsFragment());
+                if (id == R.id.menu_admin_home) {
+                    replaceFragment(new AdminHomeFragment());
                 } else if (id == R.id.menu_admin_profile) {
                     replaceFragment(new AdminProfileFragment());
                 }
