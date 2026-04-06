@@ -14,6 +14,7 @@ import com.bumptech.glide.Glide;
 import com.example.cipher_events.R;
 import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
+import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 
 import java.util.List;
@@ -68,11 +69,26 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         holder.date.setText(event.getTime());
         holder.location.setText(event.getLocation());
 
-        if (event.getOrganizer() != null && event.getOrganizer().getName() != null) {
-            holder.organizer.setText("Organizer: " + event.getOrganizer().getName());
-            holder.organizer.setVisibility(View.VISIBLE);
+        // Bind Organizer info
+        String organizerId = event.getOrganizerID();
+        Organizer organizer = (organizerId != null) ? DBProxy.getInstance().getOrganizer(organizerId) : null;
+        
+        if (organizer != null) {
+            holder.organizerName.setText("By " + organizer.getName());
+            holder.organizerName.setVisibility(View.VISIBLE);
+            
+            if (organizer.getProfilePictureURL() != null && !organizer.getProfilePictureURL().isEmpty()) {
+                Glide.with(holder.itemView.getContext())
+                        .load(organizer.getProfilePictureURL())
+                        .placeholder(R.drawable.outline_account_circle_24)
+                        .into(holder.organizerImage);
+            } else {
+                holder.organizerImage.setImageResource(R.drawable.outline_account_circle_24);
+            }
+            holder.organizerImage.setVisibility(View.VISIBLE);
         } else {
-            holder.organizer.setVisibility(View.GONE);
+            holder.organizerName.setVisibility(View.GONE);
+            holder.organizerImage.setVisibility(View.GONE);
         }
 
         // Bind Description
@@ -158,8 +174,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     }
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
-        TextView title, date, location, organizer, waitlistCount, capacity, description;
-        ImageView image, favorite;
+        TextView title, date, location, organizerName, waitlistCount, capacity, description;
+        ImageView image, favorite, organizerImage;
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -168,7 +184,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             title = itemView.findViewById(R.id.event_title);
             date = itemView.findViewById(R.id.event_date);
             location = itemView.findViewById(R.id.event_location);
-            organizer = itemView.findViewById(R.id.event_organizer);
+            organizerName = itemView.findViewById(R.id.event_organizer);
+            organizerImage = itemView.findViewById(R.id.event_organizer_image);
             waitlistCount = itemView.findViewById(R.id.event_waitlist_count);
             capacity = itemView.findViewById(R.id.event_capacity);
             description = itemView.findViewById(R.id.event_description);
