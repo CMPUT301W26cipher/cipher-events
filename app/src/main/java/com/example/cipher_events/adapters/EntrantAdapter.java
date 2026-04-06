@@ -1,7 +1,6 @@
 package com.example.cipher_events.adapters;
 
 import android.app.AlertDialog;
-import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,7 +25,7 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
         void onRemoveFromEnrolled(User user);
     }
 
-    private List<User> users = new ArrayList<>();
+    private List<User> users;
     private ListType listType;
     private OnEnrolledRemoveListener removeListener;
 
@@ -88,14 +87,14 @@ public class EntrantAdapter extends RecyclerView.Adapter<EntrantAdapter.EntrantV
                 break;
         }
 
-        // Action: Remove from Enrolled
+        // Only enrolled entrants are clickable for removal
         if (listType == ListType.ENROLLED && removeListener != null) {
             holder.itemView.setOnClickListener(v -> {
                 new AlertDialog.Builder(holder.itemView.getContext())
                         .setTitle("Remove Participant")
                         .setMessage("Do you want to remove " + user.getName() + " from enrolled and move them back to waitlist?")
-                        .setPositiveButton("Remove", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
-                        .setNegativeButton("Cancel", null)
+                        .setPositiveButton("Yes", (dialog, which) -> removeListener.onRemoveFromEnrolled(user))
+                        .setNegativeButton("No", null)
                         .show();
             });
         } else {
