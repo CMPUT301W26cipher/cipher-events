@@ -45,6 +45,18 @@
             android:orientation="vertical"
             android:padding="16dp">
 
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:scrollbars="none"
+                android:layout_marginBottom="8dp">
+                <LinearLayout
+                    android:id="@+id/event_tags_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
             <TextView
                 android:id="@+id/event_title"
                 android:layout_width="match_parent"

@@ -5,6 +5,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -117,6 +118,36 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.privacyBadge.setVisibility(event.isPublicEvent() ? View.GONE : View.VISIBLE);
         }
 
+        // Tags logic
+        if (holder.tagsContainer != null) {
+            holder.tagsContainer.removeAllViews();
+            List<String> tags = event.getTags();
+            if (tags != null && !tags.isEmpty()) {
+                for (String tag : tags) {
+                    TextView tagView = new TextView(holder.itemView.getContext());
+                    tagView.setText(tag);
+                    tagView.setTextSize(10);
+                    tagView.setTextColor(holder.itemView.getContext().getResources().getColor(R.color.white));
+                    tagView.setPadding(20, 10, 20, 10);
+                    
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                            LinearLayout.LayoutParams.WRAP_CONTENT,
+                            LinearLayout.LayoutParams.WRAP_CONTENT
+                    );
+                    params.setMargins(0, 0, 12, 0);
+                    tagView.setLayoutParams(params);
+                    
+                    tagView.setBackgroundResource(R.drawable.button_background_purple);
+                    tagView.getBackground().setAlpha(200); // Semi-transparent
+                    
+                    holder.tagsContainer.addView(tagView);
+                }
+                holder.tagsContainer.setVisibility(View.VISIBLE);
+            } else {
+                holder.tagsContainer.setVisibility(View.GONE);
+            }
+        }
+
         String url = event.getPosterPictureURL();
 
         if (url != null && !url.isEmpty()) {
@@ -181,6 +212,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView title, date, location, organizerName, waitlistCount, capacity, description, privacyBadge;
         ImageView image, favorite, organizerImage;
+        ViewGroup tagsContainer;
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -195,6 +227,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             capacity = itemView.findViewById(R.id.event_capacity);
             description = itemView.findViewById(R.id.event_description);
             privacyBadge = itemView.findViewById(R.id.event_privacy_badge);
+            tagsContainer = itemView.findViewById(R.id.event_tags_container);
         }
     }
 }

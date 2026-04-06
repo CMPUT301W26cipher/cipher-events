@@ -369,6 +369,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
+        ImageView ivBanner = dialogView.findViewById(R.id.iv_edit_event_banner);
+        EditText etBannerUrl = dialogView.findViewById(R.id.et_edit_event_banner_url);
         EditText etTitle = dialogView.findViewById(R.id.et_edit_event_title);
         EditText etDescription = dialogView.findViewById(R.id.et_edit_event_description);
         EditText etLocation = dialogView.findViewById(R.id.et_edit_event_location);
@@ -380,6 +382,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         Button btnCancel = dialogView.findViewById(R.id.btn_edit_event_cancel);
         Button btnSave = dialogView.findViewById(R.id.btn_edit_event_save);
 
+        // Set current values
         etTitle.setText(event.getName());
         etDescription.setText(event.getDescription());
         etLocation.setText(event.getLocation());
@@ -408,6 +411,34 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
         swPublic.setChecked(event.isPublicEvent());
 
+        // Banner loading
+        String currentBannerUrl = event.getPosterPictureURL();
+        etBannerUrl.setText(currentBannerUrl != null ? currentBannerUrl : "");
+        if (currentBannerUrl != null && !currentBannerUrl.isEmpty()) {
+            Glide.with(this).load(currentBannerUrl).placeholder(R.drawable.gray_placeholder).into(ivBanner);
+        }
+
+        // Update banner preview when URL changes
+        etBannerUrl.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                String url = s.toString().trim();
+                if (!url.isEmpty()) {
+                    Glide.with(EventDetailsDialogFragment.this)
+                            .load(url)
+                            .placeholder(R.drawable.gray_placeholder)
+                            .error(R.drawable.gray_placeholder)
+                            .into(ivBanner);
+                } else {
+                    ivBanner.setImageResource(R.drawable.gray_placeholder);
+                }
+            }
+            @Override
+            public void afterTextChanged(Editable s) {}
+        });
+
         etDate.setOnClickListener(v -> showDatePicker(etDate));
         etTime.setOnClickListener(v -> showTimePicker(etTime));
 
@@ -421,6 +452,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             String newTimeStr = etTime.getText().toString().trim();
             String capStr = etCapacity.getText().toString().trim();
             String tagsStr = etTags.getText().toString().trim();
+            String newBannerUrl = etBannerUrl.getText().toString().trim();
 
             if (newTitle.isEmpty()) {
                 Toast.makeText(getContext(), "Title is required", Toast.LENGTH_SHORT).show();
@@ -431,6 +463,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             event.setDescription(newDesc);
             event.setLocation(newLoc);
             event.setTime(newDateStr + " " + newTimeStr);
+            event.setPosterPictureURL(newBannerUrl.isEmpty() ? null : newBannerUrl);
             
             if (!capStr.isEmpty()) {
                 try {
@@ -546,7 +579,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         String deviceID = currentUser != null ? currentUser.getDeviceID() : "unknown";
         String authorName = (currentUser != null) ? currentUser.getName() : "Anonymous";
         String role = isOrganizerView ? "organizer" : "entrant";
-        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        String timestamp = new SimpleDateFormat("yyyy-MM-0dd HH:mm", Locale.getDefault())
                 .format(new Date());
 
         EventComment newComment = new EventComment(deviceID, authorName, role, message, timestamp);

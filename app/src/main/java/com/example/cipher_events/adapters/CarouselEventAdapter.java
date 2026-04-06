@@ -4,6 +4,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -82,6 +83,7 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
         private final ImageView favorite;
         private final TextView title;
         private final TextView date;
+        private final ViewGroup tagsContainer;
 
         public CarouselViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -89,6 +91,7 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
             favorite = itemView.findViewById(R.id.event_favourite);
             title = itemView.findViewById(R.id.event_title);
             date = itemView.findViewById(R.id.event_date);
+            tagsContainer = itemView.findViewById(R.id.event_tags_container);
         }
 
         public void bind(Event event, OnEventClickListener listener, OnFavoriteClickListener favoriteListener) {
@@ -104,6 +107,36 @@ public class CarouselEventAdapter extends RecyclerView.Adapter<CarouselEventAdap
             } else {
                 image.setImageResource(R.drawable.outline_account_circle_24);
                 image.setBackgroundColor(ContextCompat.getColor(itemView.getContext(), R.color.button_purple));
+            }
+
+            // Tags logic
+            if (tagsContainer != null) {
+                tagsContainer.removeAllViews();
+                List<String> tags = event.getTags();
+                if (tags != null && !tags.isEmpty()) {
+                    for (String tag : tags) {
+                        TextView tagView = new TextView(itemView.getContext());
+                        tagView.setText(tag);
+                        tagView.setTextSize(10);
+                        tagView.setTextColor(itemView.getContext().getResources().getColor(R.color.white));
+                        tagView.setPadding(20, 10, 20, 10);
+                        
+                        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
+                                LinearLayout.LayoutParams.WRAP_CONTENT,
+                                LinearLayout.LayoutParams.WRAP_CONTENT
+                        );
+                        params.setMargins(0, 0, 12, 0);
+                        tagView.setLayoutParams(params);
+                        
+                        tagView.setBackgroundResource(R.drawable.button_background_purple);
+                        tagView.getBackground().setAlpha(180); // Slightly more transparent for carousel
+                        
+                        tagsContainer.addView(tagView);
+                    }
+                    tagsContainer.setVisibility(View.VISIBLE);
+                } else {
+                    tagsContainer.setVisibility(View.GONE);
+                }
             }
 
             // Favourite logic

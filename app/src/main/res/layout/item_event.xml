@@ -99,6 +99,23 @@
                     android:text="100 Capacity" />
             </LinearLayout>
 
+            <HorizontalScrollView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_margin="12dp"
+                android:scrollbars="none"
+                app:layout_constraintBottom_toBottomOf="@+id/event_image"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constrainedWidth="true"
+                app:layout_constraintHorizontal_bias="0">
+                <LinearLayout
+                    android:id="@+id/event_tags_container"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal" />
+            </HorizontalScrollView>
+
         </androidx.constraintlayout.widget.ConstraintLayout>
 
         <LinearLayout
