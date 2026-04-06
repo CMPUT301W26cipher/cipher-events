@@ -27,6 +27,7 @@ import androidx.core.content.ContextCompat;
 
 import com.example.cipher_events.App;
 import com.example.cipher_events.R;
+import com.example.cipher_events.logging.Logger;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.EventListener;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -46,6 +47,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -56,7 +58,7 @@ import java.util.concurrent.Executors;
 
 // Relevant methods:
 // sendMessage(deviceID, message)
-// TODO: add topic subscription and mass notifying
+// sendBulkMessages(deviceIDs, message)
 
 // Example usage:
 // Notifier notifier = Notifier.getInstance();          //  setup Notifier
@@ -246,6 +248,22 @@ public class Notifier extends FirebaseMessagingService {
     }
 
     public void sendMessage(String deviceID, Message message) {
+        // Log the notification for user history
+        // Use a clone or update recipient for logging
+        Message logMessage = new Message(message.getTitle(), message.getBody(), message.getOrganizer(), deviceID);
+        logMessage.setDate(message.getDate());
+        Logger.getInstance().logNotification(logMessage);
+
+        sendFCMRequest(deviceID, message);
+    }
+
+    public void sendBulkMessages(List<String> deviceIDs, Message message) {
+        for (String deviceID : deviceIDs) {
+            sendMessage(deviceID, message);
+        }
+    }
+
+    private void sendFCMRequest(String deviceID, Message message) {
         String PROJECT_ID = "cipher-a3ec2";
         String ENDPOINT = "https://fcm.googleapis.com/v1/projects/"
                 + PROJECT_ID + "/messages:send";

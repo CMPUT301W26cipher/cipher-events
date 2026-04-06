@@ -84,7 +84,17 @@ public class MessageThreadsFragment extends Fragment {
             });
         }
 
-        adapter = new MessageThreadAdapter(this::openThread);
+        adapter = new MessageThreadAdapter(new MessageThreadAdapter.OnThreadClickListener() {
+            @Override
+            public void onOpenThread(MessageThread thread) {
+                openThread(thread);
+            }
+
+            @Override
+            public void onCloseThread(MessageThread thread) {
+                // Organizers don't currently have hide functionality
+            }
+        });
         rvThreads.setLayoutManager(new LinearLayoutManager(requireContext()));
         rvThreads.setAdapter(adapter);
 

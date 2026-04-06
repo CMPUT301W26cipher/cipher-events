@@ -55,6 +55,11 @@ public class AdminBrowseImagesFragment extends Fragment implements DBProxy.OnDat
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
 
+        View backBtn = view.findViewById(R.id.btn_back);
+        if (backBtn != null) {
+            backBtn.setOnClickListener(v -> getParentFragmentManager().popBackStack());
+        }
+
         recyclerView.setLayoutManager(new GridLayoutManager(getContext(), 2));
         adapter = new ImageAdapter(new ArrayList<>(), this::onImageClick, this::onDeleteClick);
         recyclerView.setAdapter(adapter);

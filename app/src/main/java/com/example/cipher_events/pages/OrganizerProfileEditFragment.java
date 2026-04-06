@@ -2,6 +2,7 @@ package com.example.cipher_events.pages;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.res.ColorStateList;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
@@ -19,6 +20,7 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
@@ -30,7 +32,7 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-public class OrganizerProfileEditFragment extends Fragment {
+public class OrganizerProfileEditFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private TextInputLayout tilName, tilEmail, tilPhone;
     private TextInputEditText editName, editEmail, editPhone;
@@ -53,6 +55,7 @@ public class OrganizerProfileEditFragment extends Fragment {
                             .circleCrop()
                             .into(profileImage);
                     profileImage.setPadding(0, 0, 0, 0);
+                    profileImage.setImageTintList(null);
                 }
             }
     );
@@ -80,6 +83,26 @@ public class OrganizerProfileEditFragment extends Fragment {
         initViews(view);
         loadOrganizerData();
         setupListeners();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        dbProxy.addListener(this);
+        loadOrganizerData();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        dbProxy.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (isAdded()) {
+            getActivity().runOnUiThread(this::loadOrganizerData);
+        }
     }
 
     private void initViews(View view) {
@@ -114,6 +137,12 @@ public class OrganizerProfileEditFragment extends Fragment {
                         .circleCrop()
                         .into(profileImage);
                 profileImage.setPadding(0, 0, 0, 0);
+                profileImage.setImageTintList(null);
+            } else {
+                profileImage.setImageResource(R.drawable.outline_account_circle_24);
+                int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
+                profileImage.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
+                profileImage.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.white)));
             }
         }
     }

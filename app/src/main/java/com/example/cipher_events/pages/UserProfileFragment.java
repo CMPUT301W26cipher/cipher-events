@@ -32,7 +32,7 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
-public class UserProfileFragment extends Fragment {
+public class UserProfileFragment extends Fragment implements DBProxy.OnDataChangedListener {
 
     private TextInputLayout tilName, tilEmail, tilPassword, tilPhone;
     private TextInputEditText editName, editEmail, editPassword, editPhone;
@@ -57,6 +57,7 @@ public class UserProfileFragment extends Fragment {
                             .circleCrop()
                             .into(profileImage);
                     profileImage.setPadding(0, 0, 0, 0);
+                    profileImage.setImageTintList(null);
                 }
             }
     );
@@ -84,6 +85,26 @@ public class UserProfileFragment extends Fragment {
         initViews(view);
         loadUserData();
         setupListeners();
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        dbProxy.addListener(this);
+        loadUserData();
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        dbProxy.removeListener(this);
+    }
+
+    @Override
+    public void onDataChanged() {
+        if (isAdded()) {
+            getActivity().runOnUiThread(this::loadUserData);
+        }
     }
 
     private void initViews(View view) {
@@ -123,6 +144,11 @@ public class UserProfileFragment extends Fragment {
                         .circleCrop()
                         .into(profileImage);
                 profileImage.setPadding(0, 0, 0, 0);
+                profileImage.setImageTintList(null);
+            } else {
+                profileImage.setImageResource(R.drawable.outline_account_circle_24);
+                int paddingPx = (int) (24 * getResources().getDisplayMetrics().density);
+                profileImage.setPadding(paddingPx, paddingPx, paddingPx, paddingPx);
             }
         }
     }

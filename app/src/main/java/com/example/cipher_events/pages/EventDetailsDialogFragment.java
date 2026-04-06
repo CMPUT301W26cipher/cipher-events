@@ -1,14 +1,16 @@
 package com.example.cipher_events.pages;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,11 +19,11 @@ import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
-import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.DialogFragment;
@@ -48,7 +50,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.List;
 import java.util.Locale;
+import java.util.stream.Collectors;
 
 public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
@@ -78,7 +82,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private Button deleteButton;
     private Button editButton;
     private View lotteryContainer;
-    private TextView lotteryHeader;
     private TextView lotteryText;
     private ChipGroup tagContainer;
 
@@ -93,6 +96,21 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private View entrantActionContainer;
     private View organizerActionContainer;
     private Button organizerViewWaitlistButton;
+
+    // For Image Upload in Edit Dialog
+    private Uri selectedEditImageUri;
+    private ImageView ivEditDialogBanner;
+    private final ActivityResultLauncher<Intent> pickEditImageLauncher = registerForActivityResult(
+            new ActivityResultContracts.StartActivityForResult(),
+            result -> {
+                if (result.getResultCode() == Activity.RESULT_OK && result.getData() != null) {
+                    selectedEditImageUri = result.getData().getData();
+                    if (ivEditDialogBanner != null) {
+                        Glide.with(this).load(selectedEditImageUri).placeholder(R.drawable.gray_placeholder).into(ivEditDialogBanner);
+                    }
+                }
+            }
+    );
 
     public static EventDetailsDialogFragment newInstance(
             String eventId,
@@ -167,7 +185,6 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         closeButton = view.findViewById(R.id.btn_close);
         closeButtonBottom = view.findViewById(R.id.btn_close_bottom);
         lotteryContainer = view.findViewById(R.id.lottery_container);
-        lotteryHeader = view.findViewById(R.id.detail_lottery_header);
         lotteryText = view.findViewById(R.id.detail_lottery_text);
         actionButton = view.findViewById(R.id.scan_button);
         notifyButton = view.findViewById(R.id.notify_button);
@@ -369,6 +386,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             dialog.getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
 
+        ivEditDialogBanner = dialogView.findViewById(R.id.iv_edit_event_banner);
+        View btnClose = dialogView.findViewById(R.id.btn_edit_event_close);
+        View btnChangeImage = dialogView.findViewById(R.id.btn_edit_event_change_image);
         EditText etTitle = dialogView.findViewById(R.id.et_edit_event_title);
         EditText etDescription = dialogView.findViewById(R.id.et_edit_event_description);
         EditText etLocation = dialogView.findViewById(R.id.et_edit_event_location);
@@ -380,6 +400,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         Button btnCancel = dialogView.findViewById(R.id.btn_edit_event_cancel);
         Button btnSave = dialogView.findViewById(R.id.btn_edit_event_save);
 
+        // Set current values
         etTitle.setText(event.getName());
         etDescription.setText(event.getDescription());
         etLocation.setText(event.getLocation());
@@ -408,6 +429,23 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
         swPublic.setChecked(event.isPublicEvent());
 
+        // Banner loading
+        String currentBannerUrl = event.getPosterPictureURL();
+        if (currentBannerUrl != null && !currentBannerUrl.isEmpty()) {
+            Glide.with(this).load(currentBannerUrl).placeholder(R.drawable.gray_placeholder).into(ivEditDialogBanner);
+        }
+
+        selectedEditImageUri = null;
+        btnChangeImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            pickEditImageLauncher.launch(intent);
+        });
+
+        if (btnClose != null) {
+            btnClose.setOnClickListener(v -> dialog.dismiss());
+        }
+
         etDate.setOnClickListener(v -> showDatePicker(etDate));
         etTime.setOnClickListener(v -> showTimePicker(etTime));
 
@@ -431,6 +469,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             event.setDescription(newDesc);
             event.setLocation(newLoc);
             event.setTime(newDateStr + " " + newTimeStr);
+            
+            if (selectedEditImageUri != null) {
+                event.setPosterPictureURL(selectedEditImageUri.toString());
+            }
             
             if (!capStr.isEmpty()) {
                 try {
@@ -546,7 +588,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         String deviceID = currentUser != null ? currentUser.getDeviceID() : "unknown";
         String authorName = (currentUser != null) ? currentUser.getName() : "Anonymous";
         String role = isOrganizerView ? "organizer" : "entrant";
-        String timestamp = new SimpleDateFormat("yyyy-MM-dd HH:mm", Locale.getDefault())
+        String timestamp = new SimpleDateFormat("yyyy-MM-0dd HH:mm", Locale.getDefault())
                 .format(new Date());
 
         EventComment newComment = new EventComment(deviceID, authorName, role, message, timestamp);
@@ -621,36 +663,30 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         Event e = db.getEvent(eventId);
         if (e == null) return;
         Message m = new Message(title, body, e.getOrganizer());
-        ArrayList<User> entrants = e.getInvitedEntrants();
-        if (entrants != null) {
-            for (User user : entrants) {
-                notifier.sendMessage(user.getDeviceID(), m);
-            }
-        }
+        List<String> deviceIDs = e.getInvitedEntrants().stream()
+                .map(User::getDeviceID)
+                .collect(Collectors.toList());
+        notifier.sendBulkMessages(deviceIDs, m);
     }
 
     private void notifyCancelledEntrants(String title, String body) {
         Event e = db.getEvent(eventId);
         if (e == null) return;
         Message m = new Message(title, body, e.getOrganizer());
-        ArrayList<User> entrants = e.getCancelledEntrants();
-        if (entrants != null) {
-            for (User user : entrants) {
-                notifier.sendMessage(user.getDeviceID(), m);
-            }
-        }
+        List<String> deviceIDs = e.getCancelledEntrants().stream()
+                .map(User::getDeviceID)
+                .collect(Collectors.toList());
+        notifier.sendBulkMessages(deviceIDs, m);
     }
 
     private void notifyEnrolledEntrants(String title, String body) {
         Event e = db.getEvent(eventId);
         if (e == null) return;
         Message m = new Message(title, body, e.getOrganizer());
-        ArrayList<User> entrants = e.getEnrolledEntrants();
-        if (entrants != null) {
-            for (User user : entrants) {
-                notifier.sendMessage(user.getDeviceID(), m);
-            }
-        }
+        List<String> deviceIDs = e.getEnrolledEntrants().stream()
+                .map(User::getDeviceID)
+                .collect(Collectors.toList());
+        notifier.sendBulkMessages(deviceIDs, m);
     }
 
     private void refreshUI() {

@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -17,6 +18,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.example.cipher_events.R;
+import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.User;
 import com.example.cipher_events.logging.Logger;
 import com.example.cipher_events.notifications.Message;
 
@@ -25,16 +28,21 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-public class AdminNotificationsFragment extends Fragment {
+/**
+ * NotificationsFragment displays personal notifications for the current user.
+ */
+public class NotificationsFragment extends Fragment {
 
     private RecyclerView recyclerView;
     private ProgressBar progressBar;
     private View emptyStateContainer;
     private SwipeRefreshLayout swipeRefreshLayout;
-    private NotificationLogAdapter adapter;
+    private ImageButton btnBack;
+    private NotificationAdapter adapter;
     private final Logger logger = Logger.getInstance();
+    private final DBProxy db = DBProxy.getInstance();
 
-    public AdminNotificationsFragment() {
+    public NotificationsFragment() {
         // Required empty public constructor
     }
 
@@ -43,20 +51,30 @@ public class AdminNotificationsFragment extends Fragment {
     public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_admin_notifications, container, false);
 
+        // Reuse the layout but change the title
+        TextView titleView = view.findViewById(R.id.tv_title);
+        if (titleView != null) {
+            titleView.setText("My Notifications");
+        }
+
+        btnBack = view.findViewById(R.id.btn_back);
+        if (btnBack != null) {
+            btnBack.setOnClickListener(v -> {
+                if (getParentFragmentManager().getBackStackEntryCount() > 0) {
+                    getParentFragmentManager().popBackStack();
+                }
+            });
+        }
+
         recyclerView = view.findViewById(R.id.rv_notifications);
         progressBar = view.findViewById(R.id.progress_bar);
         emptyStateContainer = view.findViewById(R.id.empty_state_container);
         swipeRefreshLayout = view.findViewById(R.id.swipe_refresh);
 
-        View backBtn = view.findViewById(R.id.btn_back);
-        if (backBtn != null) {
-            backBtn.setOnClickListener(v -> getParentFragmentManager().popBackStack());
-        }
-
         setupSwipeRefresh();
         setupRecyclerView();
         
-        loadLogs(true);
+        loadNotifications(true);
 
         return view;
     }
@@ -64,50 +82,66 @@ public class AdminNotificationsFragment extends Fragment {
     private void setupSwipeRefresh() {
         swipeRefreshLayout.setColorSchemeResources(R.color.button_purple);
         swipeRefreshLayout.setProgressBackgroundColorSchemeResource(R.color.input_background);
-        swipeRefreshLayout.setOnRefreshListener(() -> loadLogs(false));
+        swipeRefreshLayout.setOnRefreshListener(() -> loadNotifications(false));
     }
 
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         recyclerView.setHasFixedSize(true);
-        adapter = new NotificationLogAdapter(new ArrayList<>());
+        adapter = new NotificationAdapter(new ArrayList<>());
         recyclerView.setAdapter(adapter);
     }
 
-    private void loadLogs(boolean showProgress) {
+    private void loadNotifications(boolean showProgress) {
         if (showProgress) {
             progressBar.setVisibility(View.VISIBLE);
         }
         
-        // Simulating a small delay to ensure Firestore data is fetched (as per original logic)
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
             if (!isAdded()) return;
             
-            List<Message> logs = logger.getNotificationLog();
+            User currentUser = db.getCurrentUser();
+            if (currentUser == null) {
+                progressBar.setVisibility(View.GONE);
+                swipeRefreshLayout.setRefreshing(false);
+                return;
+            }
+
+            String currentUID = currentUser.getDeviceID();
+            List<Message> allLogs = logger.getNotificationLog();
+            List<Message> userNotifications = new ArrayList<>();
+            
+            // Filter by recipientID
+            for (Message msg : allLogs) {
+                if (currentUID.equals(msg.getRecipientID())) {
+                    userNotifications.add(msg);
+                }
+            }
+
             progressBar.setVisibility(View.GONE);
             swipeRefreshLayout.setRefreshing(false);
             
-            if (logs == null || logs.isEmpty()) {
+            if (userNotifications.isEmpty()) {
                 emptyStateContainer.setVisibility(View.VISIBLE);
                 recyclerView.setVisibility(View.GONE);
             } else {
                 emptyStateContainer.setVisibility(View.GONE);
                 recyclerView.setVisibility(View.VISIBLE);
-                adapter.setLogs(logs);
+                adapter.setNotifications(userNotifications);
             }
         }, 600);
     }
 
-    private static class NotificationLogAdapter extends RecyclerView.Adapter<NotificationLogAdapter.ViewHolder> {
-        private List<Message> logs;
+    private static class NotificationAdapter extends RecyclerView.Adapter<NotificationAdapter.ViewHolder> {
+        private List<Message> notifications;
         private final SimpleDateFormat dateFormat = new SimpleDateFormat("MMM dd, HH:mm", Locale.getDefault());
 
-        public NotificationLogAdapter(List<Message> logs) {
-            this.logs = logs;
+        public NotificationAdapter(List<Message> notifications) {
+            this.notifications = notifications;
         }
 
-        public void setLogs(List<Message> logs) {
-            this.logs = logs;
+        public void setNotifications(List<Message> notifications) {
+            this.notifications = notifications;
             notifyDataSetChanged();
         }
 
@@ -120,18 +154,18 @@ public class AdminNotificationsFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            Message log = logs.get(position);
+            Message notification = notifications.get(position);
             
-            holder.tvTitle.setText(log.getTitle() != null ? log.getTitle() : "Notification Sent");
-            holder.tvBody.setText(log.getBody());
+            holder.tvTitle.setText(notification.getTitle() != null ? notification.getTitle() : "Event Update");
+            holder.tvBody.setText(notification.getBody());
             
-            String senderName = (log.getOrganizer() != null && log.getOrganizer().getName() != null) 
-                    ? log.getOrganizer().getName() 
-                    : "Unknown Organizer";
-            holder.tvSender.setText("Sent by: " + senderName);
+            String senderName = (notification.getOrganizer() != null && notification.getOrganizer().getName() != null) 
+                    ? notification.getOrganizer().getName() 
+                    : "Cipher Events";
+            holder.tvSender.setText("From: " + senderName);
             
-            if (log.getDate() != null) {
-                holder.tvDate.setText(dateFormat.format(log.getDate()));
+            if (notification.getDate() != null) {
+                holder.tvDate.setText(dateFormat.format(notification.getDate()));
             } else {
                 holder.tvDate.setText("Just now");
             }
@@ -139,7 +173,7 @@ public class AdminNotificationsFragment extends Fragment {
 
         @Override
         public int getItemCount() {
-            return logs.size();
+            return notifications.size();
         }
 
         static class ViewHolder extends RecyclerView.ViewHolder {

@@ -11,22 +11,131 @@
         android:orientation="vertical"
         android:padding="24dp">
 
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Header with Close Button -->
+        <RelativeLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Edit Event Details"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="4dp"/>
+            android:layout_marginBottom="24dp">
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_alignParentStart="true"
+                android:layout_toStartOf="@+id/btn_edit_event_close"
+                android:layout_marginEnd="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Edit Event Details"
+                    android:textColor="@color/white"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="4dp"/>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Update your event information"
+                    android:textColor="@color/text_hint"
+                    android:textSize="14sp"/>
+            </LinearLayout>
+
+            <ImageButton
+                android:id="@+id/btn_edit_event_close"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentTop="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/baseline_close_24"
+                app:tint="@color/text_hint"
+                android:contentDescription="@string/close" />
+        </RelativeLayout>
+
+        <!-- Event Image Section -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Update your event information"
-            android:textColor="@color/text_hint"
+            android:text="Event Banner"
+            android:textColor="@color/text_label"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textAllCaps="true"
+            android:layout_marginBottom="8dp"
+            android:alpha="0.7"/>
+
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="160dp"
+            app:cardCornerRadius="16dp"
+            app:cardElevation="0dp"
+            app:cardBackgroundColor="@color/input_background"
+            android:layout_marginBottom="16dp">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <ImageView
+                    android:id="@+id/iv_edit_event_banner"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/gray_placeholder" />
+
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="#44000000"/>
+
+                <LinearLayout
+                    android:id="@+id/btn_edit_event_change_image"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:background="@drawable/button_background_purple"
+                    android:backgroundTint="#CC454261"
+                    android:paddingHorizontal="20dp"
+                    android:paddingVertical="10dp"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:elevation="4dp">
+
+                    <ImageView
+                        android:layout_width="20dp"
+                        android:layout_height="20dp"
+                        android:src="@drawable/ic_edit_24"
+                        app:tint="@color/white"
+                        android:layout_marginBottom="4dp"/>
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Change Image"
+                        android:textColor="@color/white"
+                        android:textSize="12sp"
+                        android:textStyle="bold" />
+                </LinearLayout>
+            </FrameLayout>
+        </androidx.cardview.widget.CardView>
+
+        <EditText
+            android:id="@+id/et_edit_event_banner_url"
+            android:layout_width="match_parent"
+            android:layout_height="52dp"
+            android:background="@drawable/input_bg"
+            android:hint="Image URL (optional)"
+            android:paddingHorizontal="16dp"
+            android:textColor="@color/white"
+            android:textColorHint="@color/text_hint"
             android:textSize="14sp"
-            android:layout_marginBottom="24dp"/>
+            android:layout_marginBottom="16dp"
+            android:inputType="textUri"
+            android:visibility="gone"/>
 
         <!-- Event Title -->
         <TextView
@@ -111,14 +220,15 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="16dp">
+            android:layout_marginBottom="16dp"
+            android:baselineAligned="false">
 
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_marginEnd="6dp">
+                android:layout_marginEnd="8dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -151,7 +261,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:layout_marginStart="6dp">
+                android:layout_marginStart="8dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -227,7 +337,7 @@
             android:textColor="@color/white"
             android:textColorHint="@color/text_hint"
             android:textSize="14sp"
-            android:layout_marginBottom="16dp"
+            android:layout_marginBottom="24dp"
             android:inputType="textCapWords"/>
 
         <!-- Public/Private -->
@@ -238,7 +348,7 @@
             android:text="Public Event"
             android:textColor="@color/white"
             android:textSize="14sp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="32dp"
             app:useMaterialThemeColors="false"
             app:thumbTint="@color/role_organizer"
             app:trackTint="@color/input_background"/>
@@ -257,22 +367,24 @@
                 android:layout_height="wrap_content"
                 android:text="Cancel"
                 android:textColor="@color/text_hint"
-                android:layout_marginEnd="8dp"
+                android:layout_marginEnd="12dp"
                 app:rippleColor="#22FFFFFF"/>
 
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btn_edit_event_save"
-                android:layout_width="wrap_content"
-                android:layout_height="52dp"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
                 android:text="Save Changes"
                 android:backgroundTint="@color/role_organizer"
                 android:textColor="@color/black"
                 android:textStyle="bold"
-                app:cornerRadius="12dp"
+                app:cornerRadius="16dp"
                 app:icon="@drawable/ic_edit_24"
                 app:iconGravity="textStart"
-                app:iconPadding="8dp"
-                app:iconTint="@color/black"/>
+                app:iconPadding="12dp"
+                app:iconTint="@color/black"
+                android:elevation="4dp"/>
         </LinearLayout>
 
     </LinearLayout>
