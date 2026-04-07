@@ -7,6 +7,8 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
@@ -26,7 +28,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -45,6 +49,11 @@ import com.example.cipher_events.notifications.Notifier;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+
+import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -70,7 +79,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView attendees;
     private TextView description;
     private TextView descriptionLabel;
-    private TextView dateLocation;
+    private TextView detailDate;
+    private TextView detailLocation;
+    private ImageView btnCenterOnEvent;
     private ImageView banner;
     private ImageView favoriteButton;
     private ImageView closeButton;
@@ -96,6 +107,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private View entrantActionContainer;
     private View organizerActionContainer;
     private Button organizerViewWaitlistButton;
+    private MapView organizerMapView;
+    private MapView entrantMapView;
+    private View entrantMapContainer;
 
     // For Image Upload in Edit Dialog
     private Uri selectedEditImageUri;
@@ -169,6 +183,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
+        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()));
+
         if (getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
@@ -179,7 +195,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         attendees = view.findViewById(R.id.detail_attendees);
         descriptionLabel = view.findViewById(R.id.description_label);
         description = view.findViewById(R.id.detail_description);
-        dateLocation = view.findViewById(R.id.detail_date_location);
+        detailDate = view.findViewById(R.id.detail_date);
+        detailLocation = view.findViewById(R.id.detail_location);
+        btnCenterOnEvent = view.findViewById(R.id.btn_center_on_event);
         banner = view.findViewById(R.id.detail_banner);
         favoriteButton = view.findViewById(R.id.btn_favorite);
         closeButton = view.findViewById(R.id.btn_close);
@@ -205,6 +223,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         entrantActionContainer = view.findViewById(R.id.entrant_action_container);
         organizerActionContainer = view.findViewById(R.id.organizer_action_container);
         organizerViewWaitlistButton = view.findViewById(R.id.organizer_view_waitlist_button);
+        
+        organizerMapView = view.findViewById(R.id.map_view);
+        entrantMapView = view.findViewById(R.id.entrant_map_view);
+        entrantMapContainer = view.findViewById(R.id.entrant_map_container);
 
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
         EditText etCommentInput = view.findViewById(R.id.et_comment_input);
@@ -275,9 +297,59 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             public void afterTextChanged(Editable s) {}
         });
 
+        setupMapView(organizerMapView);
+        setupMapView(entrantMapView);
+
+        if (btnCenterOnEvent != null) {
+            btnCenterOnEvent.setOnClickListener(v -> centerMapOnEvent());
+        }
+
         refreshUI();
 
         return view;
+    }
+
+    private void setupMapView(MapView map) {
+        if (map != null) {
+            map.setMultiTouchControls(true);
+            map.getController().setZoom(12.0);
+            map.getController().setCenter(new GeoPoint(53.5461, -113.4938));
+        }
+    }
+
+    private void centerMapOnEvent() {
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            if (event.getLatitude() != null && event.getLongitude() != null) {
+                MapView activeMap = isOrganizerView ? organizerMapView : entrantMapView;
+                if (activeMap != null) {
+                    activeMap.getController().animateTo(new GeoPoint(event.getLatitude(), event.getLongitude()));
+                }
+            } else {
+                // If coordinates missing, attempt geocode once and center
+                new Thread(() -> {
+                    try {
+                        Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+                        List<Address> addresses = geocoder.getFromLocationName(event.getLocation(), 1);
+                        if (addresses != null && !addresses.isEmpty()) {
+                            double lat = addresses.get(0).getLatitude();
+                            double lng = addresses.get(0).getLongitude();
+                            event.setLatitude(lat);
+                            event.setLongitude(lng);
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    MapView activeMap = isOrganizerView ? organizerMapView : entrantMapView;
+                                    if (activeMap != null) {
+                                        activeMap.getController().animateTo(new GeoPoint(lat, lng));
+                                        updateMapMarkers(activeMap, event);
+                                    }
+                                });
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }).start();
+            }
+        }
     }
 
     private void displayTags(ArrayList<String> tags) {
@@ -310,6 +382,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             organizerStatsCard.setVisibility(View.VISIBLE);
             organizerActionContainer.setVisibility(View.VISIBLE);
             entrantActionContainer.setVisibility(View.GONE);
+            entrantMapContainer.setVisibility(View.GONE);
             
             organizerViewWaitlistButton.setOnClickListener(v -> {
                 dismiss();
@@ -338,6 +411,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             organizerStatsCard.setVisibility(View.GONE);
             organizerActionContainer.setVisibility(View.GONE);
             entrantActionContainer.setVisibility(View.VISIBLE);
+            entrantMapContainer.setVisibility(View.VISIBLE);
 
             actionButton.setText("Scan to Join");
             actionButton.setOnClickListener(v -> {
@@ -700,6 +774,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 tvStatsWaitlist.setText(String.valueOf(count));
                 Integer cap = event.getWaitingListCapacity();
                 tvStatsCapacity.setText(cap != null ? String.valueOf(cap) : "∞");
+                updateMapMarkers(organizerMapView, event);
+            } else {
+                updateMapMarkers(entrantMapView, event);
             }
             
             String desc = event.getDescription();
@@ -712,7 +789,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 description.setVisibility(View.GONE);
             }
             
-            dateLocation.setText(event.getTime() + " • " + event.getLocation());
+            if (detailDate != null) detailDate.setText(event.getTime());
+            if (detailLocation != null) detailLocation.setText(event.getLocation());
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
                 Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
@@ -763,10 +841,81 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
     }
 
+    private void updateMapMarkers(MapView map, Event event) {
+        if (map == null) return;
+
+        map.getOverlays().clear();
+
+        // Use a background thread for geocoding if coordinates are missing
+        new Thread(() -> {
+            Double lat = event.getLatitude();
+            Double lng = event.getLongitude();
+
+            if (lat == null || lng == null) {
+                String locName = event.getLocation();
+                if (locName != null && !locName.isEmpty()) {
+                    try {
+                        Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+                        List<Address> addresses = geocoder.getFromLocationName(locName, 1);
+                        if (addresses != null && !addresses.isEmpty()) {
+                            lat = addresses.get(0).getLatitude();
+                            lng = addresses.get(0).getLongitude();
+                            event.setLatitude(lat);
+                            event.setLongitude(lng);
+                            // Not updating DB here to avoid recursion, just using for display
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            final Double finalLat = lat;
+            final Double finalLng = lng;
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    // Add Event Location Pin (Gold)
+                    if (finalLat != null && finalLng != null) {
+                        GeoPoint eventPoint = new GeoPoint(finalLat, finalLng);
+                        Marker eventMarker = new Marker(map);
+                        eventMarker.setPosition(eventPoint);
+                        eventMarker.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_event_pin));
+                        eventMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                        eventMarker.setTitle("EVENT: " + event.getName());
+                        eventMarker.setSubDescription(event.getLocation());
+                        map.getOverlays().add(eventMarker);
+                        
+                        // Focus on event location
+                        map.getController().animateTo(eventPoint);
+                    }
+
+                    // Add Entrant Pins (Red)
+                    ArrayList<User> entrants = event.getEntrants();
+                    if (entrants != null && !entrants.isEmpty()) {
+                        for (User entrant : entrants) {
+                            if (entrant.getLatitude() != null && entrant.getLongitude() != null) {
+                                GeoPoint point = new GeoPoint(entrant.getLatitude(), entrant.getLongitude());
+
+                                Marker marker = new Marker(map);
+                                marker.setPosition(point);
+                                marker.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_custom_pin));
+                                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                                marker.setTitle(entrant.getName());
+                                map.getOverlays().add(marker);
+                            }
+                        }
+                    }
+                    map.invalidate();
+                });
+            }
+        }).start();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         db.addListener(this);
+        if (organizerMapView != null) organizerMapView.onResume();
+        if (entrantMapView != null) entrantMapView.onResume();
         refreshUI();
     }
 
@@ -774,6 +923,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     public void onPause() {
         super.onPause();
         db.removeListener(this);
+        if (organizerMapView != null) organizerMapView.onPause();
+        if (entrantMapView != null) entrantMapView.onPause();
     }
 
     @Override

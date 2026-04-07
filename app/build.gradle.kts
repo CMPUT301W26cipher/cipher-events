@@ -62,6 +62,8 @@ dependencies {
     implementation(libs.swiperefreshlayout)
     implementation(libs.material.calendarview)
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.9")
+    implementation(libs.osmdroid)
+    implementation(libs.preference)
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation(libs.junit)
     testImplementation("org.mockito:mockito-core:5.12.0")

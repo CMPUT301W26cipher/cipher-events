@@ -13,6 +13,8 @@ firebaseFunctions = "22.1.0"
 swiperefreshlayout = "1.2.0"
 materialCalendarView = "2.0.1"
 threetenabp = "1.4.9"
+osmdroid = "6.1.18"
+preference = "1.2.1"
 
 [libraries]
 core = { module = "com.google.zxing:core", version.ref = "core" }
@@ -30,6 +32,8 @@ firebase-functions = { group = "com.google.firebase", name = "firebase-functions
 swiperefreshlayout = { group = "androidx.swiperefreshlayout", name = "swiperefreshlayout", version.ref = "swiperefreshlayout" }
 material-calendarview = { module = "com.github.prolificinteractive:material-calendarview", version.ref = "materialCalendarView" }
 threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref = "threetenabp" }
+osmdroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
+preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

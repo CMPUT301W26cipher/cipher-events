@@ -237,21 +237,74 @@
                 android:id="@+id/date_location_tag"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Date &amp; Location"
+                android:text="Event Details"
                 android:textColor="@color/text_label"
                 android:textSize="10sp"
                 android:textStyle="bold"
                 android:textAllCaps="true" />
 
-            <TextView
-                android:id="@+id/detail_date_location"
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="15sp"
-                android:layout_marginTop="4dp"
-                tools:text="Dec 12, 2023 - Edmonton" />
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_calendar_24"
+                    app:tint="@color/text_hint" />
+                <TextView
+                    android:id="@+id/detail_date"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    tools:text="Dec 12, 2023" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+                <ImageView
+                    android:id="@+id/btn_center_on_event"
+                    android:layout_width="18dp"
+                    android:layout_height="18dp"
+                    android:src="@drawable/ic_event_pin"
+                    app:tint="#FF5252"
+                    android:clickable="true"
+                    android:focusable="true"
+                    android:background="?attr/selectableItemBackgroundBorderless"/>
+                <TextView
+                    android:id="@+id/detail_location"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@color/white"
+                    android:textSize="15sp"
+                    tools:text="Edmonton Convention Centre" />
+            </LinearLayout>
         </LinearLayout>
+
+        <!-- Normal View Map -->
+        <com.google.android.material.card.MaterialCardView
+            android:id="@+id/entrant_map_container"
+            android:layout_width="match_parent"
+            android:layout_height="200dp"
+            android:layout_marginTop="16dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="0dp"
+            android:visibility="gone"
+            tools:visibility="visible">
+            <org.osmdroid.views.MapView
+                android:id="@+id/entrant_map_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+        </com.google.android.material.card.MaterialCardView>
 
         <!-- Description Section -->
         <TextView
@@ -441,6 +494,31 @@
                 app:iconGravity="textStart"
                 app:iconPadding="12dp"
                 app:iconTint="@color/black" />
+
+            <!-- Entrant Location Map -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Entrant Map"
+                android:textColor="@color/white"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"
+                android:layout_marginBottom="8dp"/>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="250dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="0dp"
+                android:layout_marginBottom="16dp">
+
+                <org.osmdroid.views.MapView
+                    android:id="@+id/map_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+            </com.google.android.material.card.MaterialCardView>
 
             <LinearLayout
                 android:layout_width="match_parent"

@@ -25,6 +25,9 @@ public class User {
     private boolean organizerRole;
     private boolean entrantRole;
 
+    private Double latitude;
+    private Double longitude;
+
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
         this.deviceID = UUID.randomUUID().toString();
@@ -164,6 +167,22 @@ public class User {
         this.entrantRole = entrantRole;
     }
 
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
     // String representation for debugging purposes
     @Override
     public String toString() {
@@ -174,6 +193,8 @@ public class User {
                 ", password='" + password + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", profilePictureURL='" + profilePictureURL + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
                 '}';
     }
 }
