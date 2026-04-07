@@ -11,7 +11,6 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
-import android.os.CountDownTimer;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Log;
@@ -53,7 +52,6 @@ import com.example.cipher_events.notifications.Notifier;
 import com.google.android.gms.ads.AdListener;
 import com.google.android.gms.ads.AdLoader;
 import com.google.android.gms.ads.AdRequest;
-import com.google.android.gms.ads.AdView;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.FullScreenContentCallback;
 import com.google.android.gms.ads.VideoOptions;
@@ -589,7 +587,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
     private void showAdBeforeScan() {
         if (mInterstitialAd != null) {
-            showRealInterstitialAd();
+            showInterstitialAd();
         } else {
             // If real ad not loaded yet, show a loading dialog and fetch it
             final AlertDialog loadingDialog = new AlertDialog.Builder(requireContext())
@@ -605,7 +603,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                         public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
                             loadingDialog.dismiss();
                             mInterstitialAd = interstitialAd;
-                            showRealInterstitialAd();
+                            showInterstitialAd();
                         }
 
                         @Override
@@ -619,7 +617,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
     }
 
-    private void showRealInterstitialAd() {
+    private void showInterstitialAd() {
         if (mInterstitialAd == null) {
             proceedToScan();
             return;
