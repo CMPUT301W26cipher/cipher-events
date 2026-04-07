@@ -1,5 +1,6 @@
 package com.example.cipher_events.adapters;
 
+import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.Drawable;
@@ -7,6 +8,7 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -20,18 +22,14 @@ import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
+import com.google.android.material.imageview.ShapeableImageView;
+import com.google.android.material.shape.CornerFamily;
+import com.google.android.material.shape.ShapeAppearanceModel;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Displays a list of Event objects
- * - fills in event title, date, location
- * - if URL is added for event poster, Glide is used to load it (no url = grey blank background)
- *
- * References for Glide:
- * https://www.geeksforgeeks.org/android/image-loading-caching-library-android-set-2/
- */
 public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHolder> {
 
     private List<Event> events;
@@ -46,7 +44,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         void onFavoriteClick(Event event);
     }
 
-
     public EventAdapter(List<Event> events, OnEventClickListener listener) {
         this.events = events;
         this.listener = listener;
@@ -55,7 +52,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
     public void setOnFavoriteClickListener(OnFavoriteClickListener favoriteListener) {
         this.favoriteListener = favoriteListener;
     }
-
 
     @NonNull
     @Override
@@ -73,26 +69,79 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         holder.date.setText(event.getTime());
         holder.location.setText(event.getLocation());
 
-        // Bind Organizer info
-        String organizerId = event.getOrganizerID();
-        Organizer organizer = (organizerId != null) ? DBProxy.getInstance().getOrganizer(organizerId) : null;
+        // --- Stacked Organizers Logic ---
+        holder.organizerStack.removeAllViews();
+        StringBuilder organizersBuilder = new StringBuilder("By ");
         
-        if (organizer != null) {
-            holder.organizerName.setText("By " + organizer.getName());
-            holder.organizerName.setVisibility(View.VISIBLE);
-            
-            if (organizer.getProfilePictureURL() != null && !organizer.getProfilePictureURL().isEmpty()) {
-                Glide.with(holder.itemView.getContext())
-                        .load(organizer.getProfilePictureURL())
-                        .placeholder(R.drawable.outline_account_circle_24)
-                        .into(holder.organizerImage);
-            } else {
-                holder.organizerImage.setImageResource(R.drawable.outline_account_circle_24);
+        List<Organizer> displayOrgs = new ArrayList<>();
+        
+        // 1. Add Primary Organizer
+        String primaryId = event.getOrganizerID();
+        Organizer primary = (primaryId != null) ? DBProxy.getInstance().getOrganizer(primaryId) : null;
+        if (primary != null) {
+            displayOrgs.add(primary);
+            organizersBuilder.append(primary.getName());
+        }
+
+        // 2. Add Co-Organizers
+        List<String> coOrgEmails = event.getCoOrganizerIds();
+        if (coOrgEmails != null) {
+            ArrayList<Organizer> allOrgs = DBProxy.getInstance().getAllOrganizers();
+            for (String email : coOrgEmails) {
+                Organizer found = null;
+                for (Organizer o : allOrgs) {
+                    if (email.equalsIgnoreCase(o.getEmail())) {
+                        found = o;
+                        break;
+                    }
+                }
+                
+                if (found != null) {
+                    displayOrgs.add(found);
+                    if (organizersBuilder.length() > 3) organizersBuilder.append(", ");
+                    organizersBuilder.append(found.getName());
+                }
             }
-            holder.organizerImage.setVisibility(View.VISIBLE);
+        }
+
+        // Update Text
+        if (organizersBuilder.length() > 3) {
+            holder.organizerName.setText(organizersBuilder.toString());
+            holder.organizerName.setVisibility(View.VISIBLE);
         } else {
             holder.organizerName.setVisibility(View.GONE);
-            holder.organizerImage.setVisibility(View.GONE);
+        }
+
+        // Add Stacked Avatars
+        int offset = 0;
+        int avatarSize = (int) (24 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+        int overlapOffset = (int) (14 * holder.itemView.getContext().getResources().getDisplayMetrics().density);
+
+        for (int i = 0; i < Math.min(displayOrgs.size(), 3); i++) { // Max 3 avatars for clarity
+            Organizer org = displayOrgs.get(i);
+            ShapeableImageView iv = new ShapeableImageView(holder.itemView.getContext());
+            
+            FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(avatarSize, avatarSize);
+            params.setMargins(offset, 0, 0, 0);
+            iv.setLayoutParams(params);
+            
+            iv.setShapeAppearanceModel(ShapeAppearanceModel.builder()
+                    .setAllCorners(CornerFamily.ROUNDED, avatarSize / 2f)
+                    .build());
+            iv.setStrokeWidth(4);
+            iv.setStrokeColor(ColorStateList.valueOf(Color.parseColor("#26233F"))); // Match card bg
+            iv.setPadding(2, 2, 2, 2);
+            iv.setScaleType(ImageView.ScaleType.CENTER_CROP);
+
+            String imgUrl = org.getProfilePictureURL();
+            if (imgUrl != null && !imgUrl.isEmpty()) {
+                Glide.with(holder.itemView.getContext()).load(imgUrl).into(iv);
+            } else {
+                iv.setImageResource(R.drawable.outline_account_circle_24);
+            }
+
+            holder.organizerStack.addView(iv);
+            offset += overlapOffset;
         }
 
         // Bind Description
@@ -159,17 +208,10 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
         }
 
         String url = event.getPosterPictureURL();
-
         if (url != null && !url.isEmpty()) {
-            // Load image normally
-            Glide.with(holder.itemView.getContext())
-                    .load(url)
-                    .into(holder.image);
+            Glide.with(holder.itemView.getContext()).load(url).into(holder.image);
         } else {
-            // Clear any previous image from recycled views
             Glide.with(holder.itemView.getContext()).clear(holder.image);
-
-            // Keep XML background (grey)
             holder.image.setImageDrawable(null);
         }
 
@@ -187,7 +229,6 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
                 if (favoriteListener != null) {
                     favoriteListener.onFavoriteClick(event);
                 } else {
-                    // Default behavior if no listener is set
                     if (currentUser.isFavorite(event.getEventID())) {
                         currentUser.removeFavoriteEvent(event.getEventID());
                     } else {
@@ -201,17 +242,11 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             holder.favorite.setVisibility(View.GONE);
         }
 
-        // debugging: testing if image url loads
-        Log.d("EVENT_DEBUG", "Poster URL for " + event.getName() + ": " + url);
-
-
         holder.itemView.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onEventClick(event);
             }
         });
-
-
     }
 
     @Override
@@ -221,8 +256,8 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
 
     static class EventViewHolder extends RecyclerView.ViewHolder {
         TextView title, date, location, organizerName, waitlistCount, capacity, description, privacyBadge;
-        ImageView image, favorite, organizerImage;
-        ViewGroup tagsContainer;
+        ImageView image, favorite;
+        ViewGroup organizerStack, tagsContainer;
 
         public EventViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -232,7 +267,7 @@ public class EventAdapter extends RecyclerView.Adapter<EventAdapter.EventViewHol
             date = itemView.findViewById(R.id.event_date);
             location = itemView.findViewById(R.id.event_location);
             organizerName = itemView.findViewById(R.id.event_organizer);
-            organizerImage = itemView.findViewById(R.id.event_organizer_image);
+            organizerStack = itemView.findViewById(R.id.event_organizer_stack);
             waitlistCount = itemView.findViewById(R.id.event_waitlist_count);
             capacity = itemView.findViewById(R.id.event_capacity);
             description = itemView.findViewById(R.id.event_description);

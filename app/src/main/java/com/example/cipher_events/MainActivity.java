@@ -14,6 +14,7 @@ import androidx.fragment.app.FragmentTransaction;
 
 import com.example.cipher_events.database.Admin;
 import com.example.cipher_events.database.DBProxy;
+import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.databinding.ActivityMainBinding;
@@ -98,7 +99,11 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
             currentRole = prefs.getString(KEY_ROLE, "");
             String accountID = prefs.getString(KEY_DEVICE_ID, "");
 
-            User found = DB.getAnyUser(accountID);
+            User found = null;
+            if ("ADMIN".equals(currentRole)) found = DB.getAdmin(accountID);
+            else if ("ORGANIZER".equals(currentRole)) found = DB.getOrganizer(accountID);
+            else found = DB.getUser(accountID);
+
             if (found != null) {
                 DB.setCurrentUser(found);
             } else {
@@ -125,10 +130,14 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
 
-        // Lambda updated to 10 parameters to match fixed Fragment interface
         dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, coOrganizers, isPrivate) -> {
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
             Organizer organizer = DB.getOrganizer(deviceId);
+
+            if (organizer == null) {
+                organizer = new Organizer("Organizer", "", "", "", null);
+                organizer.setDeviceID(deviceId);
+            }
 
             com.example.cipher_events.database.Event event = new com.example.cipher_events.database.Event(
                     title, description, date + " " + time, location, organizer,
@@ -136,13 +145,19 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
             );
 
             if (capacity != null) event.setWaitingListCapacity(capacity);
-            if (tags != null) event.setTags(new ArrayList<>(tags));
+            
+            // Save Tags
+            if (tags != null) {
+                event.setTags(new ArrayList<>(tags));
+            }
 
-            // Handle co-organizers: Check if list exists before setting
+            // Handle co-organizers: Store their emails in the event
             if (coOrganizers != null && !coOrganizers.isEmpty()) {
-                // If your Event class has a setCoOrganizers method, call it here:
-                // event.setCoOrganizers(new ArrayList<>(coOrganizers));
-                android.util.Log.d("CREATE_EVENT", "Inviting emails: " + coOrganizers.toString());
+                ArrayList<String> coOrgEmails = new ArrayList<>();
+                for (String email : coOrganizers) {
+                    coOrgEmails.add(email.toLowerCase().trim());
+                }
+                event.setCoOrganizerIds(coOrgEmails);
             }
 
             event.setInvitedEntrants(new ArrayList<>());
