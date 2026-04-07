@@ -60,7 +60,7 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
     private void setupRecyclerView() {
         recyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         adapter = new EventAdapter(displayedEvents, event -> {
-            ArrayList<String> tags = new ArrayList<>();
+            ArrayList<String> tags = new ArrayList<>(event.getTags());
             tags.add("Organizer View");
 
             EventDetailsDialogFragment dialog = EventDetailsDialogFragment.newInstance(
@@ -71,8 +71,7 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
                     event.getLocation(),
                     event.getEntrants() != null ? event.getEntrants().size() : 0,
                     tags,
-                    true, // Set as organizer view
-                    db.getCurrentUser() != null ? db.getCurrentUser().getDeviceID() : null
+                    true // Set as organizer view
             );
 
             dialog.show(getParentFragmentManager(), "EventDetailsDialog");
@@ -98,10 +97,14 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
         if (currentUser == null) return;
         
         String currentOrganizerID = currentUser.getDeviceID();
+        String currentEmail = currentUser.getEmail();
         
-        // Only load events organized by this user
+        // Load events organized by this user OR where they are a co-organizer
         for (Event event : db.getAllEvents()) {
-            if (currentOrganizerID != null && currentOrganizerID.equals(event.getOrganizerID())) {
+            boolean isMainOrganizer = currentOrganizerID != null && currentOrganizerID.equals(event.getOrganizerID());
+            boolean isCoOrganizer = currentEmail != null && event.getCoOrganizerIds() != null && event.getCoOrganizerIds().contains(currentEmail.toLowerCase());
+            
+            if (isMainOrganizer || isCoOrganizer) {
                 allEvents.add(event);
             }
         }
@@ -145,6 +148,7 @@ public class OrganizerHomeFragment extends Fragment implements DBProxy.OnDataCha
     }
 
     private void updateButtonUI() {
+        if (getContext() == null) return;
         setButtonStyle(btnAll, "ALL".equals(currentFilter));
         setButtonStyle(btnUpcoming, "UPCOMING".equals(currentFilter));
         setButtonStyle(btnPast, "PAST".equals(currentFilter));
