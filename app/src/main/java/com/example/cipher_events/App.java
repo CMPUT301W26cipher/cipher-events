@@ -7,6 +7,7 @@ import android.os.Bundle;
 
 import androidx.annotation.NonNull;
 
+import com.google.android.gms.ads.MobileAds;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 public class App extends Application {
@@ -19,6 +20,11 @@ public class App extends Application {
         super.onCreate();
         context = getApplicationContext();
         AndroidThreeTen.init(this);
+
+        // Initialize Google Mobile Ads SDK
+        new Thread(() -> {
+            MobileAds.initialize(this, initializationStatus -> {});
+        }).start();
 
         // Automatically track current activity
         registerActivityLifecycleCallbacks(new ActivityLifecycleCallbacks() {

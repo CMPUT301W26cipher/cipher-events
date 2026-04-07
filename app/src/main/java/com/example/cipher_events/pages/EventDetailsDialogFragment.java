@@ -13,6 +13,7 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,7 +21,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -46,6 +49,18 @@ import com.example.cipher_events.message.MessageThread;
 import com.example.cipher_events.message.MessagingService;
 import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.VideoOptions;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.gms.ads.nativead.MediaView;
+import com.google.android.gms.ads.nativead.NativeAd;
+import com.google.android.gms.ads.nativead.NativeAdOptions;
+import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.switchmaterial.SwitchMaterial;
@@ -65,6 +80,7 @@ import java.util.stream.Collectors;
 
 public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
+    private static final String TAG = "EventDetailsDialog";
     private boolean isOrganizerView = false;
     private String eventId;
     private String currentDeviceID;
@@ -110,6 +126,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private MapView organizerMapView;
     private MapView entrantMapView;
     private View entrantMapContainer;
+
+    private InterstitialAd mInterstitialAd;
+    private NativeAd currentNativeAd;
 
     // For Image Upload in Edit Dialog
     private Uri selectedEditImageUri;
@@ -304,9 +323,129 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             btnCenterOnEvent.setOnClickListener(v -> centerMapOnEvent());
         }
 
+        // Load native video ad
+        refreshNativeAd(view);
+
+        // Preload video interstitial ad
+        loadInterstitialAd();
+
         refreshUI();
 
         return view;
+    }
+
+    private void refreshNativeAd(View root) {
+        AdLoader adLoader = new AdLoader.Builder(requireContext(), "ca-app-pub-3940256099942544/1044960115")
+                .forNativeAd(nativeAd -> {
+                    if (currentNativeAd != null) {
+                        currentNativeAd.destroy();
+                    }
+                    currentNativeAd = nativeAd;
+                    FrameLayout frameLayout = root.findViewById(R.id.native_ad_container);
+                    NativeAdView adView = (NativeAdView) getLayoutInflater().inflate(R.layout.ad_unified, null);
+                    populateNativeAdView(nativeAd, adView);
+                    frameLayout.removeAllViews();
+                    frameLayout.addView(adView);
+                })
+                .withAdListener(new AdListener() {
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError adError) {
+                        Log.e(TAG, "Native ad failed to load: " + adError.getMessage());
+                    }
+                })
+                .withNativeAdOptions(new NativeAdOptions.Builder()
+                        .setVideoOptions(new VideoOptions.Builder()
+                                .setStartMuted(true)
+                                .build())
+                        .build())
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
+    private void populateNativeAdView(NativeAd nativeAd, NativeAdView adView) {
+        adView.setMediaView((MediaView) adView.findViewById(R.id.ad_media));
+        adView.setHeadlineView(adView.findViewById(R.id.ad_headline));
+        adView.setBodyView(adView.findViewById(R.id.ad_body));
+        adView.setCallToActionView(adView.findViewById(R.id.ad_call_to_action));
+        adView.setIconView(adView.findViewById(R.id.ad_app_icon));
+        adView.setPriceView(adView.findViewById(R.id.ad_price));
+        adView.setStarRatingView(adView.findViewById(R.id.ad_stars));
+        adView.setStoreView(adView.findViewById(R.id.ad_store));
+        adView.setAdvertiserView(adView.findViewById(R.id.ad_advertiser));
+
+        ((TextView) adView.getHeadlineView()).setText(nativeAd.getHeadline());
+        adView.getMediaView().setMediaContent(nativeAd.getMediaContent());
+
+        if (nativeAd.getBody() == null) {
+            adView.getBodyView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getBodyView().setVisibility(View.VISIBLE);
+            ((TextView) adView.getBodyView()).setText(nativeAd.getBody());
+        }
+
+        if (nativeAd.getCallToAction() == null) {
+            adView.getCallToActionView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getCallToActionView().setVisibility(View.VISIBLE);
+            ((Button) adView.getCallToActionView()).setText(nativeAd.getCallToAction());
+        }
+
+        if (nativeAd.getIcon() == null) {
+            adView.getIconView().setVisibility(View.GONE);
+        } else {
+            ((ImageView) adView.getIconView()).setImageDrawable(nativeAd.getIcon().getDrawable());
+            adView.getIconView().setVisibility(View.VISIBLE);
+        }
+
+        if (nativeAd.getPrice() == null) {
+            adView.getPriceView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getPriceView().setVisibility(View.VISIBLE);
+            ((TextView) adView.getPriceView()).setText(nativeAd.getPrice());
+        }
+
+        if (nativeAd.getStore() == null) {
+            adView.getStoreView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getStoreView().setVisibility(View.VISIBLE);
+            ((TextView) adView.getStoreView()).setText(nativeAd.getStore());
+        }
+
+        if (nativeAd.getStarRating() == null) {
+            adView.getStarRatingView().setVisibility(View.INVISIBLE);
+        } else {
+            ((RatingBar) adView.getStarRatingView()).setRating(nativeAd.getStarRating().floatValue());
+            adView.getStarRatingView().setVisibility(View.VISIBLE);
+        }
+
+        if (nativeAd.getAdvertiser() == null) {
+            adView.getAdvertiserView().setVisibility(View.INVISIBLE);
+        } else {
+            ((TextView) adView.getAdvertiserView()).setText(nativeAd.getAdvertiser());
+            adView.getAdvertiserView().setVisibility(View.VISIBLE);
+        }
+
+        adView.setNativeAd(nativeAd);
+    }
+
+    private void loadInterstitialAd() {
+        AdRequest adRequest = new AdRequest.Builder().build();
+        // Sample Interstitial Video Unit ID: ca-app-pub-3940256099942544/5224354917
+        InterstitialAd.load(requireContext(),"ca-app-pub-3940256099942544/5224354917", adRequest,
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                        mInterstitialAd = interstitialAd;
+                        Log.i(TAG, "onAdLoaded");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        Log.i(TAG, loadAdError.getMessage());
+                        mInterstitialAd = null;
+                    }
+                });
     }
 
     private void setupMapView(MapView map) {
@@ -413,11 +552,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             entrantActionContainer.setVisibility(View.VISIBLE);
             entrantMapContainer.setVisibility(View.VISIBLE);
 
-            actionButton.setText("Scan to Join");
+            actionButton.setText("Join Waitlist");
             actionButton.setOnClickListener(v -> {
                 if (eventId != null) {
-                    QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
-                    qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
+                    showAdBeforeScan();
                 } else {
                     Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
                 }
@@ -444,6 +582,67 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
             favoriteButton.setVisibility(View.VISIBLE);
             if (organizerContainer != null) organizerContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showAdBeforeScan() {
+        if (mInterstitialAd != null) {
+            showInterstitialAd();
+        } else {
+            // If real ad not loaded yet, show a loading dialog and fetch it
+            final AlertDialog loadingDialog = new AlertDialog.Builder(requireContext())
+                    .setMessage("Loading advertisement...")
+                    .setCancelable(false)
+                    .create();
+            loadingDialog.show();
+
+            AdRequest adRequest = new AdRequest.Builder().build();
+            InterstitialAd.load(requireContext(), "ca-app-pub-3940256099942544/5224354917", adRequest,
+                    new InterstitialAdLoadCallback() {
+                        @Override
+                        public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                            loadingDialog.dismiss();
+                            mInterstitialAd = interstitialAd;
+                            showInterstitialAd();
+                        }
+
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                            loadingDialog.dismiss();
+                            Log.e(TAG, "Ad failed to load: " + loadAdError.getMessage());
+                            // Proceed to scan if ad fails to load to not block user
+                            proceedToScan();
+                        }
+                    });
+        }
+    }
+
+    private void showInterstitialAd() {
+        if (mInterstitialAd == null) {
+            proceedToScan();
+            return;
+        }
+        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                mInterstitialAd = null;
+                loadInterstitialAd(); // Preload next one
+                proceedToScan();
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                mInterstitialAd = null;
+                proceedToScan();
+            }
+        });
+        mInterstitialAd.show(requireActivity());
+    }
+
+    private void proceedToScan() {
+        if (eventId != null) {
+            QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
+            qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
         }
     }
 
@@ -925,6 +1124,14 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         db.removeListener(this);
         if (organizerMapView != null) organizerMapView.onPause();
         if (entrantMapView != null) entrantMapView.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (currentNativeAd != null) {
+            currentNativeAd.destroy();
+        }
+        super.onDestroy();
     }
 
     @Override
