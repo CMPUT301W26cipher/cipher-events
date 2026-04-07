@@ -225,6 +225,25 @@ public class Event {
         this.comments = comments;
     }
 
+    public void addComment(EventComment comment) {
+        if (this.comments == null) {
+            this.comments = new ArrayList<>();
+        }
+        this.comments.add(comment);
+    }
+
+    public ArrayList<User> getWaitlist() {
+        return getEntrants();
+    }
+
+    public String getBannerUrl() {
+        return posterPictureURL;
+    }
+
+    public void setBannerUrl(String bannerUrl) {
+        this.posterPictureURL = bannerUrl;
+    }
+
     public boolean isPublicEvent() {
         return publicEvent;
     }

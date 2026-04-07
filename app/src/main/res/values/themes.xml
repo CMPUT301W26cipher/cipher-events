@@ -15,6 +15,12 @@
         <item name="cornerSize">24dp</item>
     </style>
 
+    <style name="DialogWide" parent="Theme.Material3.DayNight.Dialog">
+        <item name="android:windowMinWidthMajor">98%</item>
+        <item name="android:windowMinWidthMinor">98%</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
     <!-- Aesthetic Dialog Styles -->
     <style name="CustomMaterialCalendar" parent="ThemeOverlay.Material3.MaterialCalendar">
         <item name="colorSurface">@color/input_background</item>

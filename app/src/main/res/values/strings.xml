@@ -3,4 +3,20 @@
     <string name="close">Close</string>
     <!-- TODO: Remove or change this placeholder text -->
     <string name="hello_blank_fragment">Hello blank fragment</string>
+    <string name="lottery_disclaimer">⚠️ Disclaimer\nSome events use a lottery system when more people join than there are available spots.\n\nWhat this means for you:\n• When you join, you\'re entered into the lottery.\n• Everyone who joins before the deadline has the same chance.\n• Joining earlier does not increase your odds.\n• If you\'re selected, you\'ll receive a confirmation.\n• If you\'re not selected, you may be placed on a waitlist.\n\nThis system helps keep things fair and avoids first‑come‑first‑served pressure.</string>
+    <string name="joined_count">%1$d Joined</string>
+    <string name="time_location_format">%1$s | %2$s</string>
+    <string name="comment_empty_error">Comment cannot be empty</string>
+    <string name="comment_too_long_error">Comment is too long (max 200 chars)</string>
+    <string name="event_deleted">Event Deleted</string>
+    <string name="feature_coming_soon">Feature coming soon</string>
+    <string name="scan_info">Scan Info</string>
+    <string name="manage_waitlist">Manage Waitlist</string>
+    <string name="scan_error_id_missing">Error: Event ID missing</string>
+    <string name="comment_hint">Share your thoughts…</string>
+    <string name="organizer_mode">Organizer Mode</string>
+    <string name="anonymous">Anonymous</string>
+    <string name="organizer_view_tag">Organizer View</string>
+    <string name="notification_feature_coming_soon">Notification Feature coming soon</string>
+    <string name="messaging_feature_coming_soon">Messaging Feature coming soon</string>
 </resources>

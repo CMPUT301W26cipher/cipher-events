@@ -442,6 +442,21 @@
                 app:iconPadding="12dp"
                 app:iconTint="@color/black" />
 
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/organizer_view_map_button"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
+                android:text="View Event Map"
+                android:backgroundTint="#33FFFFFF"
+                android:textColor="@color/white"
+                android:textStyle="bold"
+                app:cornerRadius="12dp"
+                app:icon="@drawable/baseline_home_24"
+                app:iconGravity="textStart"
+                app:iconPadding="12dp"
+                app:iconTint="@color/white" />
+
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

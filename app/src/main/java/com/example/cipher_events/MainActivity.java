@@ -16,11 +16,7 @@ import com.example.cipher_events.database.DBProxy;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.databinding.ActivityMainBinding;
-import com.example.cipher_events.pages.AdminBrowseEventsFragment;
-import com.example.cipher_events.pages.AdminBrowseImagesFragment;
-import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
-import com.example.cipher_events.pages.AdminNotificationsFragment;
 import com.example.cipher_events.pages.AdminProfileFragment;
 import com.example.cipher_events.pages.CreateEventDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
@@ -45,7 +41,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
     private static final String KEY_ROLE = "userRole";
     private static final String KEY_DEVICE_ID = "deviceID";
     private String currentRole = "";
-    private DBProxy DB = DBProxy.getInstance();
+    private final DBProxy DB = DBProxy.getInstance();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,7 +172,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
 
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
-        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate) -> {
+        dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, isPrivate, lat, lon) -> {
             String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
             Organizer organizer = DB.getOrganizer(deviceId);
 
@@ -193,6 +189,9 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
                     bannerUrl,
                     !isPrivate
             );
+
+            event.setLatitude(lat);
+            event.setLongitude(lon);
 
             if (capacity != null) {
                 event.setWaitingListCapacity(capacity);
