@@ -589,56 +589,56 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
     private void showAdBeforeScan() {
         if (mInterstitialAd != null) {
-            mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
-                @Override
-                public void onAdDismissedFullScreenContent() {
-                    mInterstitialAd = null;
-                    loadInterstitialAd(); // Load next one
-                    proceedToScan();
-                }
-
-                @Override
-                public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
-                    mInterstitialAd = null;
-                    proceedToScan();
-                }
-            });
-            mInterstitialAd.show(requireActivity());
+            showRealInterstitialAd();
         } else {
-            // Fallback to mock ad if real ad not loaded yet
-            View adViewLayout = getLayoutInflater().inflate(R.layout.dialog_mock_ad, null);
-            AlertDialog adDialog = new AlertDialog.Builder(requireContext(), android.R.style.Theme_Black_NoTitleBar_Fullscreen)
-                    .setView(adViewLayout)
+            // If real ad not loaded yet, show a loading dialog and fetch it
+            final AlertDialog loadingDialog = new AlertDialog.Builder(requireContext())
+                    .setMessage("Loading advertisement...")
                     .setCancelable(false)
                     .create();
+            loadingDialog.show();
 
-            AdView adView = adViewLayout.findViewById(R.id.ad_view);
-            TextView countdownText = adViewLayout.findViewById(R.id.tv_ad_countdown);
-            
             AdRequest adRequest = new AdRequest.Builder().build();
-            adView.loadAd(adRequest);
-            
-            adDialog.show();
+            InterstitialAd.load(requireContext(), "ca-app-pub-3940256099942544/5224354917", adRequest,
+                    new InterstitialAdLoadCallback() {
+                        @Override
+                        public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                            loadingDialog.dismiss();
+                            mInterstitialAd = interstitialAd;
+                            showRealInterstitialAd();
+                        }
 
-            new CountDownTimer(5000, 1000) {
-                @Override
-                public void onTick(long millisUntilFinished) {
-                    if (isAdded()) {
-                        countdownText.setText("Scan starting in " + (millisUntilFinished / 1000 + 1) + " seconds...");
-                    }
-                }
-
-                @Override
-                public void onFinish() {
-                    if (isAdded()) {
-                        adDialog.dismiss();
-                        proceedToScan();
-                    } else {
-                        adDialog.dismiss();
-                    }
-                }
-            }.start();
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                            loadingDialog.dismiss();
+                            Log.e(TAG, "Ad failed to load: " + loadAdError.getMessage());
+                            // Proceed to scan if ad fails to load to not block user
+                            proceedToScan();
+                        }
+                    });
         }
+    }
+
+    private void showRealInterstitialAd() {
+        if (mInterstitialAd == null) {
+            proceedToScan();
+            return;
+        }
+        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                mInterstitialAd = null;
+                loadInterstitialAd(); // Preload next one
+                proceedToScan();
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                mInterstitialAd = null;
+                proceedToScan();
+            }
+        });
+        mInterstitialAd.show(requireActivity());
     }
 
     private void proceedToScan() {
