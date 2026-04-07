@@ -125,7 +125,7 @@ public class ProfileFragment extends Fragment implements DBProxy.OnDataChangedLi
 
         MaterialButton historyBtn = view.findViewById(R.id.history_btn);
         if (historyBtn != null) {
-            historyBtn.setOnClickListener(v -> navigateTo(new OrganizerHistoryFragment()));
+            historyBtn.setOnClickListener(v -> navigateTo(new UserHistoryFragment()));
         }
 
         MaterialButton editProfileBtn = view.findViewById(R.id.edit_profile_btn);

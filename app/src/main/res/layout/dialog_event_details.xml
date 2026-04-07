@@ -457,6 +457,16 @@
                 style="@style/Widget.Material3.Button.TonalButton"/>
         </LinearLayout>
 
+        <!-- Native Ad Container for Video Ads -->
+        <FrameLayout
+            android:id="@+id/native_ad_container"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:minHeight="300dp"
+            android:background="@drawable/input_bg"
+            android:padding="8dp" />
+
         <!-- Organizer Actions Dashboard -->
         <LinearLayout
             android:id="@+id/organizer_action_container"
