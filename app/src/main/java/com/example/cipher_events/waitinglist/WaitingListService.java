@@ -65,6 +65,11 @@ public class WaitingListService {
             return false;
         }
 
+        if (event.getPendingCoOrganizerIds() != null &&
+                event.getPendingCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
         ArrayList<User> entrants = event.getEntrants();
 
         if (entrants == null) {
@@ -324,6 +329,11 @@ public class WaitingListService {
             return false;
         }
 
+        if (event.getPendingCoOrganizerIds() != null &&
+                event.getPendingCoOrganizerIds().contains(user.getDeviceID())) {
+            return false;
+        }
+
         if (event.getAttendees() == null) {
             event.setAttendees(new ArrayList<>());
         }
@@ -511,4 +521,13 @@ public class WaitingListService {
         return false;
     }
 
+    public void markAsNoShow(Event event, User user) {
+        if (event.getInvitedEntrants().contains(user)) {
+            event.getInvitedEntrants().remove(user);
+            event.getCancelledEntrants().add(user);
+        }
+    }
+
+    public void removeFromEnrolled(Event event, User user) {
+    }
 }

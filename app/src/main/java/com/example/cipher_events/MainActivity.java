@@ -127,6 +127,55 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
                 ? View.GONE : View.VISIBLE);
     }
 
+    public void switchToAdminView() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        currentRole = "ADMIN";
+        editor.putString(KEY_ROLE, currentRole);
+        editor.apply();
+        updateNavigationMenu();
+    }
+
+    public void switchToOrganizerView() {
+        User currentUser = DB.getCurrentUser();
+
+        if (currentUser instanceof Admin) {
+            if (!currentUser.hasOrganizerRole()) {
+                android.widget.Toast.makeText(this, "Organizer role is not enabled.", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        currentRole = "ORGANIZER";
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_ROLE, currentRole);
+        editor.apply();
+
+        updateNavigationMenu();
+    }
+
+    public void switchToEntrantView() {
+        User currentUser = DB.getCurrentUser();
+
+        if (currentUser instanceof Admin) {
+            if (!currentUser.hasEntrantRole()) {
+                android.widget.Toast.makeText(this, "Entrant role is not enabled.", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        currentRole = "ENTRANT";
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_ROLE, currentRole);
+        editor.apply();
+
+        updateNavigationMenu();
+    }
+
     public void showCreateEventDialog() {
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
 
