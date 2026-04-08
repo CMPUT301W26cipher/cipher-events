@@ -64,6 +64,7 @@ dependencies {
     implementation("com.jakewharton.threetenabp:threetenabp:1.4.9")
     implementation(libs.osmdroid)
     implementation(libs.preference)
+    implementation(libs.play.services.auth)
     implementation("com.google.android.gms:play-services-ads:25.1.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation(libs.junit)

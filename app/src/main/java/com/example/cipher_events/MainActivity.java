@@ -231,11 +231,17 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
     }
 
     public void logout() {
-        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply();
-        currentRole = "";
-        DB.setCurrentUser(null);
-        bottomNavigationView.setVisibility(View.GONE);
-        replaceFragment(LoginFragment.newInstance());
+        com.google.android.gms.auth.api.signin.GoogleSignInOptions gso = new com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestEmail()
+                .build();
+        com.google.android.gms.auth.api.signin.GoogleSignInClient mGoogleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(this, gso);
+        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
+            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply();
+            currentRole = "";
+            DB.setCurrentUser(null);
+            bottomNavigationView.setVisibility(View.GONE);
+            replaceFragment(LoginFragment.newInstance());
+        });
     }
 
     private void updateNavigationMenu() {
