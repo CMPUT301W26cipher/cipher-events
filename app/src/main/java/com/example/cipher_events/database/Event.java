@@ -17,6 +17,8 @@ public class Event {
     private String description;
     private String time;
     private String location;
+    private Double latitude;
+    private Double longitude;
     private Organizer organizer;
     private ArrayList<User> entrants;
     private ArrayList<User> attendees;
@@ -29,6 +31,7 @@ public class Event {
 
     private ArrayList<EventComment> comments;
     private ArrayList<String> coOrganizerIds;
+    private ArrayList<String> pendingCoOrganizerIds;
     private ArrayList<String> tags;
     private boolean publicEvent;
     private Long registrationOpenTime;
@@ -70,6 +73,7 @@ public class Event {
 
         this.comments = new ArrayList<>();
         this.coOrganizerIds = new ArrayList<>();
+        this.pendingCoOrganizerIds = new ArrayList<>();
         this.tags = new ArrayList<>();
         this.messageThreads = messageThreads;
     }
@@ -121,6 +125,22 @@ public class Event {
 
     public void setLocation(String location) {
         this.location = location;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
     }
 
     public Organizer getOrganizer() {
@@ -232,6 +252,17 @@ public class Event {
 
     public void setCoOrganizerIds(ArrayList<String> coOrganizerIds) {
         this.coOrganizerIds = coOrganizerIds;
+    }
+
+    public ArrayList<String> getPendingCoOrganizerIds() {
+        if (pendingCoOrganizerIds == null) {
+            pendingCoOrganizerIds = new ArrayList<>();
+        }
+        return pendingCoOrganizerIds;
+    }
+
+    public void setPendingCoOrganizerIds(ArrayList<String> pendingCoOrganizerIds) {
+        this.pendingCoOrganizerIds = pendingCoOrganizerIds;
     }
 
     public ArrayList<String> getTags() {

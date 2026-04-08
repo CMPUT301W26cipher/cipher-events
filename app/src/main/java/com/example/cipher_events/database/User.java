@@ -22,6 +22,12 @@ public class User {
     private ArrayList<String> favoriteEventIds = new ArrayList<>();
     private ArrayList<String> hiddenThreadIds = new ArrayList<>();
 
+    private boolean organizerRole;
+    private boolean entrantRole;
+
+    private Double latitude;
+    private Double longitude;
+
     // Constructor; pass null for optional fields if not provided
     public User(String name, String email, String password, String phoneNumber, String profilePictureURL) {
         this.deviceID = UUID.randomUUID().toString();
@@ -145,6 +151,38 @@ public class User {
         return getHiddenThreadIds().contains(threadId);
     }
 
+    public boolean hasOrganizerRole() {
+        return organizerRole;
+    }
+
+    public void setOrganizerRole(boolean organizerRole) {
+        this.organizerRole = organizerRole;
+    }
+
+    public boolean hasEntrantRole() {
+        return entrantRole;
+    }
+
+    public void setEntrantRole(boolean entrantRole) {
+        this.entrantRole = entrantRole;
+    }
+
+    public Double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(Double latitude) {
+        this.latitude = latitude;
+    }
+
+    public Double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(Double longitude) {
+        this.longitude = longitude;
+    }
+
     // String representation for debugging purposes
     @Override
     public String toString() {
@@ -155,6 +193,8 @@ public class User {
                 ", password='" + password + '\'' +
                 ", phoneNumber='" + phoneNumber + '\'' +
                 ", profilePictureURL='" + profilePictureURL + '\'' +
+                ", latitude=" + latitude +
+                ", longitude=" + longitude +
                 '}';
     }
 }

@@ -18,7 +18,11 @@ import com.example.cipher_events.database.Event;
 import com.example.cipher_events.database.Organizer;
 import com.example.cipher_events.database.User;
 import com.example.cipher_events.databinding.ActivityMainBinding;
+import com.example.cipher_events.pages.AdminBrowseEventsFragment;
+import com.example.cipher_events.pages.AdminBrowseImagesFragment;
+import com.example.cipher_events.pages.AdminBrowseProfilesFragment;
 import com.example.cipher_events.pages.AdminHomeFragment;
+import com.example.cipher_events.pages.AdminNotificationsFragment;
 import com.example.cipher_events.pages.AdminProfileFragment;
 import com.example.cipher_events.pages.CreateEventDialogFragment;
 import com.example.cipher_events.pages.FavouritesFragment;
@@ -84,7 +88,8 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
     @Override
     public void onDataChanged() {
         SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        if (prefs.getBoolean(KEY_LOGGED_IN, false)) {
+        boolean isLoggedIn = prefs.getBoolean(KEY_LOGGED_IN, false);
+        if (isLoggedIn) {
             String role = prefs.getString(KEY_ROLE, "");
             if (!this.currentRole.equals(role)) {
                 this.currentRole = role;
@@ -125,6 +130,55 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
 
         bottomNavigationView.setVisibility((fragment instanceof LoginFragment || fragment instanceof SignupFragment)
                 ? View.GONE : View.VISIBLE);
+    }
+
+    public void switchToAdminView() {
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        currentRole = "ADMIN";
+        editor.putString(KEY_ROLE, currentRole);
+        editor.apply();
+        updateNavigationMenu();
+    }
+
+    public void switchToOrganizerView() {
+        User currentUser = DB.getCurrentUser();
+
+        if (currentUser instanceof Admin) {
+            if (!currentUser.hasOrganizerRole()) {
+                android.widget.Toast.makeText(this, "Organizer role is not enabled.", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        currentRole = "ORGANIZER";
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_ROLE, currentRole);
+        editor.apply();
+
+        updateNavigationMenu();
+    }
+
+    public void switchToEntrantView() {
+        User currentUser = DB.getCurrentUser();
+
+        if (currentUser instanceof Admin) {
+            if (!currentUser.hasEntrantRole()) {
+                android.widget.Toast.makeText(this, "Entrant role is not enabled.", android.widget.Toast.LENGTH_SHORT).show();
+                return;
+            }
+        }
+
+        currentRole = "ENTRANT";
+
+        SharedPreferences prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.putString(KEY_ROLE, currentRole);
+        editor.apply();
+
+        updateNavigationMenu();
     }
 
     public void showCreateEventDialog() {

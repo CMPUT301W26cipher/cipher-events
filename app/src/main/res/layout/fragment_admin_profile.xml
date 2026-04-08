@@ -164,6 +164,17 @@
                     app:backgroundTint="#2196F3" />
 
                 <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_use_entrant_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Use as Entrant"
+                    android:textAllCaps="false"
+                    android:visibility="gone"
+                    app:cornerRadius="8dp"
+                    app:backgroundTint="@color/button_purple" />
+
+                <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_disable_entrant_role"
                     android:layout_width="match_parent"
                     android:layout_height="48dp"
@@ -215,6 +226,17 @@
                     android:textAllCaps="false"
                     app:cornerRadius="8dp"
                     app:backgroundTint="#4CAF50" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btn_use_organizer_view"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Use as Organizer"
+                    android:textAllCaps="false"
+                    android:visibility="gone"
+                    app:cornerRadius="8dp"
+                    app:backgroundTint="@color/button_purple" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/btn_disable_organizer_role"

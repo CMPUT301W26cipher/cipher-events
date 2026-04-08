@@ -7,10 +7,13 @@ import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.location.Address;
+import android.location.Geocoder;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,7 +21,9 @@ import android.widget.ArrayAdapter;
 import android.widget.AutoCompleteTextView;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.RatingBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -26,7 +31,9 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.content.ContextCompat;
 import androidx.fragment.app.DialogFragment;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -42,9 +49,26 @@ import com.example.cipher_events.message.MessageThread;
 import com.example.cipher_events.message.MessagingService;
 import com.example.cipher_events.notifications.Message;
 import com.example.cipher_events.notifications.Notifier;
+import com.google.android.gms.ads.AdListener;
+import com.google.android.gms.ads.AdLoader;
+import com.google.android.gms.ads.AdRequest;
+import com.google.android.gms.ads.LoadAdError;
+import com.google.android.gms.ads.FullScreenContentCallback;
+import com.google.android.gms.ads.VideoOptions;
+import com.google.android.gms.ads.interstitial.InterstitialAd;
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback;
+import com.google.android.gms.ads.nativead.MediaView;
+import com.google.android.gms.ads.nativead.NativeAd;
+import com.google.android.gms.ads.nativead.NativeAdOptions;
+import com.google.android.gms.ads.nativead.NativeAdView;
 import com.google.android.material.chip.Chip;
 import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.switchmaterial.SwitchMaterial;
+
+import org.osmdroid.config.Configuration;
+import org.osmdroid.util.GeoPoint;
+import org.osmdroid.views.MapView;
+import org.osmdroid.views.overlay.Marker;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -56,6 +80,7 @@ import java.util.stream.Collectors;
 
 public class EventDetailsDialogFragment extends DialogFragment implements DBProxy.OnDataChangedListener {
 
+    private static final String TAG = "EventDetailsDialog";
     private boolean isOrganizerView = false;
     private String eventId;
     private String currentDeviceID;
@@ -70,7 +95,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private TextView attendees;
     private TextView description;
     private TextView descriptionLabel;
-    private TextView dateLocation;
+    private TextView detailDate;
+    private TextView detailLocation;
+    private ImageView btnCenterOnEvent;
     private ImageView banner;
     private ImageView favoriteButton;
     private ImageView closeButton;
@@ -96,6 +123,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     private View entrantActionContainer;
     private View organizerActionContainer;
     private Button organizerViewWaitlistButton;
+    private MapView organizerMapView;
+    private MapView entrantMapView;
+    private View entrantMapContainer;
+
+    private InterstitialAd mInterstitialAd;
+    private NativeAd currentNativeAd;
 
     // For Image Upload in Edit Dialog
     private Uri selectedEditImageUri;
@@ -169,6 +202,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                              @Nullable ViewGroup container,
                              @Nullable Bundle savedInstanceState) {
 
+        Configuration.getInstance().load(requireContext(), PreferenceManager.getDefaultSharedPreferences(requireContext()));
+
         if (getDialog() != null && getDialog().getWindow() != null) {
             getDialog().getWindow().setBackgroundDrawable(new ColorDrawable(Color.TRANSPARENT));
         }
@@ -179,7 +214,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         attendees = view.findViewById(R.id.detail_attendees);
         descriptionLabel = view.findViewById(R.id.description_label);
         description = view.findViewById(R.id.detail_description);
-        dateLocation = view.findViewById(R.id.detail_date_location);
+        detailDate = view.findViewById(R.id.detail_date);
+        detailLocation = view.findViewById(R.id.detail_location);
+        btnCenterOnEvent = view.findViewById(R.id.btn_center_on_event);
         banner = view.findViewById(R.id.detail_banner);
         favoriteButton = view.findViewById(R.id.btn_favorite);
         closeButton = view.findViewById(R.id.btn_close);
@@ -205,6 +242,10 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         entrantActionContainer = view.findViewById(R.id.entrant_action_container);
         organizerActionContainer = view.findViewById(R.id.organizer_action_container);
         organizerViewWaitlistButton = view.findViewById(R.id.organizer_view_waitlist_button);
+        
+        organizerMapView = view.findViewById(R.id.map_view);
+        entrantMapView = view.findViewById(R.id.entrant_map_view);
+        entrantMapContainer = view.findViewById(R.id.entrant_map_container);
 
         RecyclerView rvComments = view.findViewById(R.id.rv_comments);
         EditText etCommentInput = view.findViewById(R.id.et_comment_input);
@@ -275,9 +316,179 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             public void afterTextChanged(Editable s) {}
         });
 
+        setupMapView(organizerMapView);
+        setupMapView(entrantMapView);
+
+        if (btnCenterOnEvent != null) {
+            btnCenterOnEvent.setOnClickListener(v -> centerMapOnEvent());
+        }
+
+        // Load native video ad
+        refreshNativeAd(view);
+
+        // Preload video interstitial ad
+        loadInterstitialAd();
+
         refreshUI();
 
         return view;
+    }
+
+    private void refreshNativeAd(View root) {
+        AdLoader adLoader = new AdLoader.Builder(requireContext(), "ca-app-pub-3940256099942544/1044960115")
+                .forNativeAd(nativeAd -> {
+                    if (currentNativeAd != null) {
+                        currentNativeAd.destroy();
+                    }
+                    currentNativeAd = nativeAd;
+                    FrameLayout frameLayout = root.findViewById(R.id.native_ad_container);
+                    NativeAdView adView = (NativeAdView) getLayoutInflater().inflate(R.layout.ad_unified, null);
+                    populateNativeAdView(nativeAd, adView);
+                    frameLayout.removeAllViews();
+                    frameLayout.addView(adView);
+                })
+                .withAdListener(new AdListener() {
+                    @Override
+                    public void onAdFailedToLoad(LoadAdError adError) {
+                        Log.e(TAG, "Native ad failed to load: " + adError.getMessage());
+                    }
+                })
+                .withNativeAdOptions(new NativeAdOptions.Builder()
+                        .setVideoOptions(new VideoOptions.Builder()
+                                .setStartMuted(true)
+                                .build())
+                        .build())
+                .build();
+
+        adLoader.loadAd(new AdRequest.Builder().build());
+    }
+
+    private void populateNativeAdView(NativeAd nativeAd, NativeAdView adView) {
+        adView.setMediaView((MediaView) adView.findViewById(R.id.ad_media));
+        adView.setHeadlineView(adView.findViewById(R.id.ad_headline));
+        adView.setBodyView(adView.findViewById(R.id.ad_body));
+        adView.setCallToActionView(adView.findViewById(R.id.ad_call_to_action));
+        adView.setIconView(adView.findViewById(R.id.ad_app_icon));
+        adView.setPriceView(adView.findViewById(R.id.ad_price));
+        adView.setStarRatingView(adView.findViewById(R.id.ad_stars));
+        adView.setStoreView(adView.findViewById(R.id.ad_store));
+        adView.setAdvertiserView(adView.findViewById(R.id.ad_advertiser));
+
+        ((TextView) adView.getHeadlineView()).setText(nativeAd.getHeadline());
+        adView.getMediaView().setMediaContent(nativeAd.getMediaContent());
+
+        if (nativeAd.getBody() == null) {
+            adView.getBodyView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getBodyView().setVisibility(View.VISIBLE);
+            ((TextView) adView.getBodyView()).setText(nativeAd.getBody());
+        }
+
+        if (nativeAd.getCallToAction() == null) {
+            adView.getCallToActionView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getCallToActionView().setVisibility(View.VISIBLE);
+            ((Button) adView.getCallToActionView()).setText(nativeAd.getCallToAction());
+        }
+
+        if (nativeAd.getIcon() == null) {
+            adView.getIconView().setVisibility(View.GONE);
+        } else {
+            ((ImageView) adView.getIconView()).setImageDrawable(nativeAd.getIcon().getDrawable());
+            adView.getIconView().setVisibility(View.VISIBLE);
+        }
+
+        if (nativeAd.getPrice() == null) {
+            adView.getPriceView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getPriceView().setVisibility(View.VISIBLE);
+            ((TextView) adView.getPriceView()).setText(nativeAd.getPrice());
+        }
+
+        if (nativeAd.getStore() == null) {
+            adView.getStoreView().setVisibility(View.INVISIBLE);
+        } else {
+            adView.getStoreView().setVisibility(View.VISIBLE);
+            ((TextView) adView.getStoreView()).setText(nativeAd.getStore());
+        }
+
+        if (nativeAd.getStarRating() == null) {
+            adView.getStarRatingView().setVisibility(View.INVISIBLE);
+        } else {
+            ((RatingBar) adView.getStarRatingView()).setRating(nativeAd.getStarRating().floatValue());
+            adView.getStarRatingView().setVisibility(View.VISIBLE);
+        }
+
+        if (nativeAd.getAdvertiser() == null) {
+            adView.getAdvertiserView().setVisibility(View.INVISIBLE);
+        } else {
+            ((TextView) adView.getAdvertiserView()).setText(nativeAd.getAdvertiser());
+            adView.getAdvertiserView().setVisibility(View.VISIBLE);
+        }
+
+        adView.setNativeAd(nativeAd);
+    }
+
+    private void loadInterstitialAd() {
+        AdRequest adRequest = new AdRequest.Builder().build();
+        // Sample Interstitial Video Unit ID: ca-app-pub-3940256099942544/5224354917
+        InterstitialAd.load(requireContext(),"ca-app-pub-3940256099942544/5224354917", adRequest,
+                new InterstitialAdLoadCallback() {
+                    @Override
+                    public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                        mInterstitialAd = interstitialAd;
+                        Log.i(TAG, "onAdLoaded");
+                    }
+
+                    @Override
+                    public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                        Log.i(TAG, loadAdError.getMessage());
+                        mInterstitialAd = null;
+                    }
+                });
+    }
+
+    private void setupMapView(MapView map) {
+        if (map != null) {
+            map.setMultiTouchControls(true);
+            map.getController().setZoom(12.0);
+            map.getController().setCenter(new GeoPoint(53.5461, -113.4938));
+        }
+    }
+
+    private void centerMapOnEvent() {
+        Event event = db.getEvent(eventId);
+        if (event != null) {
+            if (event.getLatitude() != null && event.getLongitude() != null) {
+                MapView activeMap = isOrganizerView ? organizerMapView : entrantMapView;
+                if (activeMap != null) {
+                    activeMap.getController().animateTo(new GeoPoint(event.getLatitude(), event.getLongitude()));
+                }
+            } else {
+                // If coordinates missing, attempt geocode once and center
+                new Thread(() -> {
+                    try {
+                        Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+                        List<Address> addresses = geocoder.getFromLocationName(event.getLocation(), 1);
+                        if (addresses != null && !addresses.isEmpty()) {
+                            double lat = addresses.get(0).getLatitude();
+                            double lng = addresses.get(0).getLongitude();
+                            event.setLatitude(lat);
+                            event.setLongitude(lng);
+                            if (getActivity() != null) {
+                                getActivity().runOnUiThread(() -> {
+                                    MapView activeMap = isOrganizerView ? organizerMapView : entrantMapView;
+                                    if (activeMap != null) {
+                                        activeMap.getController().animateTo(new GeoPoint(lat, lng));
+                                        updateMapMarkers(activeMap, event);
+                                    }
+                                });
+                            }
+                        }
+                    } catch (Exception ignored) {}
+                }).start();
+            }
+        }
     }
 
     private void displayTags(ArrayList<String> tags) {
@@ -310,6 +521,7 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             organizerStatsCard.setVisibility(View.VISIBLE);
             organizerActionContainer.setVisibility(View.VISIBLE);
             entrantActionContainer.setVisibility(View.GONE);
+            entrantMapContainer.setVisibility(View.GONE);
             
             organizerViewWaitlistButton.setOnClickListener(v -> {
                 dismiss();
@@ -338,12 +550,12 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
             organizerStatsCard.setVisibility(View.GONE);
             organizerActionContainer.setVisibility(View.GONE);
             entrantActionContainer.setVisibility(View.VISIBLE);
+            entrantMapContainer.setVisibility(View.VISIBLE);
 
-            actionButton.setText("Scan to Join");
+            actionButton.setText("Join Waitlist");
             actionButton.setOnClickListener(v -> {
                 if (eventId != null) {
-                    QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
-                    qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
+                    showAdBeforeScan();
                 } else {
                     Toast.makeText(getContext(), "Error: Event ID missing", Toast.LENGTH_SHORT).show();
                 }
@@ -370,6 +582,67 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
 
             favoriteButton.setVisibility(View.VISIBLE);
             if (organizerContainer != null) organizerContainer.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private void showAdBeforeScan() {
+        if (mInterstitialAd != null) {
+            showInterstitialAd();
+        } else {
+            // If real ad not loaded yet, show a loading dialog and fetch it
+            final AlertDialog loadingDialog = new AlertDialog.Builder(requireContext())
+                    .setMessage("Loading advertisement...")
+                    .setCancelable(false)
+                    .create();
+            loadingDialog.show();
+
+            AdRequest adRequest = new AdRequest.Builder().build();
+            InterstitialAd.load(requireContext(), "ca-app-pub-3940256099942544/5224354917", adRequest,
+                    new InterstitialAdLoadCallback() {
+                        @Override
+                        public void onAdLoaded(@NonNull InterstitialAd interstitialAd) {
+                            loadingDialog.dismiss();
+                            mInterstitialAd = interstitialAd;
+                            showInterstitialAd();
+                        }
+
+                        @Override
+                        public void onAdFailedToLoad(@NonNull LoadAdError loadAdError) {
+                            loadingDialog.dismiss();
+                            Log.e(TAG, "Ad failed to load: " + loadAdError.getMessage());
+                            // Proceed to scan if ad fails to load to not block user
+                            proceedToScan();
+                        }
+                    });
+        }
+    }
+
+    private void showInterstitialAd() {
+        if (mInterstitialAd == null) {
+            proceedToScan();
+            return;
+        }
+        mInterstitialAd.setFullScreenContentCallback(new FullScreenContentCallback() {
+            @Override
+            public void onAdDismissedFullScreenContent() {
+                mInterstitialAd = null;
+                loadInterstitialAd(); // Preload next one
+                proceedToScan();
+            }
+
+            @Override
+            public void onAdFailedToShowFullScreenContent(@NonNull com.google.android.gms.ads.AdError adError) {
+                mInterstitialAd = null;
+                proceedToScan();
+            }
+        });
+        mInterstitialAd.show(requireActivity());
+    }
+
+    private void proceedToScan() {
+        if (eventId != null) {
+            QrScannerDialogFragment qrDialog = QrScannerDialogFragment.newInstance(eventId);
+            qrDialog.show(getParentFragmentManager(), "QrScannerDialog");
         }
     }
 
@@ -700,6 +973,9 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 tvStatsWaitlist.setText(String.valueOf(count));
                 Integer cap = event.getWaitingListCapacity();
                 tvStatsCapacity.setText(cap != null ? String.valueOf(cap) : "∞");
+                updateMapMarkers(organizerMapView, event);
+            } else {
+                updateMapMarkers(entrantMapView, event);
             }
             
             String desc = event.getDescription();
@@ -712,7 +988,8 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
                 description.setVisibility(View.GONE);
             }
             
-            dateLocation.setText(event.getTime() + " • " + event.getLocation());
+            if (detailDate != null) detailDate.setText(event.getTime());
+            if (detailLocation != null) detailLocation.setText(event.getLocation());
 
             if (event.getPosterPictureURL() != null && !event.getPosterPictureURL().isEmpty()) {
                 Glide.with(this).load(event.getPosterPictureURL()).placeholder(R.drawable.gray_placeholder).into(banner);
@@ -763,10 +1040,81 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
         }
     }
 
+    private void updateMapMarkers(MapView map, Event event) {
+        if (map == null) return;
+
+        map.getOverlays().clear();
+
+        // Use a background thread for geocoding if coordinates are missing
+        new Thread(() -> {
+            Double lat = event.getLatitude();
+            Double lng = event.getLongitude();
+
+            if (lat == null || lng == null) {
+                String locName = event.getLocation();
+                if (locName != null && !locName.isEmpty()) {
+                    try {
+                        Geocoder geocoder = new Geocoder(requireContext(), Locale.getDefault());
+                        List<Address> addresses = geocoder.getFromLocationName(locName, 1);
+                        if (addresses != null && !addresses.isEmpty()) {
+                            lat = addresses.get(0).getLatitude();
+                            lng = addresses.get(0).getLongitude();
+                            event.setLatitude(lat);
+                            event.setLongitude(lng);
+                            // Not updating DB here to avoid recursion, just using for display
+                        }
+                    } catch (Exception ignored) {}
+                }
+            }
+
+            final Double finalLat = lat;
+            final Double finalLng = lng;
+
+            if (getActivity() != null) {
+                getActivity().runOnUiThread(() -> {
+                    // Add Event Location Pin (Gold)
+                    if (finalLat != null && finalLng != null) {
+                        GeoPoint eventPoint = new GeoPoint(finalLat, finalLng);
+                        Marker eventMarker = new Marker(map);
+                        eventMarker.setPosition(eventPoint);
+                        eventMarker.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_event_pin));
+                        eventMarker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                        eventMarker.setTitle("EVENT: " + event.getName());
+                        eventMarker.setSubDescription(event.getLocation());
+                        map.getOverlays().add(eventMarker);
+                        
+                        // Focus on event location
+                        map.getController().animateTo(eventPoint);
+                    }
+
+                    // Add Entrant Pins (Red)
+                    ArrayList<User> entrants = event.getEntrants();
+                    if (entrants != null && !entrants.isEmpty()) {
+                        for (User entrant : entrants) {
+                            if (entrant.getLatitude() != null && entrant.getLongitude() != null) {
+                                GeoPoint point = new GeoPoint(entrant.getLatitude(), entrant.getLongitude());
+
+                                Marker marker = new Marker(map);
+                                marker.setPosition(point);
+                                marker.setIcon(ContextCompat.getDrawable(requireContext(), R.drawable.ic_custom_pin));
+                                marker.setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM);
+                                marker.setTitle(entrant.getName());
+                                map.getOverlays().add(marker);
+                            }
+                        }
+                    }
+                    map.invalidate();
+                });
+            }
+        }).start();
+    }
+
     @Override
     public void onResume() {
         super.onResume();
         db.addListener(this);
+        if (organizerMapView != null) organizerMapView.onResume();
+        if (entrantMapView != null) entrantMapView.onResume();
         refreshUI();
     }
 
@@ -774,6 +1122,16 @@ public class EventDetailsDialogFragment extends DialogFragment implements DBProx
     public void onPause() {
         super.onPause();
         db.removeListener(this);
+        if (organizerMapView != null) organizerMapView.onPause();
+        if (entrantMapView != null) entrantMapView.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        if (currentNativeAd != null) {
+            currentNativeAd.destroy();
+        }
+        super.onDestroy();
     }
 
     @Override
