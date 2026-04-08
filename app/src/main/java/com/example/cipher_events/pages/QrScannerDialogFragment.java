@@ -57,11 +57,10 @@ public class QrScannerDialogFragment extends DialogFragment {
 
         final String finalEventId = eventId;
         scanButton.setOnClickListener(v -> {
-            Toast.makeText(getContext(), "Scanning QR Code...", Toast.LENGTH_SHORT).show();
-            dismiss();
             if (finalEventId != null) {
-                ScannedEventDetailsDialogFragment scannedDialog = ScannedEventDetailsDialogFragment.newInstance(finalEventId);
-                scannedDialog.show(getParentFragmentManager(), "ScannedEventDetailsDialog");
+                ScanConfirmationDialogFragment confirmationDialog = ScanConfirmationDialogFragment.newInstance(finalEventId);
+                confirmationDialog.show(getParentFragmentManager(), "ScanConfirmationDialog");
+                dismiss();
             }
         });
 
