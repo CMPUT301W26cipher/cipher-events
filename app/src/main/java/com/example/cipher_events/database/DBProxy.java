@@ -138,6 +138,23 @@ public class DBProxy {
         if (u == null) u = getUser(deviceID);
         return u;
     }
+
+    /**
+     * Attempts to find a user by email in Admin, Organizer, then User collections.
+     */
+    public User getAnyUserByEmail(String email) {
+        if (email == null) return null;
+        for (Admin admin : getAllAdmins()) {
+            if (email.equalsIgnoreCase(admin.getEmail())) return admin;
+        }
+        for (Organizer org : getAllOrganizers()) {
+            if (email.equalsIgnoreCase(org.getEmail())) return org;
+        }
+        for (User user : getAllUsers()) {
+            if (email.equalsIgnoreCase(user.getEmail())) return user;
+        }
+        return null;
+    }
     
     public void updateUser(User user) {
         if (user instanceof Admin) {
