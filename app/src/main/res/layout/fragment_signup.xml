@@ -151,7 +151,8 @@
                 android:id="@+id/btn_google_signup"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
-                android:layout_marginTop="16dp" />
+                android:layout_marginTop="16dp"
+                app:buttonSize="wide" />
 
             <TextView
                 android:id="@+id/tv_go_to_login"
