@@ -180,13 +180,8 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
 
         dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, coOrganizers, isPrivate) -> {
-            String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
-            Organizer organizer = DB.getOrganizer(deviceId);
-
-            if (organizer == null) {
-                organizer = new Organizer("Organizer", "", "", "", null);
-                organizer.setDeviceID(deviceId);
-            }
+            // Organizer is automatically handled by DBProxy if we pass the current one or null
+            Organizer organizer = (DB.getCurrentUser() instanceof Organizer) ? (Organizer) DB.getCurrentUser() : null;
 
             com.example.cipher_events.database.Event event = new com.example.cipher_events.database.Event(
                     title, description, date + " " + time, location, organizer,
@@ -194,24 +189,8 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
             );
 
             if (capacity != null) event.setWaitingListCapacity(capacity);
-            
-            // Save Tags
-            if (tags != null) {
-                event.setTags(new ArrayList<>(tags));
-            }
-
-            // Handle co-organizers: Store their emails in the event
-            if (coOrganizers != null && !coOrganizers.isEmpty()) {
-                ArrayList<String> coOrgEmails = new ArrayList<>();
-                for (String email : coOrganizers) {
-                    coOrgEmails.add(email.toLowerCase().trim());
-                }
-                event.setCoOrganizerIds(coOrgEmails);
-            }
-
-            event.setInvitedEntrants(new ArrayList<>());
-            event.setCancelledEntrants(new ArrayList<>());
-            event.setEnrolledEntrants(new ArrayList<>());
+            if (tags != null) event.setTags(new ArrayList<>(tags));
+            if (coOrganizers != null) event.setCoOrganizerIds(new ArrayList<>(coOrganizers));
 
             DB.addEvent(event);
             Toast.makeText(this, "Event Created Successfully!", Toast.LENGTH_SHORT).show();
