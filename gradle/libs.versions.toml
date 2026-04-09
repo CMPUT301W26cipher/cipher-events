@@ -1,5 +1,5 @@
 [versions]
-agp = "8.13.1"
+agp = "9.1.0"
 core = "3.5.4"
 googleAuthLibraryOauth2Http = "1.43.0"
 junit = "4.13.2"
@@ -15,6 +15,8 @@ materialCalendarView = "2.0.1"
 threetenabp = "1.4.9"
 osmdroid = "6.1.18"
 preference = "1.2.1"
+playServicesAuth = "21.3.0"
+coreSplashscreen = "1.2.0"
 
 [libraries]
 core = { module = "com.google.zxing:core", version.ref = "core" }
@@ -34,6 +36,8 @@ material-calendarview = { module = "com.github.prolificinteractive:material-cale
 threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref = "threetenabp" }
 osmdroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
+play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

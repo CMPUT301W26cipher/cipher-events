@@ -137,14 +137,8 @@ public class AdminProfileFragment extends Fragment implements DBProxy.OnDataChan
     }
 
     private void setupActionButtons(View view) {
-        MaterialButton historyBtn = view.findViewById(R.id.admin_history_btn);
         MaterialButton editProfileBtn = view.findViewById(R.id.admin_edit_profile_btn);
         MaterialButton signoutBtn = view.findViewById(R.id.admin_signout_btn);
-
-        if (historyBtn != null) {
-            historyBtn.setOnClickListener(v ->
-                    Toast.makeText(getContext(), "Admin History Clicked", Toast.LENGTH_SHORT).show());
-        }
 
         if (editProfileBtn != null) {
             editProfileBtn.setOnClickListener(v -> navigateTo(new UserProfileFragment()));
