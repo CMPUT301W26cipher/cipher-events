@@ -114,11 +114,32 @@ public class DBProxy {
         if (event.getOrganizer() == null && currentUser instanceof Organizer) {
             event.setOrganizer((Organizer) currentUser);
         }
+        resolveCoOrganizers(event);
         eventDB.add(event);
     }
+
+    private void resolveCoOrganizers(Event event) {
+        if (event == null || event.getCoOrganizerIds() == null) return;
+        ArrayList<String> identifiers = event.getCoOrganizerIds();
+        ArrayList<String> resolved = new ArrayList<>();
+        for (String id : identifiers) {
+            if (id != null && id.contains("@")) {
+                User u = getAnyUserByEmail(id);
+                if (u != null) resolved.add(u.getDeviceID());
+                else resolved.add(id);
+            } else {
+                resolved.add(id);
+            }
+        }
+        event.setCoOrganizerIds(resolved);
+    }
+
     public Event getEvent(String eventID) { return eventDB.get(eventID); }
     public ArrayList<Event> getAllEvents() { return eventDB.getAll(); }
-    public void updateEvent(Event event) { eventDB.update(event); }
+    public void updateEvent(Event event) {
+        resolveCoOrganizers(event);
+        eventDB.update(event);
+    }
     public void deleteEvent(Event event) { eventDB.delete(event); }
     public void deleteEvent(String eventID) { eventDB.delete(eventID); }
 
