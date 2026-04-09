@@ -187,8 +187,13 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
         CreateEventDialogFragment dialog = new CreateEventDialogFragment();
 
         dialog.setCreateEventListener((title, date, time, location, description, capacity, bannerUrl, tags, coOrganizers, isPrivate) -> {
-            // Organizer is automatically handled by DBProxy if we pass the current one or null
-            Organizer organizer = (DB.getCurrentUser() instanceof Organizer) ? (Organizer) DB.getCurrentUser() : null;
+            String deviceId = Settings.Secure.getString(getContentResolver(), Settings.Secure.ANDROID_ID);
+            Organizer organizer = DB.getOrganizer(deviceId);
+
+            if (organizer == null) {
+                organizer = new Organizer("Organizer", "", "", "", null);
+                organizer.setDeviceID(deviceId);
+            }
 
             com.example.cipher_events.database.Event event = new com.example.cipher_events.database.Event(
                     title, description, date + " " + time, location, organizer,
@@ -196,8 +201,24 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
             );
 
             if (capacity != null) event.setWaitingListCapacity(capacity);
-            if (tags != null) event.setTags(new ArrayList<>(tags));
-            if (coOrganizers != null) event.setCoOrganizerIds(new ArrayList<>(coOrganizers));
+            
+            // Save Tags
+            if (tags != null) {
+                event.setTags(new ArrayList<>(tags));
+            }
+
+            // Handle co-organizers: Store their emails in the event
+            if (coOrganizers != null && !coOrganizers.isEmpty()) {
+                ArrayList<String> coOrgEmails = new ArrayList<>();
+                for (String email : coOrganizers) {
+                    coOrgEmails.add(email.toLowerCase().trim());
+                }
+                event.setCoOrganizerIds(coOrgEmails);
+            }
+
+            event.setInvitedEntrants(new ArrayList<>());
+            event.setCancelledEntrants(new ArrayList<>());
+            event.setEnrolledEntrants(new ArrayList<>());
 
             DB.addEvent(event);
             Toast.makeText(this, "Event Created Successfully!", Toast.LENGTH_SHORT).show();
@@ -217,17 +238,11 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
     }
 
     public void logout() {
-        com.google.android.gms.auth.api.signin.GoogleSignInOptions gso = new com.google.android.gms.auth.api.signin.GoogleSignInOptions.Builder(com.google.android.gms.auth.api.signin.GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestEmail()
-                .build();
-        com.google.android.gms.auth.api.signin.GoogleSignInClient mGoogleSignInClient = com.google.android.gms.auth.api.signin.GoogleSignIn.getClient(this, gso);
-        mGoogleSignInClient.signOut().addOnCompleteListener(this, task -> {
-            getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply();
-            currentRole = "";
-            DB.setCurrentUser(null);
-            bottomNavigationView.setVisibility(View.GONE);
-            replaceFragment(LoginFragment.newInstance());
-        });
+        getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE).edit().clear().apply();
+        currentRole = "";
+        DB.setCurrentUser(null);
+        bottomNavigationView.setVisibility(View.GONE);
+        replaceFragment(LoginFragment.newInstance());
     }
 
     private void updateNavigationMenu() {
