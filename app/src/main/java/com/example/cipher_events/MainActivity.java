@@ -31,6 +31,7 @@ import com.example.cipher_events.pages.ProfileFragment;
 import com.example.cipher_events.pages.SearchFragment;
 import com.example.cipher_events.pages.SignupFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import androidx.core.splashscreen.SplashScreen;
 
 import java.util.ArrayList;
 
@@ -47,6 +48,7 @@ public class MainActivity extends AppCompatActivity implements DBProxy.OnDataCha
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SplashScreen.installSplashScreen(this);
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());

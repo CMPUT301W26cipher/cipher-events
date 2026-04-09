@@ -16,6 +16,7 @@ threetenabp = "1.4.9"
 osmdroid = "6.1.18"
 preference = "1.2.1"
 playServicesAuth = "21.3.0"
+coreSplashscreen = "1.2.0"
 
 [libraries]
 core = { module = "com.google.zxing:core", version.ref = "core" }
@@ -36,6 +37,7 @@ threetenabp = { module = "com.jakewharton.threetenabp:threetenabp", version.ref 
 osmdroid = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
 preference = { group = "androidx.preference", name = "preference", version.ref = "preference" }
 play-services-auth = { group = "com.google.android.gms", name = "play-services-auth", version.ref = "playServicesAuth" }
+androidx-core-splashscreen = { group = "androidx.core", name = "core-splashscreen", version.ref = "coreSplashscreen" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

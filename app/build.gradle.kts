@@ -65,6 +65,7 @@ dependencies {
     implementation(libs.osmdroid)
     implementation(libs.preference)
     implementation(libs.play.services.auth)
+    implementation(libs.androidx.core.splashscreen)
     implementation("com.google.android.gms:play-services-ads:25.1.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.16.0")
     testImplementation(libs.junit)
